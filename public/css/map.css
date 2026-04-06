@@ -1,0 +1,29 @@
+.main-container{
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#map-container{
+    flex: 1 0 100%;
+    transition: flex 0.5s ease-in-out;
+    position: relative;
+}
+
+#map-container.shrunk{
+    flex: 1 0 50%;
+}
+
+#side-panel{
+    flex: 0 0 0%;
+    background: #f8f9fa;
+    transition: flex 0.5s ease-in-out;
+    overflow-y: auto;
+}
+
+.post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
