@@ -5,11 +5,11 @@ const express = require('express'),
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-    res.send(`
-        <div style="text-align:center; margin-top:50px;">
+    res.send(
+        `<div style="text-align:center; margin-top:50px;">
            <h1> 80번 포트 실행중 </h1>
-        </div>
-    `);
+        </div>`
+    );
 });
 
 app.get('/map', (req , res) => {
