@@ -1,0 +1,168 @@
+.main-container{
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+#map-container{
+    flex: 1 0 100%;
+    transition: flex 0.5s ease-in-out;
+    position: relative;
+    transition: all 0.5s ease-in-out;
+    z-index: 1;
+}
+
+#map-container.shrink{
+    flex:0.5 !important;
+    width: 50px !important;
+    margin: 20px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+#side-panel{
+    flex: 0.5;
+    background: #f8f9fa;
+    transition: flex 0.5s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#side-pannel.hidden{
+    flex: 0;
+    padding: 0;
+    opactiy:0; /*투명하게*/
+    visibility: hidden;
+}
+
+#side-Panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#side-Panel::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+}
+
+.post-item {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background-color: #e0e0e0;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    
+
+}
+
+.post-item:nth-child(1) { background-image: url('https://picsum.photos/400/600?random=1'); }
+.post-item:nth-child(2) { background-image: url('https://picsum.photos/400/600?random=2'); }
+.post-item:nth-child(3) { background-image: url('https://picsum.photos/400/600?random=3'); }
+.post-item:nth-child(4) { background-image: url('https://picsum.photos/400/600?random=4'); }
+.post-item:nth-child(5) { background-image: url('https://picsum.photos/400/600?random=5'); }
+.post-item:nth-child(6) { background-image: url('https://picsum.photos/400/600?random=6'); }
+.post-item:nth-child(7) { background-image: url('https://picsum.photos/400/600?random=7'); }
+.post-item:nth-child(8) { background-image: url('https://picsum.photos/400/600?random=8'); }
+.post-item:nth-child(9) { background-image: url('https://picsum.photos/400/600?random=9'); }
+.post-item:nth-child(10) { background-image: url('https://picsum.photos/400/600?random=10'); }
+.post-item:nth-child(11) { background-image: url('https://picsum.photos/400/600?random=11'); }
+.post-item:nth-child(12) { background-image: url('https://picsum.photos/400/600?random=12'); }
+
+.post-item:hover { /*게시물에 커서 올리면 살짝 커짐*/
+    transform: scale(1.02);
+    filter: brightness(0.9);
+}
+
+.top-nav{
+    position: absolute;
+    top: 20px; left: 50%;
+    transform: translateX(-50%); 
+    width: 95%;
+    max-width: 1000px;
+    height: 60px;
+    background: none; /* rgba(200,200,200,0.6);*/
+    border-radius: 30px;
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 20px;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+
+.logo{ font-weight: bold; font-size: 20px; color: #333; margin-right: 30px;}
+
+.search-box {
+    pointer-events: auto;
+    flex: 0 1 350px;
+    display: flex;
+    background: #f5f5f5;
+    border-radius: 20px;
+    padding: 5px 15px;
+}
+
+.search-box input{
+    border: none; background: none; outline: none; width: 100%; padding: 5px;
+}
+
+.season-container{
+    pointer-events: auto;
+    display: flex;
+    gap: 80px;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-left: none;
+}
+
+.season-btn {
+    padding: 6px 14px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background-color: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.seosn-btn:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+.filter-status {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 999;
+    pointer-events: none;
+    font-size: 14px;
+}
+
+#display-region, #display-seoson {
+    color: #E67E22;
+}
