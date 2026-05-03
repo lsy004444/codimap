@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/css/feed.css">
+    <title>CODIMAP Feed</title>
+</head>
+<body>
+    <!-- ── 피드 패널 ── -->
+    <div id="feed-root">
+
+        <!-- 피드 헤더 -->
+        <div class="feed-header">
+            <div class="feed-title">
+                <span class="feed-title-region" id="feed-region-label">전국</span>
+                <span class="feed-title-dot">·</span>
+                <span class="feed-title-season" id="feed-season-label">봄</span>
+                <span class="feed-title-sub">코디</span>
+            </div>
+            <div class="feed-count"><span id="feed-count-num">48</span>개의 게시물</div>
+        </div>
+
+        <!-- 피드 그리드 -->
+        <div class="feed-grid" id="feed-grid">
+        </div>
+
+        <!-- 무한 스크롤 센티넬 -->
+        <div id="feed-sentinel" class="feed-sentinel">
+            <div class="feed-loading-dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <!--게시물 상세 팝업-->
+    <div id="post-overlay" class="post-overlay hidden">
+        <div class="post-modal">
+
+            <!-- 닫기 -->
+            <button class="modal-close-btn" id="modal-close-btn">✕</button>
+
+            <div class="modal-sidebar-actions">
+                <!-- 좋아요 -->
+                <div class="action-btn-wrap">
+                    <button class="action-btn like-btn" id="like-btn" title="좋아요">
+                        <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
+                    <span class="action-label" id="like-count">0</span>
+                </div>
+
+                <!-- 스크랩 -->
+                <div class="action-btn-wrap">
+                    <button class="action-btn scrap-btn" id="scrap-btn" title="스크랩">
+                        <svg class="star-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </button>
+                    <span class="action-label" id="scrap-count">0</span>
+                </div>
+
+                <!-- 신고 -->
+                <button class="report-btn" id="report-btn" title="신고">⚑</button>
+            </div>
+
+            <!-- 왼쪽: 사진 슬라이더 -->
+            <div class="modal-left">
+                <div class="modal-slider-wrap">
+                    <div class="modal-slider" id="modal-slider">
+                        <!-- 이미지들 -->
+                    </div>
+                    <button class="slider-arrow left"  id="slider-prev">‹</button>
+                    <button class="slider-arrow right" id="slider-next">›</button>
+                    <div class="slider-dots" id="slider-dots"></div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 정보 패널 -->
+            <div class="modal-right">
+
+                <!-- 유저 프로필 -->
+                <div class="modal-user-row">
+                    <div class="modal-avatar" id="modal-avatar"></div>
+                    <div class="modal-user-info">
+                        <span class="modal-username" id="modal-username">@username</span>
+                        <span class="modal-user-region" id="modal-user-region">서울 · 봄</span>
+                    </div>
+                    
+                </div>
+
+                <!-- 게시물 설명 -->
+                <div class="modal-desc" id="modal-desc">
+                    오늘의 봄 코디 🌸 가볍고 따뜻한 날씨에 딱 맞는 레이어드룩!
+                </div>
+
+                <!-- 쇼핑몰 링크 -->
+                <div class="modal-shop-section">
+                    <p class="modal-section-title">🛍 쇼핑 링크</p>
+                    <div class="modal-shop-links" id="modal-shop-links">
+                    </div>
+                </div>
+
+                <!-- 댓글 섹션 -->
+                <div class="modal-comment-section">
+                    <p class="modal-section-title">💬 댓글 <span id="comment-count">0</span></p>
+                    <div class="comment-list" id="comment-list"></div>
+                    <div class="comment-input-row">
+                        <input type="text" id="comment-input" placeholder="댓글을 입력하세요..." maxlength="200">
+                        <button id="comment-submit-btn">등록</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 신고 팝업 -->
+    <div id="report-overlay" class="report-overlay hidden">
+        <div class="report-modal">
+            <h3 class="report-title">게시물 신고</h3>
+            <p class="report-sub">신고 사유를 선택해 주세요</p>
+            <div class="report-options" id="report-options">
+                <label><input type="radio" name="report-reason" value="spam"> 스팸 / 광고성 게시물</label>
+                <label><input type="radio" name="report-reason" value="inappropriate"> 부적절한 콘텐츠</label>
+                <label><input type="radio" name="report-reason" value="copyright"> 저작권 침해</label>
+                <label><input type="radio" name="report-reason" value="hate"> 혐오 발언 / 차별</label>
+                <label><input type="radio" name="report-reason" value="privacy"> 개인 정보 침해</label>
+                <label><input type="radio" name="report-reason" value="other"> 기타</label>
+            </div>
+            <textarea id="report-detail" placeholder="추가 설명 (선택사항)" rows="3"></textarea>
+            <div class="report-btns">
+                <button class="report-cancel-btn" id="report-cancel-btn">취소</button>
+                <button class="report-submit-btn" id="report-submit-btn">신고 제출</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/public/js/feed.js"></script>
+       
+</body>
+</html>
