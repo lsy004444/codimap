@@ -99,7 +99,15 @@
     <p class="subtab-title">📍 지역 선택</p>
     <p class="subtab-desc">주소를 검색하여 선택해주세요. 시 · 구 · 동까지 자동으로 추출됩니다.</p>
     <button class="btn-open-kakao" onclick="openKakaoPostcode()">주소 검색하기</button>
- 
+    <div class="season-select" id="seasonSelect" style="display:none;">
+  <p class="season-label">계절 선택</p>
+  <div class="season-buttons">
+    <button class="btn-season" onclick="selectSeason('봄')">봄</button>
+    <button class="btn-season" onclick="selectSeason('여름')">여름</button>
+    <button class="btn-season" onclick="selectSeason('가을')">가을</button>
+    <button class="btn-season" onclick="selectSeason('겨울')">겨울</button>
+  </div>
+</div>
 
     <div class="addr-result" id="addrResult">
       선택된 위치: <strong id="addrPreview"></strong>
@@ -279,6 +287,7 @@
     pendingLocation = null;
     document.getElementById('addrResult').classList.remove('show');
     document.getElementById('btnConfirmAddr').style.display = 'none';
+    document.getElementById('seasonSelect').style.display = 'none';
   }
  
 
@@ -298,25 +307,37 @@
         document.getElementById('addrPreview').textContent = full;
         document.getElementById('addrResult').classList.add('show');
         document.getElementById('btnConfirmAddr').style.display = 'block';
+        document.getElementById('seasonSelect').style.display = 'block';
       }
     }).open();
   }
+
+  let selectedSeason = null;  // 상단 변수 선언부에 추가
+
+function selectSeason(season) {
+  selectedSeason = season;
+  document.querySelectorAll('.btn-season').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(season));
+  });
+}
  
 
   function confirmLocation() {
-    if (!pendingLocation) return;
- 
-
-    document.getElementById('selectedLocationText').textContent = pendingLocation.full;
-    document.getElementById('selectedLocationArea').style.display = 'flex';
-    document.getElementById('metaMissing').style.display = 'none';
- 
-  
-    closeSubtab();
- 
-  
-    console.log('선택된 위치:', pendingLocation);
+  if (!pendingLocation) return;
+  if (!selectedSeason) {
+    alert('계절을 선택해주세요.');
+    return;
   }
+
+  document.getElementById('selectedLocationText').textContent = pendingLocation.full;
+  document.getElementById('selectedLocationArea').style.display = 'flex';
+  document.getElementById('metaMissing').style.display = 'none';
+
+  showMetaTags('날짜 정보 없음', pendingLocation.full, selectedSeason);
+
+  closeSubtab();
+  selectedSeason = null;
+}
  
  
   let linkCount = 0;
@@ -379,7 +400,7 @@
       location    : pendingLocation   
     };
     console.log('등록 데이터:', payload);
-    alert('등록되었습니다! (콘솔에서 데이터 확인 가능)');
+    alert('등록되었습니다!');
   }
 </script>
 </body>
