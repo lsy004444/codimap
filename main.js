@@ -16,7 +16,6 @@ app.get('/map', (req , res) => {
     res.sendFile(path.join(__dirname, 'views', 'map.html'));
 })
 app.get('/upload', (req, res) => {
-    console.log("누군가 upload 페이지에 접속했습니다!"); 
     res.sendFile(path.join(__dirname, 'views', 'upload.html'));
 })
 
