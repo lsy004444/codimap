@@ -1,0 +1,282 @@
+
+  let uploadedFiles   = [];   
+  let pendingLocation = null; 
+ 
+
+  window.addEventListener('DOMContentLoaded', () => {
+    for (let i = 1; i <= 4; i++) addLinkRow();
+  });
+ 
+
+  function handleFiles(files) {
+    if (!files || files.length === 0) return;
+ 
+    
+    Array.from(files).forEach(file => uploadedFiles.push(file));
+ 
+    renderPreviews();
+ 
+   
+    parseMetadata(uploadedFiles[0]);
+  }
+ 
+
+  function renderPreviews() {
+    const list = document.getElementById('previewList');
+    list.innerHTML = '';
+ 
+    uploadedFiles.forEach((file, idx) => {
+      const url  = URL.createObjectURL(file);
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.innerHTML = `
+        <img src="${url}" alt="preview-${idx}" />
+        ${idx === 0 ? '<div class="badge-rep">대표</div>' : ''}
+        <button class="btn-del" onclick="removeFile(${idx})">✕</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+ 
+
+  function removeFile(idx) {
+    uploadedFiles.splice(idx, 1);
+    renderPreviews();
+ 
+    if (uploadedFiles.length === 0) {
+    
+      hideAllMeta();
+    } else {
+      
+      parseMetadata(uploadedFiles[0]);
+    }
+  }
+ 
+
+  function hideAllMeta() {
+    document.getElementById('metaBox').style.display          = 'none';
+    document.getElementById('metaMissing').style.display      = 'none';
+    document.getElementById('selectedLocationArea').style.display = 'none';
+  }
+ 
+
+  function parseMetadata(file) {
+  
+    EXIF.getData(file, function() {
+      const dateStr = EXIF.getTag(this, 'DateTimeOriginal');
+      const lat     = EXIF.getTag(this, 'GPSLatitude');
+      const latRef  = EXIF.getTag(this, 'GPSLatitudeRef');
+      const lon     = EXIF.getTag(this, 'GPSLongitude');
+      const lonRef  = EXIF.getTag(this, 'GPSLongitudeRef');
+ 
+      const hasDate = !!dateStr;
+      const hasGPS  = lat && lon;
+ 
+  
+      let formattedDate = '날짜 정보 없음';
+      let season        = '';
+      if (hasDate) {
+        // "2024:11:03 14:32:00" → "2024.11.03 · 14:32"
+        const [datePart, timePart] = dateStr.split(' ');
+        const [y, m, d] = datePart.split(':');
+        const [hh, mm]  = timePart.split(':');
+        formattedDate   = `${y}.${m}.${d} · ${hh}:${mm}`;
+        season          = getSeason(parseInt(m, 10));
+      }
+ 
+  
+      let locationStr = null;
+      if (hasGPS) {
+        const latitude  = dmsToDecimal(lat,  latRef);
+        const longitude = dmsToDecimal(lon,  lonRef);
+ 
+        locationStr = `${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E`;
+      }
+ 
+
+      if (hasDate || hasGPS) {
+        showMetaTags(formattedDate, locationStr, season);
+        document.getElementById('metaMissing').style.display = 'none';
+      } else {
+      
+        document.getElementById('metaBox').style.display     = 'none';
+        document.getElementById('metaMissing').style.display = 'block';
+      }
+    });
+  }
+ 
+
+  function showMetaTags(dateStr, locationStr, season) {
+    const box  = document.getElementById('metaBox');
+    const tags = document.getElementById('metaTags');
+    box.style.display = 'block';
+ 
+    tags.innerHTML = `
+      <div class="meta-tag">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+             stroke="#6B7280" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>${dateStr}</span>
+      </div>
+      ${locationStr ? `
+      <div class="meta-tag">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+             stroke="#6B7280" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>${locationStr}</span>
+      </div>` : ''}
+      ${season ? `
+      <div class="meta-tag">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+             stroke="#6B7280" stroke-width="2">
+          <path d="M12 2a10 10 0 0 1 0 20A10 10 0 0 1 12 2"/>
+          <path d="M12 6v6l3 3"/>
+        </svg>
+        <span>${season}</span>
+      </div>` : ''}
+    `;
+ 
+    document.getElementById('metaMissing').style.display = 'none';
+  }
+ 
+ 
+  function dmsToDecimal(dms, ref) {
+    const d = dms[0] + dms[1] / 60 + dms[2] / 3600;
+    return (ref === 'S' || ref === 'W') ? -d : d;
+  }
+ 
+
+  function getSeason(month) {
+    if ([3,4,5].includes(month))  return '봄';
+    if ([6,7,8].includes(month))  return '여름';
+    if ([9,10,11].includes(month))return '가을';
+    return '겨울';
+  }
+ 
+
+  function openSubtab()  {
+    document.getElementById('subtabOverlay').classList.add('show');
+  }
+  function closeSubtab() {
+    document.getElementById('subtabOverlay').classList.remove('show');
+    pendingLocation = null;
+    document.getElementById('addrResult').classList.remove('show');
+    document.getElementById('btnConfirmAddr').style.display = 'none';
+    document.getElementById('seasonSelect').style.display = 'none';
+  }
+ 
+
+  function openKakaoPostcode() {
+    new daum.Postcode({
+      oncomplete: function(data) {
+      
+        const sido    = data.sido;    
+        const sigungu = data.sigungu; 
+        const bname   = data.bname;   
+        const full    = `${sido} ${sigungu} ${bname}`;
+ 
+
+        pendingLocation = { sido, sigungu, bname, full };
+ 
+  
+        document.getElementById('addrPreview').textContent = full;
+        document.getElementById('addrResult').classList.add('show');
+        document.getElementById('btnConfirmAddr').style.display = 'block';
+        document.getElementById('seasonSelect').style.display = 'block';
+      }
+    }).open();
+  }
+
+  let selectedSeason = null;  // 상단 변수 선언부에 추가
+
+function selectSeason(season) {
+  selectedSeason = season;
+  document.querySelectorAll('.btn-season').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(season));
+  });
+}
+ 
+
+  function confirmLocation() {
+  if (!pendingLocation) return;
+  if (!selectedSeason) {
+    alert('계절을 선택해주세요.');
+    return;
+  }
+
+  document.getElementById('selectedLocationText').textContent = pendingLocation.full;
+  document.getElementById('selectedLocationArea').style.display = 'flex';
+  document.getElementById('metaMissing').style.display = 'none';
+
+  showMetaTags('날짜 정보 없음', pendingLocation.full, selectedSeason);
+
+  closeSubtab();
+  selectedSeason = null;
+}
+ 
+ 
+  let linkCount = 0;
+ 
+  function addLinkRow() {
+    linkCount++;
+    const list = document.getElementById('linkList');
+    const row  = document.createElement('div');
+    row.className   = 'link-row';
+    row.id          = `linkRow-${linkCount}`;
+    row.innerHTML   = `
+      <div class="link-icon">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+             stroke="#9CA3AF" stroke-width="2">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      </div>
+      <input class="link-input" type="url"
+             placeholder="https://shop.example.com/product"
+             id="link-${linkCount}" />
+      <button class="btn-del-link" onclick="removeLinkRow('linkRow-${linkCount}')">✕</button>
+    `;
+    list.appendChild(row);
+  }
+ 
+  function removeLinkRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) row.remove();
+  }
+ 
+
+  function handleCancel() {
+    if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
+
+      location.reload();
+    }
+  }
+ 
+  function handleRegister() {
+
+    if (uploadedFiles.length === 0) {
+      alert('사진을 한 장 이상 업로드해주세요.');
+      return;
+    }
+    const desc = document.getElementById('descInput').value.trim();
+    if (!desc) {
+      alert('게시물 설명을 입력해주세요.');
+      return;
+    }
+
+    const links = Array.from(document.querySelectorAll('.link-input'))
+      .map(el => el.value.trim())
+      .filter(v => v !== '');
+ 
+    const payload = {
+      files       : uploadedFiles.map(f => f.name),
+      description : desc,
+      links,
+      location    : pendingLocation   
+    };
+    console.log('등록 데이터:', payload);
+    alert('등록되었습니다!');
+  }
