@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/lsy004444/codimap#readme",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql2": "^3.20.0"
+    "mysql2": "^3.22.3"
   }
 }
