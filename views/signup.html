@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/public/css/signup.css">
+    <title>회원가입 페이지</title>
+</head>
+<body>
+    <div class="signup-wrapper">
+        <h1 class="signup-title">회원가입</h1>
+
+        <form id="signupForm">
+             <div class="input-group">
+                <label class="label-text">이름</label>   
+                <input type="text" id="name" name="name">
+            </div>
+
+            <div class="input-group">
+                <label class="label-text">이메일</label>   
+                <input type="email" id="email" name="email">
+                <button type="button" class="checkBtn" id="emailBtn" name="emailBtn">이메일 중복확인</button>
+            </div>
+
+            <div class="input-group">
+                <label class="label-text">아이디</label>   
+                <input type="text" id="userId" name="userId">
+                <button type="button" class="checkBtn" id="userIdBtn" name="userIdBtn">아이디 중복확인</button>
+            </div>
+
+            <div class="input-group">
+                <label class="label-text">비밀번호</label>  
+                <input type="password" id="password" name="password">
+            </div>
+            <button type="submit" class="signupBtn" id="signupBtn">회원가입</button>
+    </form>
+    </div>
+    <script src="/public/js/signup.js"></script>
+</body>
+</html>
