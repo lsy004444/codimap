@@ -18,6 +18,9 @@ app.get('/map', (req , res) => {
 app.get('/upload', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'upload.html'));
 })
+app.get('/feed', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'feed.html'));
+})
 
 
 
