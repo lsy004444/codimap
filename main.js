@@ -15,6 +15,10 @@ app.get('/', (req, res) => {
 app.get('/map', (req , res) => {
     res.sendFile(path.join(__dirname, 'views', 'map.html'));
 })
+app.get('/upload', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'upload.html'));
+})
+
 
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
