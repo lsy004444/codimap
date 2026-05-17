@@ -1,7 +1,7 @@
 var currentMarker = null;
 
 var currentCoords = null;
-var currentRegonName = null;
+var currentRegionName = null;
 
 window.onload = function() {
         kakao.maps.load(function() {
@@ -29,7 +29,7 @@ window.onload = function() {
 
                     var fullAddress = result[0].address_name;
                     var regionName = extractDongName(fullAddress);
-                    currentRegonName = regionName;
+                    currentRegionName = regionName;
                     //console.log("검색된 지역이름: ",regionName);
                     //updateStatusUI(regionName, selectedSeason);
 
@@ -141,6 +141,11 @@ window.onload = function() {
         window.openPanel = function() {
             const mapContainer = document.getElementById('map-container');
             const sidePanel = document.getElementById('side-panel');
+            const feedFrame = document.getElementById('feed-frame');
+
+            if(feedFrame && currentRegionName) {
+                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}`;
+            }
 
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
@@ -152,9 +157,45 @@ window.onload = function() {
                 }
             }, 500);
         }
+
+        window.updateMarker = function(seasonId) {
+            if(currentMarker && currentCoords && currentRegionName) {
+                currentMarker.setMap(null);
+                const seasonColors = {
+                    spring: '#FFB7C5',
+                    summer: '#7FB3D5',
+                    fall: '#E67E22',
+                    winter: '#A9CCE3'
+                };
+                var markerContent = `
+                    <div onclick="openPanel()" style="
+                        background: ${seasonColors[seasonId]};
+                        border-radius: 20px;
+                        padding: 8px 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        font-family: 'Apple SD Gothic Neo', sans-serif;
+                        white-space: nowrap;
+                        cursor: pointer;
+                    ">
+                        <span style="font-size: 14px;">👗</span>
+                        <span style="font-weight: 700; font-size: 13px; color: white;">${currentRegionName}</span>
+                    </div>
+                `;
+                currentMarker = new kakao.maps.CustomOverlay({
+                    map: map,
+                    position: currentCoords,
+                    content: markerContent,
+                    yAnchor: 1
+                });
+            }
+        }
+
+    });  
+};       
     
-    });
-};
 
 let selectedSeason = 'spring'; 
 
@@ -202,9 +243,22 @@ function initSeasonButtons() {
 
             const currentRegionText = document.getElementById('display-region').innerText;
             updateStatusUI(currentRegionText, selectedSeason);
-            
+
+
+            //iframe에 변경사항 전달
+            const feedFrame = document.getElementById('feed-frame');
+            if(feedFrame && feedFrame.contentWindow) {
+                feedFrame.contentWindow.feedUpdateFilter(
+                    currentRegionName || '전국',
+                    season.id
+                );
+            }
+            if(window.updateMarker) window.updateMarker(season.id);
         };
+
+        
         container.appendChild(btn);
+        
     });
 }
 
@@ -231,6 +285,7 @@ function updateStatusUI(region, seasonId) {
         }
     }
    
+    
 
 }
 
