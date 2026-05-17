@@ -12,8 +12,32 @@ app.get('/', (req, res) => {
     );
 });
 
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+})
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'login.html'))
+})
+app.get('/find_pw', (res, req) => {
+    res.sendFile(path.join(__dirname, 'views', 'find_pw.html'));
+})
+app.get('/modify', (res, req) => {
+    res.sendFile(path.join(__dirname, 'views', 'modify.html'));
+})
+app.get('/mypage', (res, req) => {
+    res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
+})
+app.get('/signup', (res, req) => {
+    res.sendFile(path.join(__dirname, 'views', 'signup.html'));
+})
 app.get('/map', (req , res) => {
     res.sendFile(path.join(__dirname, 'views', 'map.html'));
+})
+app.get('/upload', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'upload.html'));
+})
+app.get('/feed', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
 
 
