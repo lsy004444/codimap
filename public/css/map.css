@@ -34,7 +34,7 @@
 #side-pannel.hidden{
     flex: 0;
     padding: 0;
-    opactiy:0; /*투명하게*/
+    opacity:0; /*투명하게*/
     visibility: hidden;
 }
 
@@ -165,4 +165,31 @@
 
 #display-region, #display-seoson {
     color: #E67E22;
+}
+
+.add-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #E67E22;
+    color: white;
+    font-size: 30px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+.add-btn:hover {
+    transform: scale(1.1);
+}
+
+#current-filter-info {
+    display: none;
 }
