@@ -18,16 +18,16 @@ app.get('/index', (req, res) => {
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'login.html'))
 })
-app.get('/find_pw', (res, req) => {
+app.get('/find_pw', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'find_pw.html'));
 })
-app.get('/modify', (res, req) => {
+app.get('/modify', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'modify.html'));
 })
-app.get('/mypage', (res, req) => {
+app.get('/mypage', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
 })
-app.get('/signup', (res, req) => {
+app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'signup.html'));
 })
 app.get('/map', (req , res) => {
