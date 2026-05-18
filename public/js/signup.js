@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("회원가입이 완료되었습니다!");
 
          // 확인을 누르면 초기화면으로 이동->회원가입 후 로그인 해야 함
-        window.location.href = "index.html";
+        window.location.href = "/index";
      });
 });
 
