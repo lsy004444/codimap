@@ -18,5 +18,5 @@ function completeModify() {
     alert("회원정보 수정이 완료되었습니다!");
  
     // 변경하기 버튼 누르면 마이페이지 화면으로 이동
-    window.location.href = "mypage.html";
+    window.location.href = "/mypage";
 }

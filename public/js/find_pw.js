@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
             alert("이메일로 비밀번호 관련 정보가 전송되었습니다.");
 
-            window.location.href = "login.html";
+            window.location.href = "/login";
         }, 1000);
     });
 })
