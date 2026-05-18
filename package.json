@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "name": "codimap",
   "version": "1.0.0",
@@ -23,7 +22,7 @@
     "mysql2": "^3.22.3"
   }
 }
-=======
+
 {
   "name": "codimap",
   "version": "1.0.0",
@@ -49,4 +48,3 @@
     "mysql2": "^3.22.3"
   }
 }
->>>>>>> origin/main

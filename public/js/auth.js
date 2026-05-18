@@ -12,8 +12,5 @@ loginbtn.addEventListener('click',function() {
     } else {
         alert("이메일과 비밀번호를 입력해주세요!");
     }
-<<<<<<< HEAD
 })
-=======
-})
->>>>>>> origin/main
+
