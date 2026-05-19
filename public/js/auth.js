@@ -8,7 +8,7 @@ loginbtn.addEventListener('click',function() {
 
     // 로그인에 성공했을 경우 
     if(email !== "" && password !== "") {
-        window.location.href="map.html";
+        window.location.href="map";
     } else {
         alert("이메일과 비밀번호를 입력해주세요!");
     }
