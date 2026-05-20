@@ -31,10 +31,10 @@
     overflow-y: auto;
 }
 
-#side-pannel.hidden{
+#side-panel.hidden{
     flex: 0;
     padding: 0;
-    opactiy:0; /*투명하게*/
+    opacity:0; /*투명하게*/
     visibility: hidden;
 }
 
@@ -42,7 +42,7 @@
     width: 6px;
 }
 
-#side-Panel::-webkit-scrollbar-thumb {
+#side-panel::-webkit-scrollbar-thumb {
     background-color: #ccc;
     border-radius: 10px;
 }
@@ -143,7 +143,7 @@
     white-space: nowrap;
 }
 
-.seosn-btn:hover {
+.season-btn:hover {
     background-color: #f0f0f0;
     transform: translateY(-1px);
 }
@@ -163,6 +163,34 @@
     font-size: 14px;
 }
 
-#display-region, #display-seoson {
+#display-region, #display-season {
     color: #E67E22;
+}
+
+.add-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #E67E22;
+    color: white;
+    font-size: 30px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.add-btn:hover {
+    transform: scale(1.1);
+}
+
+#current-filter-info {
+    display: none;
 }
