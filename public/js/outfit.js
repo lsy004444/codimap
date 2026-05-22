@@ -11,12 +11,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 function openModal() {
-  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('uploadModalOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('uploadModalOverlay').classList.remove('show');
   document.body.style.overflow = '';
 }
 
