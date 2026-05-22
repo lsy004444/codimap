@@ -205,7 +205,7 @@ textarea:focus { outline: none; border-color: #93c5fd; }
   display: none;
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.4);
-  z-index: 300;
+  z-index: 600;
   justify-content: center;
   align-items: center;
 }
