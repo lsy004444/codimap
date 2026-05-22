@@ -1,4 +1,5 @@
 var currentMarker = null;
+
 var currentCoords = null;
 var currentRegionName = null;
 
@@ -20,65 +21,74 @@ window.onload = function() {
                     if(currentMarker) {
                         currentMarker.setMap(null);
                     }
+
                     var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+
                     currentCoords = coords;
+                    
+
                     var fullAddress = result[0].address_name;
                     var regionName = extractDongName(fullAddress);
                     currentRegionName = regionName;
+                    //console.log("검색된 지역이름: ",regionName);
+                    //updateStatusUI(regionName, selectedSeason);
 
-                    //마커이미지
-                    var markerImage = new kakao.maps.MarkerImage(
-                        'https://img.icons8.com/fluency/48/marker.png',
-                        new kakao.maps.Size(40,40),
-                        { offset: new kakao.maps.Point(20,40)}
-                    );
 
-                    // 계절별 색상
                     const seasonColors = {
                         spring: '#FFB7C5',
                         summer: '#7FB3D5',
                         fall: '#E67E22',
-                        winter: '#A9CCE3'
+
+                        winter: '#A0CCE3'
                     };
 
-                    // 커스텀 마커 HTML
                     var markerContent = `
-                        <div onclick="openPanel()" style="
-                            background: ${seasonColors[selectedSeason]};
-                            border-radius: 20px;
-                            padding: 8px 14px;
-                            display: flex;
-                            align-items: center;
-                            gap: 6px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                            font-family: 'Apple SD Gothic Neo', sans-serif;
-                            white-space: nowrap;
-                            cursor: pointer;
-                        ">
-                            <span style="font-size: 14px;">👗</span>
-                            <span style="font-weight: 700; font-size: 13px; color: white;">${regionName}</span>
-                        </div>
-                    `;
+                    <div onclick="openPanel()" style="
+                        background: ${seasonColors[selectedSeason]};
+                        border-radius: 20px;
+                        padding: 8px 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        font-family: 'Apple SD Gothic Neo', sans-serif;
+                        white-space: nowrap;
+                        cursor: pointer;
+                    ">
+                        <span style="font-size: 14px;">👗</span>
+                        <span style="font-weight: 700; font-size: 13px; color: white;">${regionName}</span>
+                    </div>
+                `   ;
 
-                    currentMarker = new kakao.maps.CustomOverlay({
+                    currentMarker = new kakao.maps.CustomOverlay({ // 검색한 마커만 뜨고 예전 마커 삭제
                         map: map,
                         position: coords,
                         content: markerContent,
-                        yAnchor: 1
+                        yAnchor:1
+
                     });
                    
                     
                     map.setCenter(coords);
+
+                    document.getElementById('current-filter-info').style.display = 'block';
+                    updateStatusUI(regionName, selectedSeason);
+
                     map.setLevel(5);
 
-                    updateStatusUI(regionName,selectedSeason);
+                    setTimeout(function() {
+                    map.relayout();
+                    map.setCenter(coords);
+                }, 100);
 
                 }
             });
         }
         
 
-        kakao.maps.event.addListener(map, 'idle', function() { //지도가 움직이다가 멈췄을 때 이 구역이 어디인지 알아냄
+
+        kakao.maps.event.addListener(map, 'idle', function() {
+
             if(currentMarker) return;
             var center = map.getCenter();
 
@@ -111,29 +121,15 @@ window.onload = function() {
                 mapContainer.classList.remove('shrink');
                 sidePanel.classList.add('hidden');
 
-                // let count = 0;
-                // const relayouter = setInterval(function() {
-                //     map.relayout();
-                //     map.setCenter(map.getCenter());
-                //     count++;
-                //     if(count > 10) clearInterval(relayouter);
-                // }, 50);
 
                 setTimeout(function() {
-                    map.relayout();
-                    if(currentMarker) {
-                        map.setCenter(currentMarker.getPosition());
-                    }
-                }, 500);
-            }
-            else {
-                if(currentMarker) {
-                    currentMarker.setMap(null);
-                    currentMarker = null;
-                    currentCoords = null;
-                    currentRegionName = null;
-                    document.getElementById('current-filter-info').style.display='none';
+                map.relayout();
+                if(currentCoords) {
+                    map.setCenter(currentCoords);
                 }
+            }, 600);
+  
+
             }
         });
 
@@ -150,38 +146,64 @@ window.onload = function() {
         });
         initSeasonButtons();
 
-        //지도 마커 화면 정가운데에 고정
-        window.addEventListener('resize', function() {
-            map.relayout();
-            setTimeout(function(){
-                if(currentMarker) {
-                    map.setCenter(currentCoords);
-                } else {
-                    map.setCenter(new kakao.maps.LatLng(36.2683, 127.6358));
-                }
-        },300);
-        });
-
         window.openPanel = function() {
-        const mapContainer = document.getElementById('map-container');
-        const sidePanel = document.getElementById('side-panel');
+            const mapContainer = document.getElementById('map-container');
+            const sidePanel = document.getElementById('side-panel');
+            const feedFrame = document.getElementById('feed-frame');
 
-        mapContainer.classList.add('shrink');
-        sidePanel.classList.remove('hidden');
-
-        setTimeout(function() {
-            map.relayout();
-            if(currentCoords) {
-                map.setCenter(currentCoords);
+            if(feedFrame && currentRegionName) {
+                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}`;
             }
-        }, 500); 
-}
-    
-    
-    
-});
 
-};
+            mapContainer.classList.add('shrink');
+            sidePanel.classList.remove('hidden');
+
+            setTimeout(function() {
+                map.relayout();
+                if(currentCoords) {
+                    map.setCenter(currentCoords);
+                }
+            }, 500);
+        }
+
+        window.updateMarker = function(seasonId) {
+            if(currentMarker && currentCoords && currentRegionName) {
+                currentMarker.setMap(null);
+                const seasonColors = {
+                    spring: '#FFB7C5',
+                    summer: '#7FB3D5',
+                    fall: '#E67E22',
+                    winter: '#A9CCE3'
+                };
+                var markerContent = `
+                    <div onclick="openPanel()" style="
+                        background: ${seasonColors[seasonId]};
+                        border-radius: 20px;
+                        padding: 8px 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        font-family: 'Apple SD Gothic Neo', sans-serif;
+                        white-space: nowrap;
+                        cursor: pointer;
+                    ">
+                        <span style="font-size: 14px;">👗</span>
+                        <span style="font-weight: 700; font-size: 13px; color: white;">${currentRegionName}</span>
+                    </div>
+                `;
+                currentMarker = new kakao.maps.CustomOverlay({
+                    map: map,
+                    position: currentCoords,
+                    content: markerContent,
+                    yAnchor: 1
+                });
+            }
+        }
+
+    });  
+};       
+    
 
 let selectedSeason = 'spring'; 
 
@@ -227,35 +249,53 @@ function initSeasonButtons() {
         });
         console.log("선택된 계절:", selectedSeason);
 
-        const currentRegionText = document.getElementById('display-region').innerText;
-        updateStatusUI(currentRegionText, selectedSeason);
-    };
+            const currentRegionText = document.getElementById('display-region').innerText;
+            updateStatusUI(currentRegionText, selectedSeason);
+
+
+            //iframe에 변경사항 전달
+            const feedFrame = document.getElementById('feed-frame');
+            if(feedFrame && feedFrame.contentWindow) {
+                feedFrame.contentWindow.feedUpdateFilter(
+                    currentRegionName || '전국',
+                    season.id
+                );
+            }
+            if(window.updateMarker) window.updateMarker(season.id);
+        };
+
+        
+
         container.appendChild(btn);
+        
     });
 }
 
-function updateStatusUI(region, seasonId) { //상단 계절, 구역 표시 바
-    const regionDisplay = document.getElementById('display-region');
-    const seasonDisplay = document.getElementById('display-season');
 
-    if (regionDisplay) regionDisplay.innerText = region;
 
-    if(seasonDisplay) {
-        const seasonObj = seasons.find(s => s.id === seasonId);
-        seasonDisplay.innerText = seasonObj ? seasonObj.name : seasonId;
-    }
-
+function updateStatusUI(region, seasonId) {
     const regionSpan = document.getElementById('display-region');
     const seasonSpan = document.getElementById('display-season');
+    const filterInfo = document.getElementById('current-filter-info');
 
-    if(regionSpan) {
-        regionSpan.innerText = region;
-    }
+    if(regionSpan) regionSpan.innerText = region;
 
     if(seasonSpan) {
-        const seasonObj = seasons.find(s => s.id ===seasonId);
+        const seasonObj = seasons.find(s => s.id === seasonId);
         seasonSpan.innerText = seasonObj ? seasonObj.name : seasonId;
     }
+
+    if(filterInfo) {
+        const seasonObj = seasons.find(s => s.id === seasonId);
+        if(seasonObj) {
+            filterInfo.style.borderLeft = `4px solid ${seasonObj.color}`;
+            regionSpan.style.color = seasonObj.color;
+            seasonSpan.style.color = seasonObj.color;
+        }
+    }
+   
+    
+
 }
 
 

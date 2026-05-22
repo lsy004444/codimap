@@ -1,4 +1,3 @@
-require('dotenv').config(); //db 연결
 const express = require('express'),
       path = require('path'),
       app = express();
@@ -13,26 +12,34 @@ app.get('/', (req, res) => {
     );
 });
 
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+})
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'login.html'))
+})
+app.get('/find_pw', (req, res)=> {
+    res.sendFile(path.join(__dirname, 'views', 'find_pw.html'));
+})
+app.get('/modify', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'modify.html'));
+})
+app.get('/mypage', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
+})
+app.get('/signup', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'signup.html'));
+})
 app.get('/map', (req , res) => {
     res.sendFile(path.join(__dirname, 'views', 'map.html'));
 })
-
 app.get('/upload', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'upload.html'));
-});
+})
+app.get('/feed', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'feed.html'));
+})
 
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
 
-
-// const db = require('./config/db');
-// // DB 연결 테스트
-// async function testDB() {
-//     try {
-//         const [rows] = await db.query('SELECT 1');
-//         console.log('✅ DB 연결 성공!');
-//     } catch (err) {
-//         console.error('❌ DB 연결 실패:', err.message);
-//     }
-// }
-// testDB();

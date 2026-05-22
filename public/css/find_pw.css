@@ -7,7 +7,7 @@ body {
     background-color: #f0f2f5; 
 }
 
-.login-wrapper {
+.find-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -17,7 +17,7 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
 }
 
-.login-title {
+.find-title {
     margin-top: 0;
     margin-bottom: 40px;
     color: #333;
@@ -25,7 +25,7 @@ body {
     font-weight: bold;
 }
 
-form {
+#findPwForm {
     display: flex;
     flex-direction: column;
     gap: 20px; 
@@ -35,39 +35,35 @@ form {
 
 .input-group {
     display: flex;
-    align-items: center; 
-    justify-content: center; 
+    flex-direction: column;  
+    align-items: center;     
     width: 100%;
-    gap: 10px; 
+    gap: 8px;               
+    margin-bottom: 20px;
 }
 
 .label-text {
-    width: 100px; 
-    text-align: right; 
-    margin-right: 10px; 
-    font-size: 1.2rem;
+    width: auto;             
+    text-align: center;     
+    margin-right: 0; 
+    font-size: 1.1rem;
     color: #555;
-    font-weight: 500;
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 
-input[type="text"], input[type="password"],input[type="email"] {
-    width: 300px; 
+input[type="text"], input[type="email"] {
+    width: 300px;           
     padding: 12px; 
     border: 1px solid #ddd;
     border-radius: 8px; 
     font-size: 1.1rem;
-    color: #333;
-}
-
-input[type="text"]:focus, input[type="password"]:focus,input[type="email"]:focus {
-    outline: none;
-    border-color: #3c4fb1; 
-    box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
+    box-sizing: border-box; 
 }
 
 button {
-    margin-top: 15px;
-    width: calc(100px + 10px + 300px + 12px); 
+    margin-top: 10px;
+    width: 300px;           
     padding: 15px;
     font-size: 1.25rem;
     font-weight: bold;
@@ -82,23 +78,3 @@ button {
 button:hover {
     background-color: #283577; 
 }
-
-.find_pw{
-    margin-top: 20px; 
-    display: flex;
-    justify-content: center; 
-    gap: 15px; 
-}
-
-.find_pw a {
-    font-size: 0.95rem;
-    color: #777; 
-    text-decoration: none; 
-    transition: color 0.2s;
-}
-
-.find_pw a:hover {
-    color: #3c4fb1; 
-    text-decoration: underline; 
-}
-

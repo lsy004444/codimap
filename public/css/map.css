@@ -186,7 +186,10 @@
     justify-content: center;
     transition: transform 0.2s;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4590f6a4246b51db39761029d923df40a8c10ef3
 .add-btn:hover {
     transform: scale(1.1);
 }

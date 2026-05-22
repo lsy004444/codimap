@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/mypage.css">
+    <title>마이페이지</title>
+</head>
+<body>
+    <div class="mypage-wrapper">
+        <h1 class="mypage-title">내 정보</h1>
+
+        <form>
+            <div class="input-group">
+                <label class="label-text">아이디</label>   
+                <input type="text" id="id" name="id" readonly class="readonly-input">
+                <button type="button" id="modify" name="modify" onclick="location.href='/modify'">프로필 수정</button>
+            </div>
+
+            <div class="tab">
+                <button type="button" class="tab-item active" onclick="openTab(event, 'scrap')">스크랩</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'following')">팔로잉/팔로워 목록</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'posts')">내 게시물</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'comments')">내 댓글</button>
+            </div>
+        </form>
+
+        <div id="scrap" class="tab-content grid-container active">
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+        </div>
+
+        <div id="following" class="tab-content follow-container">
+            <div class="follow">팔로잉 목록</div>
+            <div class="follow">팔로워 목록</div>
+        </div>
+
+        <div id="posts" class="tab-content grid-container">
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+            <div class="grid"></div>
+        </div>
+
+        <div id="comments" class="tab-content comment-container">
+            <div class="comment">댓글 1</div>
+            <div class="comment">댓글 2</div>
+            <div class="comment">댓글 3</div>
+        </div>
+    </div>
+
+    <script src="/js/mypage.js"></script>
+</body>
+</html>
