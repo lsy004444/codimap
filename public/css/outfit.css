@@ -252,3 +252,19 @@ textarea:focus { outline: none; border-color: #93c5fd; }
 }
 .btn-season:hover  { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
 .btn-season.active { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; font-weight: 500; }
+.upload-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 500;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 40px 16px;
+}
+.upload-modal-overlay.show {
+  display: flex;
+}

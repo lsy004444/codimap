@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="stylesheet" href="/css/outfit.css">
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
     <meta charset="UTF-8">
     <meta name="referrer" content="origin">
     <link rel="stylesheet" href="/css/map.css">
     <title>카카오 지도</title>
+    
 </head>
 <body style="margin:0; padding:0;">
 
@@ -53,9 +57,111 @@
             </div>
         </div>
 
-        <button class = "add-btn" onclick="window.location.href='/upload'"> +</button>
+        <button class="add-btn" onclick="openModal()">+</button>
     </div>
         <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=84d8aeff75217261fb3eb2190840c88e&libraries=services&autoload=false"></script>
         <script src="/js/map.js"></script>
+        <div class="upload-modal-overlay" id="uploadModalOverlay">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h1>게시물 등록</h1>
+      <div class="btn-group">
+        <button class="btn-cancel" onclick="handleCancel()">취소</button>
+        <button class="btn-register" onclick="handleRegister()">등록</button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <div>
+        <p class="section-label">사진 업로드</p>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)" />
+          <div class="upload-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <span class="upload-text">클릭하여 사진 추가</span>
+          <span class="upload-sub">여러 장 선택 가능</span>
+        </div>
+
+        <div class="preview-list" id="previewList"></div>
+
+        <div class="meta-box" id="metaBox" style="display:none;">
+          <p class="meta-box-label">사진 정보 (첫 번째 사진 기준)</p>
+          <div class="meta-tags" id="metaTags"></div>
+        </div>
+
+        <div id="metaMissing" style="display:none;">
+          <div class="meta-missing">
+            <span>⚠️</span>
+            <span>위치/계절 정보를 가져올 수 없어요. 직접 선택해주세요.</span>
+          </div>
+          <button class="btn-location-pick" onclick="openSubtab()">📍 지역/계절 직접 선택</button>
+        </div>
+
+        <div class="selected-location" id="selectedLocationArea" style="display:none;">
+          <span>📍</span>
+          <span id="selectedLocationText"></span>
+          <button class="btn-change" onclick="openSubtab()">변경</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <p class="section-label">게시물 설명</p>
+        <textarea id="descInput" placeholder="사진에 대한 설명을 입력해주세요..."></textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="link-header">
+          <p class="section-label" style="margin:0;">쇼핑몰 링크</p>
+          <button class="btn-add-link" onclick="addLinkRow()">+ 링크 추가</button>
+        </div>
+        <div class="link-list" id="linkList"></div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="subtab-overlay" id="subtabOverlay">
+  <div class="subtab-card">
+    <button class="btn-subtab-close" onclick="closeSubtab()">✕</button>
+    <p class="subtab-title">📍 지역 선택</p>
+    <p class="subtab-desc">주소를 검색하여 선택해주세요. 시 · 구 · 동까지 자동으로 추출됩니다.</p>
+    <button class="btn-open-kakao" onclick="openKakaoPostcode()">주소 검색하기</button>
+
+    <div class="season-select" id="seasonSelect" style="display:none;">
+      <p class="season-label">계절 선택</p>
+      <div class="season-buttons">
+        <button class="btn-season" onclick="selectSeason('봄')">봄</button>
+        <button class="btn-season" onclick="selectSeason('여름')">여름</button>
+        <button class="btn-season" onclick="selectSeason('가을')">가을</button>
+        <button class="btn-season" onclick="selectSeason('겨울')">겨울</button>
+      </div>
+    </div>
+
+    <div class="addr-result" id="addrResult">
+      선택된 위치: <strong id="addrPreview"></strong>
+    </div>
+    <button class="btn-confirm-addr" id="btnConfirmAddr"
+            style="display:none;" onclick="confirmLocation()">
+      이 위치로 설정
+    </button>
+  </div>
+</div>
+
+<script src="/js/outfit.js"></script>
 </body>
 </html>
