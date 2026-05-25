@@ -260,8 +260,7 @@ function removeLinkRow(rowId) {
 
 function handleCancel() {
   if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
-    closeSubtab();
-    closeModal();
+    window.location.href = '/map';
   }
 }
 

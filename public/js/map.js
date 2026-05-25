@@ -273,7 +273,12 @@ function showToast(msg) {
     toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
 }
 
-
+function toggleSidebar() {
+    const overlay = document.getElementById('sidebar-overlay');
+    const menu = document.getElementById('sidebar-menu');
+    overlay.classList.toggle('show');
+    menu.classList.toggle('show');
+}
 
 function updateStatusUI(region, seasonId) {
     const regionSpan = document.getElementById('display-region');
