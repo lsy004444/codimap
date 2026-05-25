@@ -190,6 +190,87 @@
     transform: scale(1.05);
 }
 
+/*버블형태*/
+.sidebar-menu {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.sidebar-menu.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.bubble-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.bubble {
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+.bubble:hover { transform: scale(1.08); }
+
+.bubble-large {
+    width: 130px;
+    height: 130px;
+    background: #FFB7C5;
+    color: #7a2a3a;
+    font-size: 13px;
+    font-weight: 500;
+}
+.bubble-large i { font-size: 28px; }
+
+.bubble-medium {
+    width: 100px;
+    height: 100px;
+    background: #A9CCE3;
+    color: #1a3a5c;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: -30px;
+}
+.bubble-medium i { font-size: 24px; }
+
+.bubble-logout {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 32px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.bubble-logout:hover { background: rgba(255,255,255,0.25); }
+.bubble-logout i { font-size: 16px; }
+
 /*페이지 이동 버튼*/
 .sidebar-overlay {
     position: fixed;
