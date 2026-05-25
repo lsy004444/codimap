@@ -40,6 +40,8 @@ app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
 
+const feedRouter = require("./routes/feed");
+app.use("/api/feed", feedRouter);
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
 
