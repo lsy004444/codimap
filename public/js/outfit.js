@@ -304,6 +304,11 @@ function handleRegister() {
   formData.append('links', JSON.stringify(links));
   formData.append('location', JSON.stringify(pendingLocation));
 
+  if (pendingLocation && pendingLocation.latitude) {
+    formData.append('latitude', pendingLocation.latitude);
+    formData.append('longitude', pendingLocation.longitude);}
+      formData.append('season', '');
+
   fetch('/api/outfit/register', {
     method: 'POST',
     body: formData
