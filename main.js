@@ -60,3 +60,7 @@ app.get('/feed', (req, res) => {
 
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+
+// regions.js 
+const regionsRouter = require('./routes/regions');
+app.use('/api/regions', regionsRouter);

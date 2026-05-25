@@ -11,12 +11,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 function openModal() {
-  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('uploadModalOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('uploadModalOverlay').classList.remove('show');
   document.body.style.overflow = '';
 }
 
@@ -260,9 +260,10 @@ function removeLinkRow(rowId) {
 
 function handleCancel() {
   if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
-    closeModal();
+    window.location.href = '/map';
   }
 }
+
 
 function handleRegister() {
   if (uploadedFiles.length === 0) {
