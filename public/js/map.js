@@ -147,7 +147,7 @@ window.onload = function() {
             const feedFrame = document.getElementById('feed-frame');
 
             if(feedFrame && currentRegionName) {
-                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}`;
+                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}`;
             }
 
             mapContainer.classList.add('shrink');
