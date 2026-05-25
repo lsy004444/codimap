@@ -47,43 +47,6 @@
     border-radius: 10px;
 }
 
-.post-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding: 10px;
-}
-
-.post-item {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    background-color: #e0e0e0;
-    background-size: cover;
-    background-position: center;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    
-
-}
-
-.post-item:nth-child(1) { background-image: url('https://picsum.photos/400/600?random=1'); }
-.post-item:nth-child(2) { background-image: url('https://picsum.photos/400/600?random=2'); }
-.post-item:nth-child(3) { background-image: url('https://picsum.photos/400/600?random=3'); }
-.post-item:nth-child(4) { background-image: url('https://picsum.photos/400/600?random=4'); }
-.post-item:nth-child(5) { background-image: url('https://picsum.photos/400/600?random=5'); }
-.post-item:nth-child(6) { background-image: url('https://picsum.photos/400/600?random=6'); }
-.post-item:nth-child(7) { background-image: url('https://picsum.photos/400/600?random=7'); }
-.post-item:nth-child(8) { background-image: url('https://picsum.photos/400/600?random=8'); }
-.post-item:nth-child(9) { background-image: url('https://picsum.photos/400/600?random=9'); }
-.post-item:nth-child(10) { background-image: url('https://picsum.photos/400/600?random=10'); }
-.post-item:nth-child(11) { background-image: url('https://picsum.photos/400/600?random=11'); }
-.post-item:nth-child(12) { background-image: url('https://picsum.photos/400/600?random=12'); }
-
-.post-item:hover { /*게시물에 커서 올리면 살짝 커짐*/
-    transform: scale(1.02);
-    filter: brightness(0.9);
-}
 
 .top-nav{
     position: absolute;
@@ -192,4 +155,26 @@
 
 #current-filter-info {
     display: none;
+}
+
+/*신고 팝업이랑 통일*/
+.map-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: #1a1714;
+    color: white;
+    padding: 10px 22px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 2000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transition: opacity 0.3s, transform 0.3s;
+    white-space: nowrap;
+}
+.map-toast.hidden { 
+    opacity: 0; 
+    pointer-events: none; 
+    transform: translateX(-50%) translateY(8px); 
 }

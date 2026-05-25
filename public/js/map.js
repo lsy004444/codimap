@@ -76,6 +76,9 @@ window.onload = function() {
                     map.setCenter(coords);
                 }, 100);
                 }
+                else {
+                    showToast('검색 결과가 없습니다. 다시 입력해주세요.');
+                }
 
             });
 
@@ -260,6 +263,14 @@ function initSeasonButtons() {
         container.appendChild(btn);
         
     });
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('map-toast');
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
 }
 
 
