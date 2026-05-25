@@ -1,8 +1,26 @@
 const express = require('express'),
       path = require('path'),
+      session = require('express-session'),
+      authRouter = require("./routes/auth"),
       app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true}));
 app.use(express.static('public'));
+
+// 세션 설정
+app.use(session({
+    secret: 'codimap-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60
+    }
+}));
+
+app.use("/api/auth", authRouter);
 
 app.get('/', (req, res) => {
     res.send(
