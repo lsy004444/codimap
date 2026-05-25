@@ -4,10 +4,6 @@
 const state = {
     currentRegion: '전국',
     currentSeason: 'spring',
-    //추가
-    currentLat : null,
-    currentLng : null,
-    //추가
     page: 0,
     pageSize: 9,
     isLoading: false,
@@ -114,61 +110,7 @@ function initInfiniteScroll() {
     if (sentinel) observer.observe(sentinel);
 }
 
-async function loadMorePosts(){
-    if(!state.currentLat || !state.currentLng){
-        state.isLoading = true;
-        sentinel.style.visibility  ='visible';
-        await new Promise(r => setTimeout(r,700));
-        const TOTAL = 45;
-        const newPosts = generateMockPosts(
-            Math.min(state.pathSize, TOTAL - state.posts.length),
-            state.posts.length
-        );
-        state.hasMore = state.posts.length + newPosts.length < TOTAL;
-        state.page++;
-        state.posts.push(...newPosts);
-        newPosts.forEach(p => {
-            if(!(p.id in state.likeCounts)) state.likeCounts[p.id] = p.likeCount;
-            if(!(p.id in state.scrapCounts)) state.scrapCounts[p.id] = p.scrapCount;
-        });
-        renderCards(newPosts);
-        state.isLoading = false;
-        if (!state.hasMore) sentinel.style.visibility = 'hidden';
-        return;
-    }
-
-    state.isLoading = true;
-    sentinel.style.visibility = 'visible';
-
-    try{
-        const res = await fetch(
-            `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}`
-        );
-        const data = await res.json();
-        const newPosts = data.map(p => ({
-            id: `post_${p.POST_ID}`,
-        user: { username: '@user', avatar: 'https://i.pravatar.cc/80?img=1' },
-        images: [`https://picsum.photos/seed/${p.POST_ID}/600/800`],
-        season: p.SEASON,
-        region: p.REGION_NAME,
-        desc: p.CONTENT,
-        shops: [],
-        likeCount: 0,
-        scrapCount: p.SCRAP_COUNT,
-        }))
-        state.hasMore = false;
-        state.posts.push(...newPosts);
-        renderCards(newPosts);
-    } catch(err) {
-        console.error('게시물 로드 실패: ', err);
-    }
-    state.isLoading = false;
-    sentinel.style.visibility = 'hidden';
-}
-
-
-
-/*async function loadMorePosts() {
+async function loadMorePosts() {
     state.isLoading = true;
     sentinel.style.visibility = 'visible';
 
@@ -192,7 +134,7 @@ async function loadMorePosts(){
 
     state.isLoading = false;
     if (!state.hasMore) sentinel.style.visibility = 'hidden';
-}*/
+}
 
 // ──────────────────────────────────────────
 // 피드 카드 렌더링
@@ -572,13 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const region = urlParams.get('region'); // map.js에서 넘긴 값
     const season = urlParams.get('season'); // map.js에서 넘긴 값
-
-    //추가
-    const lat = urlParams.get('lat');
-    const lng = urlParams.get('lng');
-
-    state.currentLat = lat ? parseFloat(lat) : null;
-    state.currentLng = lng ? parseFloat(lng) : null;
 
     // 2. 전달된 데이터가 있으면 해당 데이터로, 없으면 기본값으로 시작
     const initialRegion = region ? decodeURIComponent(region) : '전국';

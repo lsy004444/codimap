@@ -7,8 +7,8 @@
     <meta charset="UTF-8">
     <meta name="referrer" content="origin">
     <link rel="stylesheet" href="/css/map.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <title>카카오 지도</title>
-    
 </head>
 <body style="margin:0; padding:0;">
 
@@ -40,14 +40,20 @@
             <!-- 페이지 이동 버튼 추가 -->
             <div class = "sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
             <div class = "sidebar-menu" id="sidebar-menu">
-              <button class = "sidebar-item" onclick="window.location.href='/upload'">
-                <span class = "sidebar-icon">📸</span>
-                <span>게시물 등록</span>
-              </button>
-              <button class="sidebar-item" onclick="window.location.href='/mypage'">
-                <span class="sidebar-icon">👤</span>
-                <span>마이페이지</span>
-              </button>
+              <div class="bubble-container">
+                <div class="bubble bubble-large" onclick="window.location.href='/upload'">
+                  <i class="ti ti-camera" aria-hidden="true"></i>
+                  <span>게시물 등록</span>
+                </div>
+                <div class="bubble bubble-medium" onclick="window.location.href='/mypage'">
+                  <i class="ti ti-user" aria-hidden="true"></i>
+                  <span>마이페이지</span>
+                </div>
+              </div>
+              <div class="bubble-logout" onclick="alert('로그아웃')">
+                <i class="ti ti-logout" aria-hidden="true"></i>
+                <span>로그아웃</span>
+              </div>
             </div>
 
             <div id="current-filter-info" class="filter-status">
