@@ -3,6 +3,11 @@ const express = require('express'),
       app = express();
 
 app.use(express.static('public'));
+app.use(express.json());            
+app.use(express.urlencoded({ extended: true })); 
+
+const outfitRouter = require('./routes/outfit');
+app.use('/api/outfit', outfitRouter);
 
 app.get('/', (req, res) => {
     res.send(
