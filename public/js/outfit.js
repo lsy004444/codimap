@@ -276,6 +276,46 @@ function handleRegister() {
     return;
   }
 
+  const links = Array.from(document.querySelectorAll('.link-row')).map(row => {
+    const icon      = row.querySelector('.link-icon');
+    const input     = row.querySelector('.link-input');
+    const url       = input ? input.value.trim() : '';
+    const affiliate = icon ? icon.dataset.affiliate === 'true' : false;
+    return { url, affiliate };
+  }).filter(item => item.url !== '');
+
+  // FormData로 서버에 전송
+  const formData = new FormData();
+
+  // 이미지 파일 추가
+  uploadedFiles.forEach(file => {
+    formData.append('images', file);
+  });
+
+  // 나머지 데이터 추가
+  formData.append('description', desc);
+  formData.append('links', JSON.stringify(links));
+  formData.append('location', JSON.stringify(pendingLocation));
+
+  fetch('/api/outfit/register', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert('등록되었습니다!');
+      closeModal();
+    } else {
+      alert('등록 실패: ' + data.message);
+    }
+  })
+  .catch(err => {
+    console.error('오류:', err);
+    alert('서버 오류가 발생했습니다.');
+  });
+}
+
  
   const links = Array.from(document.querySelectorAll('.link-row')).map(row => {
     const icon      = row.querySelector('.link-icon');
