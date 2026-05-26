@@ -331,3 +331,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const mypageBtn = document.getElementById("mypageBtn");
+
+    if(!mypageBtn) return;
+
+    mypageBtn.addEventListener("click", async () => {
+        try {
+            const response = await fetch("/api/auth/mypage");
+            const result = await response.json();
+
+            if(!result.success) {
+                alert("로그인이 필요합니다.");
+                window.location.href = "/login";
+                return;
+            }
+
+            const profileId = result.user.profileId;
+
+            window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
+        } catch (error) {
+            console.error(error);
+            alert("마이페이지로 이동하는 중 오류가 발생했습니다.");
+        }
+    });
+});

@@ -48,6 +48,10 @@ app.get('/modify', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'modify.html'));
 })
 app.get('/mypage', (req, res) => {
+    // 로그인 하지 않은 사람이 마이페이지에 들어가면 로그인으로 보내짐
+    if(!req.session.user) {
+        return res.redirect('/login');
+    }
     res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
 })
 app.get('/signup', (req, res) => {
