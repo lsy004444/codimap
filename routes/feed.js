@@ -116,38 +116,26 @@ let mockComments = {
     3: [],
 };
 
-const mockScrappedPostIds = new Set();
+const mockScrappedByUser = new Map(); // userId -> Set<postId>
 
-// ──────────────────────────────────────────
-// 로그인 유저 ID 가져오기
-// 지금은 기능 확인을 위해 1번 유저로 임시 처리
-// 로그인 기능 연결 후에는 || 1 부분을 제거하고 세션/JWT 값만 사용하기
-// ──────────────────────────────────────────
 function getLoginUserId(req) {
-    return req.session?.user_id || req.session?.userId || 1;
+    return req.session?.user_id || req.session?.userId || null;
 }
 
-function convertSeason(season) {
-    const map = {
-        spring: '봄',
-        summer: '여름',
-        fall: '가을',
-        winter: '겨울',
-    };
+const SEASON_MAP = {
+    spring: '봄',
+    summer: '여름',
+    fall: '가을',
+    winter: '겨울',
+};
 
-    return map[season] || season;
+function convertSeason(season) {
+    return SEASON_MAP[season] || season;
 }
 
 function getSeasonValues(season) {
-    const map = {
-        spring: '봄',
-        summer: '여름',
-        fall: '가을',
-        winter: '겨울',
-    };
-
     if (!season) return [];
-    if (map[season]) return [season, map[season]];
+    if (SEASON_MAP[season]) return [season, SEASON_MAP[season]];
     return [season];
 }
 
@@ -319,27 +307,27 @@ router.post('/posts/:postId/scrap', async (req, res) => {
 
     // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
     if (USE_MOCK_FEED) {
+        const mockUserId = userId ?? 1;
         const post = mockPosts.find((p) => p.id === postId);
 
         if (!post) {
             return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
         }
 
-        if (mockScrappedPostIds.has(postId)) {
-            mockScrappedPostIds.delete(postId);
+        if (!mockScrappedByUser.has(mockUserId)) {
+            mockScrappedByUser.set(mockUserId, new Set());
+        }
+        const userScraps = mockScrappedByUser.get(mockUserId);
+
+        if (userScraps.has(postId)) {
+            userScraps.delete(postId);
             post.scrapCount = Math.max((post.scrapCount || 0) - 1, 0);
-            return res.json({
-                scrapped: false,
-                scrapCount: post.scrapCount,
-            });
+            return res.json({ scrapped: false, scrapCount: post.scrapCount });
         }
 
-        mockScrappedPostIds.add(postId);
+        userScraps.add(postId);
         post.scrapCount = (post.scrapCount || 0) + 1;
-        return res.json({
-            scrapped: true,
-            scrapCount: post.scrapCount,
-        });
+        return res.json({ scrapped: true, scrapCount: post.scrapCount });
     }
 
     if (!userId) {
@@ -350,68 +338,48 @@ router.post('/posts/:postId/scrap', async (req, res) => {
         return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
     }
 
+    const connection = await db.getConnection();
     try {
-        const [[existing]] = await db.query(
-            `
-            SELECT scrap_id
-            FROM scrap
-            WHERE user_id = ? AND post_id = ?
-            `,
+        await connection.beginTransaction();
+
+        const [[existing]] = await connection.query(
+            `SELECT scrap_id FROM scrap WHERE user_id = ? AND post_id = ?`,
             [userId, postId]
         );
 
         if (existing) {
-            await db.query(
-                `
-                DELETE FROM scrap
-                WHERE user_id = ? AND post_id = ?
-                `,
+            await connection.query(
+                `DELETE FROM scrap WHERE user_id = ? AND post_id = ?`,
                 [userId, postId]
             );
-
-            await db.query(
-                `
-                UPDATE post
-                SET scrap_count = GREATEST(scrap_count - 1, 0)
-                WHERE post_id = ?
-                `,
+            await connection.query(
+                `UPDATE post SET scrap_count = GREATEST(scrap_count - 1, 0) WHERE post_id = ?`,
                 [postId]
             );
         } else {
-            await db.query(
-                `
-                INSERT INTO scrap (user_id, post_id, created_date)
-                VALUES (?, ?, NOW())
-                `,
+            await connection.query(
+                `INSERT INTO scrap (user_id, post_id, created_date) VALUES (?, ?, NOW())`,
                 [userId, postId]
             );
-
-            await db.query(
-                `
-                UPDATE post
-                SET scrap_count = scrap_count + 1
-                WHERE post_id = ?
-                `,
+            await connection.query(
+                `UPDATE post SET scrap_count = scrap_count + 1 WHERE post_id = ?`,
                 [postId]
             );
         }
 
-        const [[row]] = await db.query(
-            `
-            SELECT scrap_count AS scrapCount
-            FROM post
-            WHERE post_id = ?
-            `,
+        const [[row]] = await connection.query(
+            `SELECT scrap_count AS scrapCount FROM post WHERE post_id = ?`,
             [postId]
         );
 
-        res.json({
-            scrapped: !existing,
-            scrapCount: row?.scrapCount || 0,
-        });
+        await connection.commit();
+        res.json({ scrapped: !existing, scrapCount: row?.scrapCount || 0 });
     } catch (err) {
+        await connection.rollback();
         console.error('[feed/scrap]', err);
         res.status(500).json({ message: '스크랩 처리 실패' });
+    } finally {
+        connection.release();
     }
 });
 
@@ -500,10 +468,11 @@ router.post('/posts/:postId/comments', async (req, res) => {
 
     // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
     if (USE_MOCK_FEED) {
+        const mockUserId = userId ?? 1;
         const newComment = {
             id: Date.now(),
             postId,
-            userId,
+            userId: mockUserId,
             username: '@testuser',
             avatar: '',
             text: text.trim(),
@@ -563,6 +532,7 @@ router.put('/posts/:postId/comments/:commentId', async (req, res) => {
 
     // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
     if (USE_MOCK_FEED) {
+        const mockUserId = userId ?? 1;
         const comments = mockComments[postId] || [];
         const comment = comments.find((c) => c.id === commentId);
 
@@ -570,7 +540,7 @@ router.put('/posts/:postId/comments/:commentId', async (req, res) => {
             return res.status(404).json({ message: '댓글을 찾을 수 없습니다' });
         }
 
-        if (comment.userId !== userId) {
+        if (comment.userId !== mockUserId) {
             return res.status(403).json({ message: '수정 권한이 없습니다' });
         }
 
@@ -621,6 +591,7 @@ router.delete('/posts/:postId/comments/:commentId', async (req, res) => {
 
     // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
     if (USE_MOCK_FEED) {
+        const mockUserId = userId ?? 1;
         const comments = mockComments[postId] || [];
         const commentIndex = comments.findIndex((c) => c.id === commentId);
 
@@ -628,7 +599,7 @@ router.delete('/posts/:postId/comments/:commentId', async (req, res) => {
             return res.status(404).json({ message: '댓글을 찾을 수 없습니다' });
         }
 
-        if (comments[commentIndex].userId !== userId) {
+        if (comments[commentIndex].userId !== mockUserId) {
             return res.status(403).json({ message: '삭제 권한이 없습니다' });
         }
 
