@@ -29,7 +29,7 @@ loginbtn.addEventListener('click',async function(event) {
         const result = await response.json();
 
         if(result.success) {
-            alert("로그인 성공!");
+            alert("로그인 되었습니다.");
             window.location.href = "/map";
         } else {
             alert(result.message);

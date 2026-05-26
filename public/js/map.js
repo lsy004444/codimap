@@ -308,3 +308,26 @@ function updateStatusUI(region, seasonId) {
 
 
 window.addEventListener('DOMContentLoaded', initSeasonButtons);
+
+// 로그아웃 했을 경우
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            const response = await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                window.location.href = "/login";
+            } else {
+                alert("로그아웃에 실패했습니다.");
+            }
+        });
+    }
+});
