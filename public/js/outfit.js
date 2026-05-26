@@ -36,6 +36,7 @@ function closeModal() {
   }
 }
 
+
 function handleFiles(files) {
   if (!files || files.length === 0) return;
   Array.from(files).forEach(file => uploadedFiles.push(file));
