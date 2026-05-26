@@ -265,6 +265,14 @@ function initSeasonButtons() {
     });
 }
 
+function handleLogout() {
+        showToast('로그아웃 되었습니다');
+        setTimeout(() => {
+             window.location.href = '/login?logout=true';
+        }, 500);
+       
+    }
+
 function showToast(msg) {
     const toast = document.getElementById('map-toast');
     toast.textContent = msg;
@@ -300,9 +308,14 @@ function updateStatusUI(region, seasonId) {
             seasonSpan.style.color = seasonObj.color;
         }
     }
-   
-    
+}
 
+function handleMenuClick(e) {
+    if(e.target === document.getElementById('sidebar-menu') || 
+       e.target.closest('.bubble-container') === null && 
+       e.target.closest('.bubble-logout') === null) {
+        toggleSidebar();
+    }
 }
 
 
