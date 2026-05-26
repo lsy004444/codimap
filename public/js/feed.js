@@ -8,82 +8,12 @@ const state = {
     pageSize: 9,
     isLoading: false,
     hasMore: true,
-    scrappedIds: new Set(JSON.parse(localStorage.getItem('codimap_scraps') || '[]')),
-    likedIds: new Set(JSON.parse(localStorage.getItem('codimap_likes') || '[]')), 
-    posts: [],           // 로드된 전체 포스트
-    currentPost: null,   // 팝업에 열려있는 포스트
-    currentSlide: 0,     // 슬라이더 인덱스
-    comments: {},        // postId → comment[]
-    commentIdSeq: 0,
-    likeCounts:  {},     // postId → number
-    scrapCounts: {},     // postId → number
+    scrappedIds: new Set(),
+    likedIds: new Set(),
+    posts: [],
+    currentPost: null,
+    currentSlide: 0,
 };
-
-// ──────────────────────────────────────────
-// MOCK DATA
-// ──────────────────────────────────────────
-const MOCK_USERS = [
-    { id: 'u1', username: '@seoultrendz',  avatar: 'https://i.pravatar.cc/80?img=1',  bio: '서울 스트릿 패션' },
-    { id: 'u2', username: '@jeju_codi',    avatar: 'https://i.pravatar.cc/80?img=5',  bio: '제주 감성 코디' },
-    { id: 'u3', username: '@busan_wave',   avatar: 'https://i.pravatar.cc/80?img=9',  bio: '부산 바다 패션' },
-    { id: 'u4', username: '@daegu_style',  avatar: 'https://i.pravatar.cc/80?img=12', bio: '대구 빈티지' },
-    { id: 'u5', username: '@gangnam_fit',  avatar: 'https://i.pravatar.cc/80?img=20', bio: '강남 피트 코디' },
-    { id: 'u6', username: '@incheon_look', avatar: 'https://i.pravatar.cc/80?img=25', bio: '인천 캐주얼' },
-];
-
-const MOCK_SHOPS = [
-    [
-        { name: 'MUSINSA', item: '오버핏 린넨 셔츠', url: 'https://www.musinsa.com' },
-        { name: 'W CONCEPT', item: '와이드 슬랙스', url: 'https://www.wconcept.co.kr' },
-    ],
-    [
-        { name: 'ABLY', item: '플리츠 스커트', url: 'https://m.a-bly.com/' },
-        { name: 'ZIG ZAG', item: '크롭 자켓', url: 'https://www.zigzag.kr' },
-        { name: 'MUSINSA', item: '화이트 스니커즈', url: 'https://www.musinsa.com' },
-    ],
-    [
-        { name: '29CM', item: '니트 가디건', url: 'https://www.29cm.co.kr' },
-    ],
-    [
-        { name: 'MUSINSA', item: '데님 팬츠', url: 'https://www.musinsa.com' },
-        { name: 'W CONCEPT', item: '레이어드 티셔츠', url: 'https://www.wconcept.co.kr' },
-    ],
-];
-
-const MOCK_DESCS = [
-    '오늘의 봄 코디  가볍고 따뜻한 날씨에 딱 맞는 레이어드룩!',
-    '여름 감성 가득한 린넨 원피스  시원하고 예쁜 나들이 룩',
-    '가을엔 역시 브라운 계열  따뜻한 니트와 와이드 팬츠 조합',
-    '겨울 데일리 코디  두꺼운 아우터 없어도 레이어드로 완성',
-    '캐주얼하게 입기 좋은 봄 스트릿 룩  심플하지만 포인트 있어요',
-    '트렌디한 Y2K 감성 코디  친구들한테 어디서 샀냐고 물어봤대요',
-];
-
-function generateMockPosts(count, offset) {
-    const posts = [];
-    const seasons = ['spring', 'summer', 'fall', 'winter'];
-    for (let i = 0; i < count; i++) {
-        const id = `post_${offset + i}`;
-        const user = MOCK_USERS[(offset + i) % MOCK_USERS.length];
-        const imgCount = Math.random() > 0.55 ? Math.floor(Math.random() * 3) + 2 : 1;
-        const images = Array.from({ length: imgCount }, (_, k) =>
-            `https://picsum.photos/seed/${id}_${k}/600/800`
-        );
-        posts.push({
-            id,
-            user,
-            images,
-            season: seasons[(offset + i) % 4],
-            region: state.currentRegion,
-            desc: MOCK_DESCS[(offset + i) % MOCK_DESCS.length],
-            shops: MOCK_SHOPS[(offset + i) % MOCK_SHOPS.length],
-            createdAt: new Date(Date.now() - (offset + i) * 3600000 * 5).toISOString(),
-            likeCount:  Math.floor(Math.random() * 120),
-            scrapCount: Math.floor(Math.random() * 60),
-        });
-    }
-    return posts;
-}
 
 // ──────────────────────────────────────────
 // DOM 참조
@@ -114,23 +44,28 @@ async function loadMorePosts() {
     state.isLoading = true;
     sentinel.style.visibility = 'visible';
 
-    await new Promise(r => setTimeout(r, 700)); 
+    try {
+        const params = new URLSearchParams({
+            page: state.page,
+            size: state.pageSize,
+        });
+        if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
+        if (state.currentSeason) params.set('season', state.currentSeason);
 
-    const TOTAL = 45;
-    const newPosts = generateMockPosts(
-        Math.min(state.pageSize, TOTAL - state.posts.length),
-        state.posts.length
-    );
-    state.hasMore = state.posts.length + newPosts.length < TOTAL;
-    state.page++;
-    state.posts.push(...newPosts);
+        const res = await fetch(`/api/feed/posts?${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { posts: newPosts, total } = await res.json();
 
-    newPosts.forEach(p => {
-        if (!(p.id in state.likeCounts))  state.likeCounts[p.id]  = p.likeCount;
-        if (!(p.id in state.scrapCounts)) state.scrapCounts[p.id] = p.scrapCount;
-    });
+        state.hasMore = state.posts.length + newPosts.length < total;
+        state.page++;
+        state.posts.push(...newPosts);
 
-    renderCards(newPosts);
+        renderCards(newPosts);
+        $('feed-count-num').textContent = total;
+    } catch (err) {
+        console.error('게시물 로드 실패:', err);
+        showToast('게시물을 불러오지 못했습니다');
+    }
 
     state.isLoading = false;
     if (!state.hasMore) sentinel.style.visibility = 'hidden';
@@ -147,7 +82,7 @@ function renderCards(posts) {
         if (state.scrappedIds.has(post.id)) card.classList.add('scrapped');
 
         card.innerHTML = `
-            <img src="${post.images[0]}" alt="코디 사진" loading="lazy">
+            <img src="${post.images[0] || ''}" alt="코디 사진" loading="lazy">
             ${post.images.length > 1 ? `<div class="feed-card-multi">📷 ${post.images.length}</div>` : ''}
             <div class="feed-card-scrap-badge" data-id="${post.id}">
                 <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -169,8 +104,6 @@ function renderCards(posts) {
 
         feedGrid.appendChild(card);
     });
-
-    $('feed-count-num').textContent = state.posts.length;
 }
 
 // ──────────────────────────────────────────
@@ -190,51 +123,58 @@ function resetFeed(region, season) {
 }
 
 // ──────────────────────────────────────────
-// 스크랩 토글
+// 스크랩 토글 (API 연동, 중복 확인은 서버에서)
 // ──────────────────────────────────────────
-function toggleScrap(postId, cardEl) {
-    const isScrapped = state.scrappedIds.has(postId);
+async function toggleScrap(postId, cardEl) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}/scrap`, { method: 'POST' });
+        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (!res.ok) throw new Error();
 
-    if (isScrapped) {
-        state.scrappedIds.delete(postId);
-        cardEl?.classList.remove('scrapped');
-        $('scrap-btn')?.classList.remove('active');
-        state.scrapCounts[postId] = Math.max(0, (state.scrapCounts[postId] || 0) - 1);
-        showToast('스크랩이 취소됐습니다');
-    } else {
-        state.scrappedIds.add(postId);
-        cardEl?.classList.add('scrapped');
-        $('scrap-btn')?.classList.add('active');
-        state.scrapCounts[postId] = (state.scrapCounts[postId] || 0) + 1;
-        showToast('스크랩에 저장했습니다');
-    }
+        const { scrapped, scrapCount } = await res.json();
 
-    localStorage.setItem('codimap_scraps', JSON.stringify([...state.scrappedIds]));
-
-    if (state.currentPost?.id === postId) {
-        $('scrap-count').textContent = state.scrapCounts[postId];
+        if (scrapped) {
+            state.scrappedIds.add(postId);
+            cardEl?.classList.add('scrapped');
+            $('scrap-btn')?.classList.add('active');
+            showToast('스크랩에 저장했습니다');
+        } else {
+            state.scrappedIds.delete(postId);
+            cardEl?.classList.remove('scrapped');
+            $('scrap-btn')?.classList.remove('active');
+            showToast('스크랩이 취소됐습니다');
+        }
+        if (state.currentPost?.id === postId) {
+            $('scrap-count').textContent = scrapCount;
+        }
+    } catch {
+        showToast('스크랩 처리에 실패했습니다');
     }
 }
 
 // ──────────────────────────────────────────
-// 좋아요 토글
+// 좋아요 토글 (API 연동)
 // ──────────────────────────────────────────
-function toggleLike(postId) {
-    const likeBtn = $('like-btn');
-    const isLiked = state.likedIds.has(postId);
+async function toggleLike(postId) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}/like`, { method: 'POST' });
+        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (!res.ok) throw new Error();
 
-    if (isLiked) {
-        state.likedIds.delete(postId);
-        likeBtn.classList.remove('active');
-        state.likeCounts[postId] = Math.max(0, (state.likeCounts[postId] || 0) - 1);   
-    } else {
-        state.likedIds.add(postId);
-        likeBtn.classList.add('active');
-        state.likeCounts[postId] = (state.likeCounts[postId] || 0) + 1;
+        const { liked, likeCount } = await res.json();
+        const likeBtn = $('like-btn');
+
+        if (liked) {
+            state.likedIds.add(postId);
+            likeBtn.classList.add('active');
+        } else {
+            state.likedIds.delete(postId);
+            likeBtn.classList.remove('active');
+        }
+        $('like-count').textContent = likeCount;
+    } catch {
+        showToast('좋아요 처리에 실패했습니다');
     }
-
-    localStorage.setItem('codimap_likes', JSON.stringify([...state.likedIds]));
-    $('like-count').textContent = state.likeCounts[postId];
 }
 
 // ──────────────────────────────────────────
@@ -244,13 +184,12 @@ function openPostModal(post) {
     state.currentPost = post;
     state.currentSlide = 0;
 
-    // 슬라이더 구성
+    // 슬라이더
     const slider = $('modal-slider');
     slider.innerHTML = post.images.map(src =>
         `<div class="modal-slide"><img src="${src}" alt="코디"></div>`
     ).join('');
     slider.style.transform = 'translateX(0)';
-
 
     const dotsEl = $('slider-dots');
     dotsEl.innerHTML = post.images.map((_, i) =>
@@ -259,32 +198,33 @@ function openPostModal(post) {
     dotsEl.querySelectorAll('.slider-dot').forEach(d =>
         d.addEventListener('click', () => goSlide(+d.dataset.i))
     );
-
     updateSliderArrows();
 
-    // 유저
-    $('modal-avatar').style.backgroundImage = `url('${post.user.avatar}')`;
-    $('modal-username').textContent = post.user.username;
+    // 유저 프로필 — 클릭 시 해당 작성자의 마이페이지로 이동
+    const avatarEl   = $('modal-avatar');
+    const usernameEl = $('modal-username');
+    avatarEl.style.backgroundImage = `url('${post.user.avatar}')`;
+    usernameEl.textContent = post.user.username;
     $('modal-user-region').textContent = `${post.region} · ${seasonName(post.season)}`;
 
-    // 좋아요 버튼 상태 및 카운트
-    const likeBtn = $('like-btn');
-    likeBtn.classList.toggle('active', state.likedIds.has(post.id));
-    // 팝업 열 때 like-count 레이블에 현재 좋아요 수 표시
-    $('like-count').textContent = state.likeCounts[post.id] ?? post.likeCount;
+    const goToProfile = () => { window.location.href = `/mypage?user_id=${post.user.id}`; };
+    avatarEl.style.cursor   = 'pointer';
+    usernameEl.style.cursor = 'pointer';
+    avatarEl.onclick   = goToProfile;
+    usernameEl.onclick = goToProfile;
 
-    // 스크랩 버튼 상태 및 카운트
-    const scrapBtn = $('scrap-btn');
-    scrapBtn.classList.toggle('active', state.scrappedIds.has(post.id));
-    // 팝업 열 때 scrap-count 레이블에 현재 스크랩 수 표시
-    $('scrap-count').textContent = state.scrapCounts[post.id] ?? post.scrapCount;
+    // 좋아요 / 스크랩 상태
+    $('like-btn').classList.toggle('active', state.likedIds.has(post.id));
+    $('like-count').textContent  = post.likeCount;
+    $('scrap-btn').classList.toggle('active', state.scrappedIds.has(post.id));
+    $('scrap-count').textContent = post.scrapCount;
 
     // 설명
     $('modal-desc').textContent = post.desc;
 
     // 쇼핑 링크
     const shopEl = $('modal-shop-links');
-    shopEl.innerHTML = post.shops.map(s => `
+    shopEl.innerHTML = (post.shops || []).map(s => `
         <a class="shop-link-btn" href="${s.url}" target="_blank" rel="noopener">
             <span class="shop-link-icon">🛒</span>
             <span class="shop-link-name">${s.name}</span>
@@ -293,8 +233,8 @@ function openPostModal(post) {
         </a>
     `).join('');
 
-    // 댓글
-    renderComments(post.id);
+    // 댓글 로드
+    loadComments(post.id);
 
     postOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -331,28 +271,36 @@ $('slider-next').addEventListener('click', () => goSlide(state.currentSlide + 1)
 $('modal-close-btn').addEventListener('click', closePostModal);
 postOverlay.addEventListener('click', e => { if (e.target === postOverlay) closePostModal(); });
 
-// 좋아요 버튼 (팝업 내)
 $('like-btn').addEventListener('click', () => {
     if (!state.currentPost) return;
     toggleLike(state.currentPost.id);
 });
 
-// 스크랩 버튼 (팝업 내)
 $('scrap-btn').addEventListener('click', () => {
     if (!state.currentPost) return;
     const card = feedGrid.querySelector(`.feed-card-scrap-badge[data-id="${state.currentPost.id}"]`)?.closest('.feed-card');
     toggleScrap(state.currentPost.id, card);
 });
 
+// ──────────────────────────────────────────
+// 댓글 (API 연동)
+// ──────────────────────────────────────────
+async function loadComments(postId) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}/comments`);
+        if (!res.ok) throw new Error();
+        const { comments } = await res.json();
+        renderComments(postId, comments);
+    } catch {
+        renderComments(postId, []);
+    }
+}
 
-// 댓글 
-
-function renderComments(postId) {
-    const list = state.comments[postId] || [];
-    const el   = $('comment-list');
-    $('comment-count').textContent = list.length;
+function renderComments(postId, comments) {
+    const el = $('comment-list');
+    $('comment-count').textContent = comments.length;
     el.innerHTML = '';
-    list.forEach(c => el.appendChild(buildCommentEl(postId, c)));
+    comments.forEach(c => el.appendChild(buildCommentEl(postId, c)));
     el.scrollTop = el.scrollHeight;
 }
 
@@ -361,8 +309,8 @@ function buildCommentEl(postId, comment) {
     wrap.className = 'comment-item';
     wrap.dataset.id = comment.id;
 
-    const meUser = '@나'; // 테스트용. 실제 로그인 유저 ID로 교체
-    const isOwn = comment.username === meUser;
+    // window.__userId 는 서버에서 로그인 세션 연동 시 주입 (현재는 undefined)
+    const isOwn = window.__userId && comment.userId === window.__userId;
 
     wrap.innerHTML = `
         <div class="comment-avatar" style="background-image:url('${comment.avatar}')"></div>
@@ -379,11 +327,9 @@ function buildCommentEl(postId, comment) {
         </div>
     `;
 
-    // 수정
     wrap.querySelector('.comment-edit-btn')?.addEventListener('click', () => {
         startEditComment(postId, comment, wrap);
     });
-    // 삭제
     wrap.querySelector('.comment-delete-btn')?.addEventListener('click', () => {
         deleteComment(postId, comment.id);
     });
@@ -404,51 +350,67 @@ function startEditComment(postId, comment, wrapEl) {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
 
-    bodyEl.querySelector('.comment-edit-save').addEventListener('click', () => {
+    bodyEl.querySelector('.comment-edit-save').addEventListener('click', async () => {
         const newText = input.value.trim();
         if (!newText) return;
-        comment.text = newText;
-        comment.updatedAt = new Date().toISOString();
-        renderComments(postId);
-        showToast('댓글이 수정됐습니다');
+        try {
+            const res = await fetch(`/api/feed/posts/${postId}/comments/${comment.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: newText }),
+            });
+            if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+            if (!res.ok) throw new Error();
+            showToast('댓글이 수정됐습니다');
+            await loadComments(postId);
+        } catch {
+            showToast('댓글 수정에 실패했습니다');
+        }
     });
     bodyEl.querySelector('.comment-edit-cancel').addEventListener('click', () => {
-        renderComments(postId);
+        loadComments(postId);
     });
 }
 
-function deleteComment(postId, commentId) {
-    state.comments[postId] = (state.comments[postId] || []).filter(c => c.id !== commentId);
-    renderComments(postId);
-    showToast('댓글이 삭제됐습니다');
+async function deleteComment(postId, commentId) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
+        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (!res.ok) throw new Error();
+        showToast('댓글이 삭제됐습니다');
+        await loadComments(postId);
+    } catch {
+        showToast('댓글 삭제에 실패했습니다');
+    }
 }
 
 $('comment-submit-btn').addEventListener('click', submitComment);
 $('comment-input').addEventListener('keypress', e => { if (e.key === 'Enter') submitComment(); });
 
-function submitComment() {
+async function submitComment() {
     const input = $('comment-input');
     const text  = input.value.trim();
     if (!text || !state.currentPost) return;
 
-    const newComment = {
-        id: `c_${++state.commentIdSeq}`,
-        postId: state.currentPost.id,
-        username: '@나',
-        avatar: 'https://i.pravatar.cc/80?img=50',
-        text,
-        createdAt: new Date().toISOString(),
-    };
+    try {
+        const res = await fetch(`/api/feed/posts/${state.currentPost.id}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+        });
+        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (!res.ok) throw new Error();
 
-    if (!state.comments[state.currentPost.id]) state.comments[state.currentPost.id] = [];
-    state.comments[state.currentPost.id].push(newComment);
-    input.value = '';
-    renderComments(state.currentPost.id);
+        input.value = '';
+        await loadComments(state.currentPost.id);
+    } catch {
+        showToast('댓글 작성에 실패했습니다');
+    }
 }
 
-
-// 신고 팝업
-
+// ──────────────────────────────────────────
+// 신고 팝업 (API 연동)
+// ──────────────────────────────────────────
 $('report-btn').addEventListener('click', () => {
     reportOverlay.classList.remove('hidden');
 });
@@ -458,25 +420,43 @@ $('report-cancel-btn').addEventListener('click', () => {
 reportOverlay.addEventListener('click', e => {
     if (e.target === reportOverlay) reportOverlay.classList.add('hidden');
 });
-$('report-submit-btn').addEventListener('click', () => {
+$('report-submit-btn').addEventListener('click', async () => {
     const reason = document.querySelector('input[name="report-reason"]:checked')?.value;
     if (!reason) { showToast('신고 사유를 선택해 주세요'); return; }
     const detail = $('report-detail').value.trim();
 
+    try {
+        const res = await fetch(`/api/feed/posts/${state.currentPost.id}/report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason, detail }),
+        });
+        if (res.status === 401) {
+            showToast('로그인이 필요합니다');
+            reportOverlay.classList.add('hidden');
+            return;
+        }
+        if (res.status === 409) {
+            showToast('이미 신고한 게시물입니다');
+            reportOverlay.classList.add('hidden');
+            return;
+        }
+        if (!res.ok) throw new Error();
 
-    reportOverlay.classList.add('hidden');
-    document.querySelector('input[name="report-reason"]:checked').checked = false;
-    $('report-detail').value = '';
-    showToast('신고가 접수됐습니다. 검토 후 처리됩니다.');
+        reportOverlay.classList.add('hidden');
+        document.querySelector('input[name="report-reason"]:checked').checked = false;
+        $('report-detail').value = '';
+        showToast('신고가 접수됐습니다. 검토 후 처리됩니다.');
+    } catch {
+        showToast('신고 처리에 실패했습니다');
+    }
 });
 
-
-// 지도에서 지역을 클릭하거나 계절을 바꿀 때 호출할 함수
+// ──────────────────────────────────────────
+// 지도에서 지역/계절 변경 시 호출
+// ──────────────────────────────────────────
 window.feedUpdateFilter = function(region, seasonId) {
-    console.log(`필터 변경 수신: ${region}, ${seasonId}`);
     resetFeed(region, seasonId);
-    
-    // 페이지 최상단으로 스크롤 이동 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -484,7 +464,7 @@ window.feedUpdateFilter = function(region, seasonId) {
 // 유틸
 // ──────────────────────────────────────────
 function seasonName(id) {
-    return { spring:'봄', summer:'여름', fall:'가을', winter:'겨울' }[id] || id;
+    return { spring: '봄', summer: '여름', fall: '가을', winter: '겨울' }[id] || id;
 }
 
 function showToast(msg) {
@@ -495,31 +475,28 @@ function showToast(msg) {
 }
 
 function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function formatTime(iso) {
     const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-    if (diff < 60)   return '방금 전';
-    if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
-    if (diff < 86400)return `${Math.floor(diff/3600)}시간 전`;
+    if (diff < 60)    return '방금 전';
+    if (diff < 3600)  return `${Math.floor(diff / 60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
     return new Date(iso).toLocaleDateString('ko-KR');
 }
 
 // ──────────────────────────────────────────
-// 초기화 
+// 초기화
 // ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. URL 파라미터에서 부모창이 보낸 데이터 추출
     const urlParams = new URLSearchParams(window.location.search);
-    const region = urlParams.get('region'); // map.js에서 넘긴 값
-    const season = urlParams.get('season'); // map.js에서 넘긴 값
+    const region = urlParams.get('region');
+    const season = urlParams.get('season');
 
-    // 2. 전달된 데이터가 있으면 해당 데이터로, 없으면 기본값으로 시작
     const initialRegion = region ? decodeURIComponent(region) : '전국';
     const initialSeason = season || 'spring';
 
-    // 3. 앱 상태 초기화 및 피드 로드
     initInfiniteScroll();
     resetFeed(initialRegion, initialSeason);
 });

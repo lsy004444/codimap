@@ -64,7 +64,7 @@ body {
 }
 .feed-title-region { font-weight: 700; color: var(--text-primary); }
 .feed-title-dot     { color: var(--accent); font-size: 22px; line-height: 1; }
-.feed-title-season  { color: var(--accent); font-style: italic; }
+.feed-title-season  { color: var(--accent);  }
 .feed-title-sub     { font-size: 14px; color: var(--text-secondary); font-family: var(--font-body); font-weight: 400; }
 
 .feed-count {

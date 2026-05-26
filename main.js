@@ -7,6 +7,11 @@ const express = require('express'),
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use(express.static('public'));
+app.use(express.json());            
+app.use(express.urlencoded({ extended: true })); 
+
+const outfitRouter = require('./routes/outfit');
+app.use('/api/outfit', outfitRouter);
 
 // 세션 설정
 app.use(session({
@@ -58,6 +63,8 @@ app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
 
+const feedRouter = require("./routes/feed");
+app.use("/api/feed", feedRouter);
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
 
