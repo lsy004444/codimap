@@ -45,9 +45,12 @@ app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
 
-
-app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+const feedRouter = require("./routes/feed");
+app.use("/api/feed", feedRouter);
 
 // regions.js 
 const regionsRouter = require('./routes/regions');
 app.use('/api/regions', regionsRouter);
+
+app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+
