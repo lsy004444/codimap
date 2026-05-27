@@ -23,8 +23,14 @@ router.get('/nearby', async(req,res) => {
         ];
 
         if(season) {
-            query += 'AND p.SEASON = ?';
-            params.push(season);
+            const seasonMap = {
+                spring: '봄',
+                summer: '여름',
+                fall: '가을',
+                winter: '겨울'
+            };
+            query += ' And p.SEASON = ?';
+            params.push(seasonMap[season] || season);
         }
 
         const [rows] = await db.query(query, params);

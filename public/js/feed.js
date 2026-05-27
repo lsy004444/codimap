@@ -4,6 +4,8 @@
 const state = {
     currentRegion: '전국',
     currentSeason: 'spring',
+    currentLat: null,
+    currentLng: null,
     page: 0,
     pageSize: 9,
     isLoading: false,

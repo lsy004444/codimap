@@ -109,6 +109,8 @@ router.post('/register', upload.array('images', 10), async (req, res) => {
         const latitude    = req.body.latitude  ? parseFloat(req.body.latitude)  : null;
         const longitude   = req.body.longitude ? parseFloat(req.body.longitude) : null;
 
+        console.log('위도:', latitude, '경도:', longitude); // 추가
+
     
         if (!files || files.length === 0) {
             await conn.rollback();

@@ -10,9 +10,6 @@ app.use(express.static('public'));
 app.use(express.json());            
 app.use(express.urlencoded({ extended: true })); 
 
-const outfitRouter = require('./routes/outfit');
-app.use('/api/outfit', outfitRouter);
-
 // 세션 설정
 app.use(session({
     secret: 'codimap-secret-key',
@@ -26,6 +23,10 @@ app.use(session({
 }));
 
 app.use("/api/auth", authRouter);
+
+const outfitRouter = require('./routes/outfit');
+app.use('/api/outfit', outfitRouter);
+
 
 app.get('/', (req, res) => {
     res.send(
