@@ -326,3 +326,28 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
 }
 .sidebar-icon { font-size: 18px; }
+
+#map-container.shrink .top-nav {
+    width: 90%;
+    max-width: 500px;
+    gap: 8px;
+    padding: 0 10px;
+}
+#map-container.shrink .logo {
+    font-size: 14px;
+    margin-right: 5px;
+}
+#map-container.shrink .search-box {
+    flex: 0 1 150px;
+}
+#map-container.shrink .season-container {
+    gap: 4px;
+    padding: 8px 8px;
+}
+#map-container.shrink .season-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+#map-container.shrink .hamburger-bar {
+    right: 10px;
+}
