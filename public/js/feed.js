@@ -101,7 +101,7 @@ async function loadMorePosts() {
                 scrapCount: p.SCRAP_COUNT || 0,
                 likeCount: 0,
                 user: { id: p.MEMBER_ID, username: '@user', avatar: '' },
-                images: p.IMAGE_URL ? [p.IMAGE_URL] : [],
+                images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
                 shops: [],
             }));
             state.hasMore = false;
