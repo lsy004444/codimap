@@ -2,6 +2,7 @@ var currentMarker = null;
 
 var currentCoords = null;
 var currentRegionName = null;
+var currentAddressType = 'dong';
 
 window.onload = function() {
         kakao.maps.load(function() {
@@ -30,8 +31,13 @@ window.onload = function() {
                     var fullAddress = result[0].address_name;
                     var regionName = extractDongName(fullAddress);
                     currentRegionName = regionName;
-                    //console.log("검색된 지역이름: ",regionName);
-                    //updateStatusUI(regionName, selectedSeason);
+
+                    //구.동 판별 추가
+                    if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                        currentAddressType = 'gu';
+                    } else {
+                        currentAddressType = 'dong';
+                    }
 
                     const seasonColors = {
                         spring: '#FFB7C5',
@@ -147,9 +153,14 @@ window.onload = function() {
             const feedFrame = document.getElementById('feed-frame');
 
             if(feedFrame && currentRegionName) {
-                const dongName = currentRegionName.split(' ').pop();
-                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}`;
+            const dongName = currentRegionName.split(' ').pop(); // ← 추가
+
+            if(currentAddressType === 'gu') {
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&gu=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=gu`;
+            } else {
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=dong`;
             }
+    }
 
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
