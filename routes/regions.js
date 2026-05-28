@@ -13,9 +13,11 @@ router.get('/nearby', async(req, res) => {
         if(gu) {
             query = `
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
+                u.NAME,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
+                JOIN USERS u ON p.MEMBER_ID = u.USER_ID
                 LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
                 WHERE r.COUNTRY = ?
             `;
@@ -23,9 +25,11 @@ router.get('/nearby', async(req, res) => {
         } else {
             query = `
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
+                u.NAME,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
+                JOIN USERS u ON p.MEMBER_ID = u.USER_ID
                 LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
                 WHERE r.LATITUDE BETWEEN ? AND ?
                 AND r.LONGITUDE BETWEEN ? AND ?
@@ -49,7 +53,7 @@ router.get('/nearby', async(req, res) => {
             params.push(seasonMap[season] || season);
         }
 
-        query += ' GROUP BY p.POST_ID, r.REGION_NAME, r.LATITUDE, r.LONGITUDE';
+        query += ' GROUP BY p.POST_ID, r.REGION_NAME, r.LATITUDE, r.LONGITUDE, u.NAME';
 
         const [rows] = await db.query(query, params);
         res.json(rows);
