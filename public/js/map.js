@@ -13,11 +13,11 @@ window.onload = function() {
         var map = new kakao.maps.Map(container, options);
         var geocoder = new kakao.maps.services.Geocoder();
 
-        function searchLocation(keyword) { // 사용자가 지역 검색하면 위경도 좌표로 바꾸고 지도 이동시켜줌
-            document.getElementById('current-filter-info').style.display = 'block';
+        function searchLocation(keyword) {
+
             geocoder.addressSearch(keyword, function(result, status){
                 if(status === kakao.maps.services.Status.OK) {
-                
+
                     if(currentMarker) {
                         currentMarker.setMap(null);
                     }
@@ -33,12 +33,10 @@ window.onload = function() {
                     //console.log("검색된 지역이름: ",regionName);
                     //updateStatusUI(regionName, selectedSeason);
 
-
                     const seasonColors = {
                         spring: '#FFB7C5',
                         summer: '#7FB3D5',
                         fall: '#E67E22',
-
                         winter: '#A0CCE3'
                     };
 
@@ -65,30 +63,28 @@ window.onload = function() {
                         position: coords,
                         content: markerContent,
                         yAnchor:1
-
                     });
-                   
-                    
+
                     map.setCenter(coords);
 
                     document.getElementById('current-filter-info').style.display = 'block';
                     updateStatusUI(regionName, selectedSeason);
 
                     map.setLevel(5);
-
                     setTimeout(function() {
                     map.relayout();
                     map.setCenter(coords);
                 }, 100);
-
                 }
-            });
-        }
-        
+                else {
+                    showToast('검색 결과가 없습니다. 다시 입력해주세요.');
+                }
 
+            });
+
+        }
 
         kakao.maps.event.addListener(map, 'idle', function() {
-
             if(currentMarker) return;
             var center = map.getCenter();
 
@@ -111,7 +107,8 @@ window.onload = function() {
 
         });
 
-        kakao.maps.event.addListener(map, 'click', function() { //모달이 나와있는 상태에서 지도 아무곳을 누르면 모달 들어가고 지도 원래대로 복귀
+        kakao.maps.event.addListener(map, 'click', function() {
+            //console.log("지도 빈 곳 클릭됨 -> 복귀");
 
             const mapContainer = document.getElementById('map-container');
             const sidePanel = document.getElementById('side-panel');
@@ -121,7 +118,6 @@ window.onload = function() {
                 mapContainer.classList.remove('shrink');
                 sidePanel.classList.add('hidden');
 
-
                 setTimeout(function() {
                 map.relayout();
                 if(currentCoords) {
@@ -129,11 +125,10 @@ window.onload = function() {
                 }
             }, 600);
   
-
             }
         });
 
-        function extractDongName(address) { //행정구역 중 '동'만 추출
+        function extractDongName(address) {
             const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
@@ -152,7 +147,8 @@ window.onload = function() {
             const feedFrame = document.getElementById('feed-frame');
 
             if(feedFrame && currentRegionName) {
-                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}`;
+                const dongName = currentRegionName.split(' ').pop();
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}`;
             }
 
             mapContainer.classList.add('shrink');
@@ -237,17 +233,17 @@ function initSeasonButtons() {
         }
 
         btn.onclick = () => {
-        selectedSeason = season.id;
+            selectedSeason = season.id;
 
-        document.querySelectorAll('.season-btn').forEach((b, idx) => {
-            b.style.backgroundColor = 'white';
-            b.style.color = '#333';
-            if (seasons[idx].id === selectedSeason) {
-                b.style.backgroundColor = seasons[idx].color;
-                b.style.color = 'white';
-            }
-        });
-        console.log("선택된 계절:", selectedSeason);
+            document.querySelectorAll('.season-btn').forEach((b, idx) => {
+                b.style.backgroundColor = 'white';
+                b.style.color = '#333';
+                if (seasons[idx].id === selectedSeason) {
+                    b.style.backgroundColor = seasons[idx].color;
+                    b.style.color = 'white';
+                }
+            });
+            console.log("선택된 계절:", selectedSeason);
 
             const currentRegionText = document.getElementById('display-region').innerText;
             updateStatusUI(currentRegionText, selectedSeason);
@@ -265,13 +261,33 @@ function initSeasonButtons() {
         };
 
         
-
         container.appendChild(btn);
         
     });
 }
 
+function handleLogout() {
+        showToast('로그아웃 되었습니다');
+        setTimeout(() => {
+             window.location.href = '/login?logout=true';
+        }, 500);
+       
+    }
 
+function showToast(msg) {
+    const toast = document.getElementById('map-toast');
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+function toggleSidebar() {
+    const overlay = document.getElementById('sidebar-overlay');
+    const menu = document.getElementById('sidebar-menu');
+    overlay.classList.toggle('show');
+    menu.classList.toggle('show');
+}
 
 function updateStatusUI(region, seasonId) {
     const regionSpan = document.getElementById('display-region');
@@ -293,12 +309,65 @@ function updateStatusUI(region, seasonId) {
             seasonSpan.style.color = seasonObj.color;
         }
     }
-   
-    
+}
 
+function handleMenuClick(e) {
+    if(e.target === document.getElementById('sidebar-menu') || 
+       e.target.closest('.bubble-container') === null && 
+       e.target.closest('.bubble-logout') === null) {
+        toggleSidebar();
+    }
 }
 
 
 
-
 window.addEventListener('DOMContentLoaded', initSeasonButtons);
+
+// 로그아웃 했을 경우
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            const response = await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                window.location.href = "/login";
+            } else {
+                alert("로그아웃에 실패했습니다.");
+            }
+        });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const mypageBtn = document.getElementById("mypageBtn");
+
+    if(!mypageBtn) return;
+
+    mypageBtn.addEventListener("click", async () => {
+        try {
+            const response = await fetch("/api/auth/mypage");
+            const result = await response.json();
+
+            if(!result.success) {
+                alert("로그인이 필요합니다.");
+                window.location.href = "/login";
+                return;
+            }
+
+            const profileId = result.user.profileId;
+
+            window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
+        } catch (error) {
+            console.error(error);
+            alert("마이페이지로 이동하는 중 오류가 발생했습니다.");
+        }
+    });
+});

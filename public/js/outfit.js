@@ -1,6 +1,5 @@
 (function() {
 
-
 let uploadedFiles    = [];
 let pendingLocation  = null;
 let selectedSeason   = null;
@@ -9,15 +8,32 @@ window.addEventListener('DOMContentLoaded', () => {
   for (let i = 1; i <= 4; i++) addLinkRow();
 });
 
-
 function openModal() {
   document.getElementById('uploadModalOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
+
   document.getElementById('uploadModalOverlay').classList.remove('show');
   document.body.style.overflow = '';
+
+  uploadedFiles = [];
+  pendingLocation = null;
+  selectedSeason = null;
+
+  const descInput = document.getElementById('descInput');
+  if (descInput) descInput.value = ''; 
+
+  renderPreviews(); 
+  hideAllMeta();    
+
+  const list = document.getElementById('linkList');
+  if (list) {
+    list.innerHTML = ''; 
+    linkCount = 0;       
+    for (let i = 1; i <= 4; i++) addLinkRow(); 
+  }
 }
 
 
@@ -35,10 +51,11 @@ function renderPreviews() {
     const url  = URL.createObjectURL(file);
     const item = document.createElement('div');
     item.className = 'preview-item';
+    // 전역으로 바인딩된 window 메소드를 안전하게 지칭하도록 수정
     item.innerHTML = `
       <img src="${url}" alt="preview-${idx}" />
       ${idx === 0 ? '<div class="badge-rep">대표</div>' : ''}
-      <button class="btn-del" onclick="removeFile(${idx})">✕</button>
+      <button class="btn-del" onclick="window.removeFile(${idx})">✕</button>
     `;
     list.appendChild(item);
   });
@@ -59,7 +76,6 @@ function hideAllMeta() {
   document.getElementById('metaMissing').style.display          = 'none';
   document.getElementById('selectedLocationArea').style.display = 'none';
 }
-
 
 function parseMetadata(file) {
   EXIF.getData(file, function() {
@@ -142,14 +158,13 @@ function getSeason(month) {
   return '겨울';
 }
 
-
 function openSubtab() {
   document.getElementById('subtabOverlay').classList.add('show');
 }
 
 function closeSubtab() {
   document.getElementById('subtabOverlay').classList.remove('show');
-  pendingLocation = null;
+  //pendingLocation = null;
   document.getElementById('addrResult').classList.remove('show');
   document.getElementById('btnConfirmAddr').style.display = 'none';
   document.getElementById('seasonSelect').style.display   = 'none';
@@ -162,11 +177,27 @@ function openKakaoPostcode() {
       const sigungu = data.sigungu;
       const bname   = data.bname;
       const full    = `${sido} ${sigungu} ${bname}`;
-      pendingLocation = { sido, sigungu, bname, full };
+
       document.getElementById('addrPreview').textContent      = full;
       document.getElementById('addrResult').classList.add('show');
       document.getElementById('btnConfirmAddr').style.display = 'block';
       document.getElementById('seasonSelect').style.display   = 'block';
+
+      //수정. 카카오 geocoder로 위도/경도 가져오기 //
+      kakao.maps.load(function() { 
+      var geocoder = new kakao.maps.services.Geocoder();
+      geocoder.addressSearch(full, function(result, status) {
+        if(status === kakao.maps.services.Status.OK) {
+          pendingLocation = {
+            sido, sigungu, bname, full,
+            latitude: parseFloat(result[0].y),
+            longitude: parseFloat(result[0].x)
+          };
+        } else {
+           pendingLocation = { sido, sigungu, bname, full };
+        }
+      });
+    });
     }
   }).open();
 }
@@ -184,6 +215,8 @@ function confirmLocation() {
     alert('계절을 선택해주세요.');
     return;
   }
+  //추가
+  pendingLocation.season = selectedSeason;
   document.getElementById('selectedLocationText').textContent    = pendingLocation.full;
   document.getElementById('selectedLocationArea').style.display  = 'flex';
   document.getElementById('metaMissing').style.display           = 'none';
@@ -192,16 +225,13 @@ function confirmLocation() {
   selectedSeason = null;
 }
 
-
 let linkCount = 0;
-
 
 const svgLink = `
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
   </svg>`;
-
 
 const svgDollar = `
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
@@ -219,7 +249,7 @@ function addLinkRow() {
     <div class="link-icon"
          id="linkIcon-${linkCount}"
          data-affiliate="false"
-         onclick="toggleAffiliate(${linkCount})"
+         onclick="window.toggleAffiliate(${linkCount})"
          title="클릭하면 수익성 링크로 설정"
          style="cursor:pointer;">
       ${svgLink}
@@ -227,24 +257,21 @@ function addLinkRow() {
     <input class="link-input" type="url"
            placeholder="https://shop.example.com/product"
            id="link-${linkCount}" />
-    <button class="btn-del-link" onclick="removeLinkRow('linkRow-${linkCount}')">✕</button>
+    <button class="btn-del-link" onclick="window.removeLinkRow('linkRow-${linkCount}')">✕</button>
   `;
   list.appendChild(row);
 }
-
 
 function toggleAffiliate(idx) {
   const icon        = document.getElementById(`linkIcon-${idx}`);
   const isAffiliate = icon.dataset.affiliate === 'true';
 
   if (isAffiliate) {
-  
     icon.dataset.affiliate = 'false';
     icon.style.background  = '#f3f4f6';
     icon.innerHTML         = svgLink;
     icon.title             = '클릭하면 수익성 링크로 설정';
   } else {
-  
     icon.dataset.affiliate = 'true';
     icon.style.background  = '#f0fdf4';
     icon.innerHTML         = svgDollar;
@@ -257,12 +284,12 @@ function removeLinkRow(rowId) {
   if (row) row.remove();
 }
 
-
 function handleCancel() {
   if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
     closeModal();
   }
 }
+
 
 function handleRegister() {
   if (uploadedFiles.length === 0) {
@@ -275,7 +302,6 @@ function handleRegister() {
     return;
   }
 
- 
   const links = Array.from(document.querySelectorAll('.link-row')).map(row => {
     const icon      = row.querySelector('.link-icon');
     const input     = row.querySelector('.link-input');
@@ -284,15 +310,43 @@ function handleRegister() {
     return { url, affiliate };
   }).filter(item => item.url !== '');
 
-  const payload = {
-    files       : uploadedFiles.map(f => f.name),
-    description : desc,
-    links,          
-    location    : pendingLocation
-  };
-  console.log('등록 데이터:', payload);
-  alert('등록되었습니다!');
-  closeModal();
+
+  const formData = new FormData();
+
+ 
+  uploadedFiles.forEach(file => {
+    formData.append('images', file);
+  });
+
+
+  formData.append('description', desc);
+  formData.append('links', JSON.stringify(links));
+  formData.append('location', JSON.stringify(pendingLocation));
+
+  console.log('pendingLocation:', pendingLocation);
+
+  if (pendingLocation && pendingLocation.latitude) {
+    formData.append('latitude', pendingLocation.latitude);
+    formData.append('longitude', pendingLocation.longitude);
+  }
+  formData.append('season', pendingLocation?.season || '');
+  fetch('/api/outfit/register', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert('등록되었습니다!');
+      closeModal();
+    } else {
+      alert('등록 실패: ' + data.message);
+    }
+  })
+  .catch(err => {
+    console.error('오류:', err);
+    alert('서버 오류가 발생했습니다.');
+  });
 }
 
 
