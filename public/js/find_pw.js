@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailInput = document.getElementById("email");
     const sendEmailBtn = document.getElementById("sendEmailBtn");
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const emailValue = emailInput.value.trim();
 
@@ -22,12 +22,36 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        sendEmailBtn.disabled = true;
+        try{
+            sendEmailBtn.disabled = true;
 
-        setTimeout(() => {
-            alert("이메일로 비밀번호 관련 정보가 전송되었습니다.");
+            const response = await fetch("/api/auth/find_pw", {
+                method: "POST",
+                headers: {
+                    "Content-Type" : "application/json"
+                },
+                body: JSON.stringify({
+                    email: emailValue
+                })
+            });
 
-            window.location.href = "/login";
-        }, 1000);
+            const result = await response.json();
+
+            alert(result.message);
+
+            if(result.success) {
+                window.location.href = "/login";
+            } else {
+                sendEmailBtn.disabled = false;
+                sendEmailBtn.textContent = "이메일 전송";
+            }
+        } catch(error) {
+            console.error(error);
+            alert("임시 비밀번호 전송 중 오류가 발생했습니다.");
+
+            sendEmailBtn.disabled = false;
+            sendEmailBtn.textContent = "이메일 전송";
+        }
     });
-})
+});
+

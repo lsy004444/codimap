@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-//const crypto = require("crypto");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const pool = require("../config/db");
 const router = express.Router();
 
@@ -12,6 +13,18 @@ function isValidUserId(userId) {
 function isValidPassword(password) {
     const passwordPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]+$/;
     return passwordPattern.test(password);
+}
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS
+    }
+});
+
+function createTempPassword() {
+    return crypto.randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 8);
 }
 
 // 회원가입
@@ -254,7 +267,7 @@ router.get("/check-id", async(req, res) => {
     }
 });
 
-// mypage
+// 마이페이지
 router.get("/mypage", (req, res) => {
     if(!req.session.user) {
         return res.status(401).json({
@@ -381,5 +394,72 @@ router.patch("/modify", requireLogin, async(req, res) => {
         });
     }
 });
+
+// 비밀번호 찾기_인증번호 전송
+router.post("/find_pw", async(req, res) => {
+    try{
+        const {email } = req.body;
+
+        if(!email) {
+            return res.status(400).json({
+                success: false,
+                message: "이메일을 입력해주세요."
+            });
+        }
+
+        const [rows] = await pool.query(
+            `
+            SELECT USER_ID, EMAIL, ID
+            FROM USERS
+            WHERE EMAIL = ?
+            `,
+            [email]
+        );
+
+        if(rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "일치하는 회원 정보를 찾을 수 없습니다."
+            });
+        }
+
+        const user = rows[0];
+
+        const tempPassword = createTempPassword();
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+        
+       await pool.query(
+        `
+        UPDATE USERS
+        SET PASSWORD = ?
+        WHERE USER_ID = ?
+        `,
+        [passwordHash, user.USER_ID]
+       );
+
+        await transporter.sendMail({
+            from: process.env.MAIL_USER,
+            to: user.EMAIL,
+            subject: "[CODIMAP] 임시 비밀번호가 발송되었습니다.",
+            text: `
+            안녕하세요 CODIMAP입니다.
+            임시 비밀번호는 아래와 같습니다.
+            임시 비밀번호: ${tempPassword}
+            로그인 후 반드시 비밀번호를 변경해주시기 바랍니다.
+            `
+        });
+
+        return res.json({
+            success: true,
+            message: "임시 비밀번호가 이메일로 전송되었습니다."
+        });
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "임시 비밀번호 전송 중 서버 오류가 발생했습니다."
+        });
+    }
+})
 
 module.exports = router;
