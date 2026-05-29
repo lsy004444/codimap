@@ -8,13 +8,36 @@ body {
 }
 
 .find-wrapper {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     background-color: white;
-    padding: 60px 50px; 
+    padding: 90px 50px 60px;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+}
+
+.btn-back {
+    position: absolute;
+    left: 28px;
+    top: 24px;
+
+    width: 64px;
+    height: 54px;
+
+    border: none;
+    border-radius: 9px;
+    background-color: #3f51b5;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    background-color: #3445a5;
 }
 
 .find-title {
