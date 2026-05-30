@@ -63,11 +63,9 @@ document.addEventListener("DOMContentLoaded", async() => {
         const result = await response.json();
 
         if(!result.success) {
-            alert("로그인이 필요합니다.");
             window.location.href="/login";
             return;
         }
-
         const loginUserProfileId = result.user.profileId;
 
         // URL에 profileId가 있으면 그 프로필을 보여주고, 없으면 로그인한 내 프로필을 보여줌
@@ -95,7 +93,7 @@ document.addEventListener("DOMContentLoaded", async() => {
     
     } catch (error) {
         console.error(error);
-        alert("사용자 정보를 불러오는 중 오류가 발생했습니다.");
+        
         window.location.href = "/login";
     }    
 });

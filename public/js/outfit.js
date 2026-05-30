@@ -8,9 +8,25 @@ window.addEventListener('DOMContentLoaded', () => {
   for (let i = 1; i <= 4; i++) addLinkRow();
 });
 
-function openModal() {
-  document.getElementById('uploadModalOverlay').classList.add('show');
-  document.body.style.overflow = 'hidden';
+async function openModal() {
+  try {
+    const response = await fetch('/api/auth/mypage');
+    const result = await response.json();
+    if(!result.success) {
+      window.showToast('🔒 로그인이 필요합니다');  // ← window. 붙이기
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+      return;
+    }
+    document.getElementById('uploadModalOverlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  } catch(e) {
+    window.showToast('🔒 로그인이 필요합니다');  // ← window. 붙이기
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 1000);
+  }
 }
 
 function closeModal() {

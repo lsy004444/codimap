@@ -303,6 +303,7 @@ function initSeasonButtons() {
     });
 }
 
+//로그아웃 토스트 지정
 function handleLogout() {
         showToast('로그아웃 되었습니다');
         setTimeout(() => {
@@ -311,13 +312,31 @@ function handleLogout() {
        
     }
 
-function showToast(msg) {
+//로그인 없이 게시물 등록 버튼 접근 시 토스트 지정
+window.openModal = async function() {
+    try {
+        const response = await fetch('/api/auth/mypage');
+        const result = await responst.json();
+        if(!result.success) {
+            showToast('🔒 로그인이 필요합니다');
+            return;
+        }
+        //로그인 시 모달 열기
+        document.getElementById('uploadModalOverlay').style.display = 'flex';
+    } catch(e) {
+        showToast('🔒 로그인이 필요합니다');
+    }
+}
+
+//경고창 팝업
+window.showToast = function(msg) {
     const toast = document.getElementById('map-toast');
     toast.textContent = msg;
     toast.classList.remove('hidden');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
 }
+
 
 function toggleSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
@@ -394,9 +413,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const result = await response.json();
 
             if(!result.success) {
-                alert("로그인이 필요합니다.");
-                window.location.href = "/login";
-                return;
+                window.showToast('🔒 로그인이 필요합니다');
+                setTimeout( () => {
+                    window.location.href = '/login';
+                }, 1000);
             }
 
             const profileId = result.user.profileId;
@@ -404,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
         } catch (error) {
             console.error(error);
-            alert("마이페이지로 이동하는 중 오류가 발생했습니다.");
+            window.showToast('🔒 로그인이 필요합니다');
         }
     });
 });
