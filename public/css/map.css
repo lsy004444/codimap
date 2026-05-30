@@ -48,7 +48,7 @@
 }
 
 
-.top-nav{
+.top-nav {
     position: absolute;
     top: 20px; left: 50%;
     transform: translateX(-50%); 
@@ -65,7 +65,13 @@
     padding: 0 20px;
     z-index: 100;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: default !important;
+}
+
+/*상단바 커서 고정*/
+.top-nav * {
+    cursor: default !important;
 }
 
 .logo{ font-weight: bold; font-size: 20px; color: #333; margin-right: 30px;}
@@ -81,12 +87,13 @@
 
 .search-box input{
     border: none; background: none; outline: none; width: 100%; padding: 5px;
+    cursor: text !important;
 }
 
 .search-box button {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: pointer !important;
     padding: 4px 6px;
     border-radius: 50%;
     display: flex;
@@ -127,7 +134,7 @@
     border: 1px solid #ddd;
     border-radius: 20px;
     background-color: white;
-    cursor: pointer;
+    cursor: pointer !important;
     font-weight: bold;
     font-size: 13px;
     transition: all 0.2s ease;
