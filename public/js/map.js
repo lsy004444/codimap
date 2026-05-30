@@ -138,11 +138,27 @@ window.onload = function() {
             const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
+        //세부 동명(ex 돈암2동) 검색 시 기본 동명으로 안내
+        function normalizedongName(query) {
+            const match = query.match(/^(.+?)(\d+)(동)$/);
+            if(match) {
+                return match[1] + match[3];
+            }
+            return null;
+        }
 
         const searchInput = document.querySelector('.search-box input');
+         //세부 동명(ex 돈암2동) 검색 시 기본 동명으로 안내
         searchInput.addEventListener('keypress', function(e) {
             if(e.key === 'Enter') {
-                searchLocation(this.value);
+                const query = this.value.trim();
+                const suggestion = normalizedongName(query);
+
+                if(suggestion) {
+                    showToast(`❌ "${suggestion}"으로 검색해 주세요`);
+                    return;
+                }
+                searchLocation(query);
             }
         });
         initSeasonButtons();
