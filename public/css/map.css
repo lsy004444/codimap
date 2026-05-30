@@ -83,6 +83,34 @@
     border: none; background: none; outline: none; width: 100%; padding: 5px;
 }
 
+.search-box button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+/* 상단 검색바 */
+.search-box button:hover {
+    transform: scale(1.25);
+    background: rgba(255, 183, 197, 0.25);
+}
+
+.search-box button:active {
+    transform: scale(0.9);
+}
+
+.search-box button svg {
+    transition: stroke 0.2s ease;
+}
+
+.search-box button:hover svg {
+    stroke: #FFB7C5 !important;
+}
 .season-container{
     pointer-events: auto;
     display: flex;
