@@ -9,7 +9,8 @@ window.onload = function() {
         var container = document.getElementById('map');
         var options = {
             center: new kakao.maps.LatLng(36.2683, 127.6358),
-            level: 13
+            level: 13,
+            
         };
         var map = new kakao.maps.Map(container, options);
         var geocoder = new kakao.maps.services.Geocoder();
@@ -89,6 +90,15 @@ window.onload = function() {
             });
 
         }
+
+        //지도 축소 불가 경고 (zoom_changed는 무조건 레벨이 한번은 바뀌어서 다른거로 대체)
+        //오... 다른방법이 없어서  그냥 zoom_changed로 지정
+        kakao.maps.event.addListener(map, 'zoom_changed', function() {
+            if(map.getLevel() >= 13) {
+                map.setLevel(13, {animate: false}); // 애니메이션 없이 즉시 복구
+                showToast('더 이상 축소할 수 없습니다.');
+            }
+        });
 
         kakao.maps.event.addListener(map, 'idle', function() {
             if(currentMarker) return;
