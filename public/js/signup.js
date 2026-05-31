@@ -18,7 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 이메일 중복확인 버튼 클릭 시 발생
-    emailBtn.addEventListener("click", () => {
+    emailBtn.addEventListener("click", async(addEventListener) => {
+        event.preventDefault();
+        
         const email = emailInput.value.trim();
 
         if(email === "") {
@@ -33,12 +35,29 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        alert("사용 가능한 이메일입니다.");
-        isEmailChecked = true;
+        try{
+            const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+            const result = await response.json();
+
+            alert(result.message);
+
+            if(result.available) {
+                isEmailChecked = true;
+            } else {
+                isEmailChecked = false;
+                emailInput.focus();
+            }
+        } catch (error) {
+            console.error(error);
+            alert("이메일 중복확인 중 오류가 발생했습니다.");
+            isEmailChecked = false;
+        }
 });
 
     // 아이디 중복확인 버튼 클릭 시 발생
-    userIdBtn.addEventListener("click", () => {
+    userIdBtn.addEventListener("click", async(event) => {
+        event.preventDefault();
+
         const userId = userIdInput.value.trim();
 
         if(userId === "") {
@@ -47,8 +66,23 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        alert("사용 가능한 아이디입니다.");
-        isIdChecked = true;
+        try{
+            const response = await fetch(`/api/auth/check-id?userId=${encodeURIComponent(userId)}`);
+            const result = await response.json();
+
+            alert(result.message);
+
+            if(result.available) {
+                isIdChecked = true;
+            } else {
+                isIdChecked = false;
+                userIdInput.focus();
+            }
+        } catch (error) {
+            console.error(error);
+            alert("아이디 중복확인 중 오류가 발생했습니다.");
+            isIdChecked = false;
+        }
     });
 
     emailInput.addEventListener("input", () => {
@@ -60,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // 회원가입 버튼 클릭 시 발생
-    signupForm.addEventListener("submit", (event) => {
+    signupForm.addEventListener("submit", async(event) => {
          event.preventDefault();
 
          const name = nameInput.value.trim();
@@ -116,11 +150,31 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-         // 회원가입 후 팝업 창 띄움
-        alert("회원가입이 완료되었습니다!");
+        try {
+            const response = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    userId: userId,
+                    password: password
+                })
+            });
 
-         // 확인을 누르면 초기화면으로 이동->회원가입 후 로그인 해야 함
-        window.location.href = "/index";
+            const result = await response.json();
+
+            alert(result.message);
+
+            if(result.success) {
+                window.location.href = "/login";
+            }
+        } catch (error) {
+            console.error(error);
+            alert("회원가입 요청 중 오류가 발생했습니다.");
+        }
      });
 });
 

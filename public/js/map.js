@@ -2,13 +2,15 @@ var currentMarker = null;
 
 var currentCoords = null;
 var currentRegionName = null;
+var currentAddressType = 'dong';
 
 window.onload = function() {
         kakao.maps.load(function() {
         var container = document.getElementById('map');
         var options = {
             center: new kakao.maps.LatLng(36.2683, 127.6358),
-            level: 13
+            level: 13,
+            
         };
         var map = new kakao.maps.Map(container, options);
         var geocoder = new kakao.maps.services.Geocoder();
@@ -30,8 +32,13 @@ window.onload = function() {
                     var fullAddress = result[0].address_name;
                     var regionName = extractDongName(fullAddress);
                     currentRegionName = regionName;
-                    //console.log("검색된 지역이름: ",regionName);
-                    //updateStatusUI(regionName, selectedSeason);
+
+                    //구.동 판별 추가
+                    if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                        currentAddressType = 'gu';
+                    } else {
+                        currentAddressType = 'dong';
+                    }
 
                     const seasonColors = {
                         spring: '#FFB7C5',
@@ -84,6 +91,15 @@ window.onload = function() {
 
         }
 
+        //지도 축소 불가 경고 (zoom_changed는 무조건 레벨이 한번은 바뀌어서 다른거로 대체)
+        //오... 다른방법이 없어서  그냥 zoom_changed로 지정
+        kakao.maps.event.addListener(map, 'zoom_changed', function() {
+            if(map.getLevel() >= 13) {
+                map.setLevel(13, {animate: false}); // 애니메이션 없이 즉시 복구
+                showToast('더 이상 축소할 수 없습니다.');
+            }
+        });
+
         kakao.maps.event.addListener(map, 'idle', function() {
             if(currentMarker) return;
             var center = map.getCenter();
@@ -132,11 +148,27 @@ window.onload = function() {
             const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
+        //세부 동명(ex 돈암2동) 검색 시 기본 동명으로 안내
+        function normalizedongName(query) {
+            const match = query.match(/^(.+?)(\d+)(동)$/);
+            if(match) {
+                return match[1] + match[3];
+            }
+            return null;
+        }
 
         const searchInput = document.querySelector('.search-box input');
+         //세부 동명(ex 돈암2동) 검색 시 기본 동명으로 안내
         searchInput.addEventListener('keypress', function(e) {
             if(e.key === 'Enter') {
-                searchLocation(this.value);
+                const query = this.value.trim();
+                const suggestion = normalizedongName(query);
+
+                if(suggestion) {
+                    showToast(`❌ "${suggestion}"으로 검색해 주세요`);
+                    return;
+                }
+                searchLocation(query);
             }
         });
         initSeasonButtons();
@@ -147,8 +179,14 @@ window.onload = function() {
             const feedFrame = document.getElementById('feed-frame');
 
             if(feedFrame && currentRegionName) {
-                feedFrame.src = `/feed?region=${encodeURIComponent(currentRegionName)}&season=${selectedSeason}`;
+            const dongName = currentRegionName.split(' ').pop(); // ← 추가
+
+            if(currentAddressType === 'gu') {
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&gu=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=gu`;
+            } else {
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=dong`;
             }
+    }
 
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
@@ -265,6 +303,7 @@ function initSeasonButtons() {
     });
 }
 
+//로그아웃 토스트 지정
 function handleLogout() {
         showToast('로그아웃 되었습니다');
         setTimeout(() => {
@@ -273,13 +312,31 @@ function handleLogout() {
        
     }
 
-function showToast(msg) {
+//로그인 없이 게시물 등록 버튼 접근 시 토스트 지정
+window.openModal = async function() {
+    try {
+        const response = await fetch('/api/auth/mypage');
+        const result = await responst.json();
+        if(!result.success) {
+            showToast('🔒 로그인이 필요합니다');
+            return;
+        }
+        //로그인 시 모달 열기
+        document.getElementById('uploadModalOverlay').style.display = 'flex';
+    } catch(e) {
+        showToast('🔒 로그인이 필요합니다');
+    }
+}
+
+//경고창 팝업
+window.showToast = function(msg) {
     const toast = document.getElementById('map-toast');
     toast.textContent = msg;
     toast.classList.remove('hidden');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
 }
+
 
 function toggleSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
@@ -321,3 +378,53 @@ function handleMenuClick(e) {
 
 
 window.addEventListener('DOMContentLoaded', initSeasonButtons);
+
+// 로그아웃 했을 경우
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+            const response = await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "include"
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                window.location.href = "/login";
+            } else {
+                alert("로그아웃에 실패했습니다.");
+            }
+        });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const mypageBtn = document.getElementById("mypageBtn");
+
+    if(!mypageBtn) return;
+
+    mypageBtn.addEventListener("click", async () => {
+        try {
+            const response = await fetch("/api/auth/mypage");
+            const result = await response.json();
+
+            if(!result.success) {
+                window.showToast('🔒 로그인이 필요합니다');
+                setTimeout( () => {
+                    window.location.href = '/login';
+                }, 1000);
+            }
+
+            const profileId = result.user.profileId;
+
+            window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
+        } catch (error) {
+            console.error(error);
+            window.showToast('🔒 로그인이 필요합니다');
+        }
+    });
+});

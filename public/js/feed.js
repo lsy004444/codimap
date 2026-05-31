@@ -4,6 +4,10 @@
 const state = {
     currentRegion: '전국',
     currentSeason: 'spring',
+    currentLat: null,
+    currentLng: null,
+    addressType: 'dong',
+    currentGu: null,
     page: 0,
     pageSize: 9,
     isLoading: false,
@@ -40,28 +44,88 @@ function initInfiniteScroll() {
     if (sentinel) observer.observe(sentinel);
 }
 
+// async function loadMorePosts() {
+//     state.isLoading = true;
+//     sentinel.style.visibility = 'visible';
+
+//     try {
+//         const params = new URLSearchParams({
+//             page: state.page,
+//             size: state.pageSize,
+//         });
+//         if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
+//         if (state.currentSeason) params.set('season', state.currentSeason);
+
+//         const res = await fetch(`/api/feed/posts?${params}`);
+//         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+//         const { posts: newPosts, total } = await res.json();
+
+//         state.hasMore = state.posts.length + newPosts.length < total;
+//         state.page++;
+//         state.posts.push(...newPosts);
+
+//         renderCards(newPosts);
+//         $('feed-count-num').textContent = total;
+//     } catch (err) {
+//         console.error('게시물 로드 실패:', err);
+//         showToast('게시물을 불러오지 못했습니다');
+//     }
+
+//     state.isLoading = false;
+//     if (!state.hasMore) sentinel.style.visibility = 'hidden';
+// }
+
+//loadmoreposts 수정버전
 async function loadMorePosts() {
     state.isLoading = true;
     sentinel.style.visibility = 'visible';
 
     try {
-        const params = new URLSearchParams({
-            page: state.page,
-            size: state.pageSize,
-        });
-        if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
-        if (state.currentSeason) params.set('season', state.currentSeason);
+        if(state.currentLat && state.currentLng) {
+            let url;
+            if(state.currentGu) {
+                url = `/api/regions/nearby?gu=${encodeURIComponent(state.currentGu)}&season=${state.currentSeason}`;
+            } else {
+                url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
+            }
+            const res = await fetch(url);
+            console.log('API 응답 상태: , res.status, url');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const newPosts = data.map(p => ({
+                id: p.POST_ID,
+                desc: p.CONTENT,
+                region: p.REGION_NAME,
+                season: p.SEASON,
+                viewCount: p.VIEW_COUNT || 0,
+                scrapCount: p.SCRAP_COUNT || 0,
+                likeCount: 0,
+                user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', avatar: '' },
+                images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
+                shops: [],
+            }));
+            state.hasMore = false;
+            state.posts.push(...newPosts);
+            renderCards(newPosts);
+            $('feed-count-num').textContent = newPosts.length;
+        } else {
+            const params = new URLSearchParams({
+                page: state.page,
+                size: state.pageSize,
+            });
+            if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
+            if (state.currentSeason) params.set('season', state.currentSeason);
 
-        const res = await fetch(`/api/feed/posts?${params}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const { posts: newPosts, total } = await res.json();
+            const res = await fetch(`/api/feed/posts?${params}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const { posts: newPosts, total } = await res.json();
 
-        state.hasMore = state.posts.length + newPosts.length < total;
-        state.page++;
-        state.posts.push(...newPosts);
-
-        renderCards(newPosts);
-        $('feed-count-num').textContent = total;
+            state.hasMore = state.posts.length + newPosts.length < total;
+            state.page++;
+            state.posts.push(...newPosts);
+            renderCards(newPosts);
+            $('feed-count-num').textContent = total;
+        }
     } catch (err) {
         console.error('게시물 로드 실패:', err);
         showToast('게시물을 불러오지 못했습니다');
@@ -493,6 +557,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const region = urlParams.get('region');
     const season = urlParams.get('season');
+    const lat = urlParams.get('lat');
+    const lng = urlParams.get('lng');
+    const type = urlParams.get('type') || 'dong';
+    const gu = urlParams.get('gu');
+
+    state.currentLat = lat ? parseFloat(lat) : null;
+    state.currentLng = lng ? parseFloat(lng) : null;
+
+    state.addressType = type;
+    state.currentGu = gu ? decodeURIComponent(gu) : null;
+    
 
     const initialRegion = region ? decodeURIComponent(region) : '전국';
     const initialSeason = season || 'spring';

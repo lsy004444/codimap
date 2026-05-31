@@ -1,13 +1,32 @@
 const express = require('express'),
       path = require('path'),
+      session = require('express-session'),
+      authRouter = require("./routes/auth"),
       app = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true}));
 app.use(express.static('public'));
 app.use(express.json());            
 app.use(express.urlencoded({ extended: true })); 
 
+// 세션 설정
+app.use(session({
+    secret: 'codimap-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60
+    }
+}));
+
+app.use("/api/auth", authRouter);
+
 const outfitRouter = require('./routes/outfit');
 app.use('/api/outfit', outfitRouter);
+
 
 app.get('/', (req, res) => {
     res.send(
@@ -30,6 +49,10 @@ app.get('/modify', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'modify.html'));
 })
 app.get('/mypage', (req, res) => {
+    // 로그인 하지 않은 사람이 마이페이지에 들어가면 로그인으로 보내짐
+    if(!req.session.user) {
+        return res.redirect('/login');
+    }
     res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
 })
 app.get('/signup', (req, res) => {

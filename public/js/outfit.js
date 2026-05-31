@@ -8,9 +8,25 @@ window.addEventListener('DOMContentLoaded', () => {
   for (let i = 1; i <= 4; i++) addLinkRow();
 });
 
-function openModal() {
-  document.getElementById('uploadModalOverlay').classList.add('show');
-  document.body.style.overflow = 'hidden';
+async function openModal() {
+  try {
+    const response = await fetch('/api/auth/mypage');
+    const result = await response.json();
+    if(!result.success) {
+      window.showToast('🔒 로그인이 필요합니다');  // ← window. 붙이기
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+      return;
+    }
+    document.getElementById('uploadModalOverlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  } catch(e) {
+    window.showToast('🔒 로그인이 필요합니다');  // ← window. 붙이기
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 1000);
+  }
 }
 
 function closeModal() {
@@ -35,6 +51,7 @@ function closeModal() {
     for (let i = 1; i <= 4; i++) addLinkRow(); 
   }
 }
+
 
 function handleFiles(files) {
   if (!files || files.length === 0) return;
@@ -163,7 +180,7 @@ function openSubtab() {
 
 function closeSubtab() {
   document.getElementById('subtabOverlay').classList.remove('show');
-  pendingLocation = null;
+  //pendingLocation = null;
   document.getElementById('addrResult').classList.remove('show');
   document.getElementById('btnConfirmAddr').style.display = 'none';
   document.getElementById('seasonSelect').style.display   = 'none';
@@ -176,11 +193,27 @@ function openKakaoPostcode() {
       const sigungu = data.sigungu;
       const bname   = data.bname;
       const full    = `${sido} ${sigungu} ${bname}`;
-      pendingLocation = { sido, sigungu, bname, full };
+
       document.getElementById('addrPreview').textContent      = full;
       document.getElementById('addrResult').classList.add('show');
       document.getElementById('btnConfirmAddr').style.display = 'block';
       document.getElementById('seasonSelect').style.display   = 'block';
+
+      //수정. 카카오 geocoder로 위도/경도 가져오기 //
+      kakao.maps.load(function() { 
+      var geocoder = new kakao.maps.services.Geocoder();
+      geocoder.addressSearch(full, function(result, status) {
+        if(status === kakao.maps.services.Status.OK) {
+          pendingLocation = {
+            sido, sigungu, bname, full,
+            latitude: parseFloat(result[0].y),
+            longitude: parseFloat(result[0].x)
+          };
+        } else {
+           pendingLocation = { sido, sigungu, bname, full };
+        }
+      });
+    });
     }
   }).open();
 }
@@ -198,6 +231,8 @@ function confirmLocation() {
     alert('계절을 선택해주세요.');
     return;
   }
+  //추가
+  pendingLocation.season = selectedSeason;
   document.getElementById('selectedLocationText').textContent    = pendingLocation.full;
   document.getElementById('selectedLocationArea').style.display  = 'flex';
   document.getElementById('metaMissing').style.display           = 'none';
@@ -267,7 +302,7 @@ function removeLinkRow(rowId) {
 
 function handleCancel() {
   if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
-    window.history.back();
+    closeModal();
   }
 }
 
@@ -304,6 +339,13 @@ function handleRegister() {
   formData.append('links', JSON.stringify(links));
   formData.append('location', JSON.stringify(pendingLocation));
 
+  console.log('pendingLocation:', pendingLocation);
+
+  if (pendingLocation && pendingLocation.latitude) {
+    formData.append('latitude', pendingLocation.latitude);
+    formData.append('longitude', pendingLocation.longitude);
+  }
+  formData.append('season', pendingLocation?.season || '');
   fetch('/api/outfit/register', {
     method: 'POST',
     body: formData

@@ -8,7 +8,7 @@ const db = require('../config/db');
 // false = 실제 MySQL DB 사용
 // 테스트 끝나면 반드시 false로 바꾸기
 // ──────────────────────────────────────────
-const USE_MOCK_FEED = true;
+const USE_MOCK_FEED = false;
 
 // ──────────────────────────────────────────
 // 테스트용 MOCK 데이터
@@ -179,7 +179,6 @@ function filterMockPosts(query) {
 // GET /api/feed/posts?page=0&size=9&region=서울&season=spring
 // ──────────────────────────────────────────
 router.get('/posts', async (req, res) => {
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
     if (USE_MOCK_FEED) {
         const { posts, total } = filterMockPosts(req.query);
         return res.json({ posts, total });
@@ -193,16 +192,16 @@ router.get('/posts', async (req, res) => {
     const params = [];
 
     if (region && region !== '전국') {
-        conditions.push('r.region_name = ?');
+        conditions.push('r.REGION_NAME = ?');
         params.push(region);
     }
 
     const seasonValues = getSeasonValues(season);
     if (seasonValues.length === 1) {
-        conditions.push('p.season = ?');
+        conditions.push('p.SEASON = ?');
         params.push(seasonValues[0]);
     } else if (seasonValues.length === 2) {
-        conditions.push('p.season IN (?, ?)');
+        conditions.push('p.SEASON IN (?, ?)');
         params.push(seasonValues[0], seasonValues[1]);
     }
 
@@ -211,9 +210,9 @@ router.get('/posts', async (req, res) => {
     try {
         const [[{ total }]] = await db.query(
             `
-            SELECT COUNT(DISTINCT p.post_id) AS total
-            FROM post p
-            JOIN region r ON p.region_id = r.region_id
+            SELECT COUNT(DISTINCT p.POST_ID) AS total
+            FROM POST p
+            JOIN REGION r ON p.REGION_ID = r.REGION_ID
             ${where}
             `,
             params
@@ -222,34 +221,34 @@ router.get('/posts', async (req, res) => {
         const [rows] = await db.query(
             `
             SELECT
-                p.post_id,
-                p.user_id,
-                u.user_name,
-                r.region_name,
-                p.created_date,
-                p.view_count,
-                p.season,
-                p.content,
-                p.scrap_count,
-                GROUP_CONCAT(DISTINCT i.url ORDER BY i.image_id SEPARATOR '||') AS image_urls,
-                GROUP_CONCAT(DISTINCT pl.url ORDER BY pl.link_id SEPARATOR '||') AS link_urls
-            FROM post p
-            JOIN \`user\` u ON p.user_id = u.user_id
-            JOIN region r ON p.region_id = r.region_id
-            LEFT JOIN image i ON p.post_id = i.post_id
-            LEFT JOIN post_link pl ON p.post_id = pl.post_id
+                p.POST_ID,
+                p.MEMBER_ID,
+                u.NAME,
+                r.REGION_NAME,
+                p.CREATED_DATE,
+                p.VIEW_COUNT,
+                p.SEASON,
+                p.CONTENT,
+                p.SCRAP_COUNT,
+                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls
+            FROM POST p
+            JOIN USERS u ON p.MEMBER_ID = u.USER_ID
+            JOIN REGION r ON p.REGION_ID = r.REGION_ID
+            LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
+            LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
             ${where}
             GROUP BY
-                p.post_id,
-                p.user_id,
-                u.user_name,
-                r.region_name,
-                p.created_date,
-                p.view_count,
-                p.season,
-                p.content,
-                p.scrap_count
-            ORDER BY p.created_date DESC
+                p.POST_ID,
+                p.MEMBER_ID,
+                u.NAME,
+                r.REGION_NAME,
+                p.CREATED_DATE,
+                p.VIEW_COUNT,
+                p.SEASON,
+                p.CONTENT,
+                p.SCRAP_COUNT
+            ORDER BY p.CREATED_DATE DESC
             LIMIT ? OFFSET ?
             `,
             [...params, limit, offset]
@@ -260,29 +259,20 @@ router.get('/posts', async (req, res) => {
             const links = splitGroupConcat(row.link_urls);
 
             return {
-                id: row.post_id,
-                desc: row.content,
-                region: row.region_name,
-                season: row.season,
-                viewCount: row.view_count || 0,
-                scrapCount: row.scrap_count || 0,
-
-                // 현재 DB에 좋아요 테이블/컬럼이 없어서 임시 0 처리
-                // 다음 회의 후 좋아요 테이블 추가되면 실제 값으로 교체
+                id: row.POST_ID,
+                desc: row.CONTENT,
+                region: row.REGION_NAME,
+                season: row.SEASON,
+                viewCount: row.VIEW_COUNT || 0,
+                scrapCount: row.SCRAP_COUNT || 0,
                 likeCount: 0,
-
                 user: {
-                    id: row.user_id,
-                    username: normalizeUsername(row.user_name),
-
-                    // 현재 user 테이블에 profile_image 컬럼이 없어서 빈 문자열 처리
+                    id: row.MEMBER_ID,
+                    username: normalizeUsername(row.NAME),
                     avatar: '',
                 },
-
                 images,
-
                 shops: links.map((url, index) => ({
-                    // 현재 post_link 테이블에는 url만 있음
                     name: '쇼핑 링크',
                     item: `링크 ${index + 1}`,
                     url,
@@ -418,16 +408,16 @@ router.get('/posts/:postId/comments', async (req, res) => {
         const [rows] = await db.query(
             `
             SELECT
-                c.comment_id,
-                c.post_id,
-                c.user_id,
-                u.user_name,
-                c.content,
-                c.created_date
-            FROM \`comment\` c
-            JOIN \`user\` u ON c.user_id = u.user_id
-            WHERE c.post_id = ?
-            ORDER BY c.created_date ASC
+                c.COMMENT_ID,
+                c.POST_ID,
+                c.MEMBER_ID,
+                u.NAME,
+                c.CONTENT,
+                c.CREATED_DATE
+            FROM COMMENT c
+            JOIN USERS u ON c.MEMBER_ID = u.USER_ID
+            WHERE c.POST_ID = ?
+            ORDER BY c.CREATED_DATE ASC
             `,
             [postId]
         );
