@@ -17,8 +17,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return emailPattern.test(email);
     }
 
+    // 아이디: 영문, 숫자, 기호만 허용 + 정확히 8자리
+    function isValidUserId(userId) {
+        const idPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{8}$/;
+        return idPattern.test(userId);
+    }
+
+    // 비밀번호: 영문, 숫자, 기호만 허용, 길이 제한 없음
+    function isValidPassword(password) {
+        const passwordPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]+$/;
+        return passwordPattern.test(password);
+    }
+
     // 이메일 중복확인 버튼 클릭 시 발생
-    emailBtn.addEventListener("click", async(addEventListener) => {
+    emailBtn.addEventListener("click", async(event) => {
         event.preventDefault();
         
         const email = emailInput.value.trim();
@@ -62,6 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if(userId === "") {
             alert("아이디를 입력해주세요.");
+            userIdInput.focus();
+            return;
+        }
+
+        if (!isValidUserId(userId)) {
+            alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
             userIdInput.focus();
             return;
         }
@@ -132,6 +150,12 @@ document.addEventListener("DOMContentLoaded", () => {
              return;
          }
 
+         if (!isValidUserId(userId)) {
+            alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+            userIdInput.focus();
+            return;
+        }
+
          if (!isIdChecked) {
             alert("아이디 중복확인을 해주세요.");
             userIdBtn.focus();
@@ -144,8 +168,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (password.length < 6) {
-            alert("비밀번호는 6자 이상 입력해주세요.");
+        if (!isValidPassword(password)) {
+            alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
             passwordInput.focus();
             return;
         }
