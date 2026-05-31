@@ -117,6 +117,7 @@ let mockComments = {
 };
 
 const mockScrappedByUser = new Map(); // userId -> Set<postId>
+const mockLikedByUser = new Map(); // userId -> Set<postId>
 
 function getLoginUserId(req) {
     return req.session?.user_id || req.session?.userId || null;
@@ -230,6 +231,7 @@ router.get('/posts', async (req, res) => {
                 p.SEASON,
                 p.CONTENT,
                 p.SCRAP_COUNT,
+                p.LIKE_COUNT,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
                 GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls
             FROM POST p
@@ -247,7 +249,8 @@ router.get('/posts', async (req, res) => {
                 p.VIEW_COUNT,
                 p.SEASON,
                 p.CONTENT,
-                p.SCRAP_COUNT
+                p.SCRAP_COUNT,
+                p.LIKE_COUNT
             ORDER BY p.CREATED_DATE DESC
             LIMIT ? OFFSET ?
             `,
@@ -265,7 +268,7 @@ router.get('/posts', async (req, res) => {
                 season: row.SEASON,
                 viewCount: row.VIEW_COUNT || 0,
                 scrapCount: row.SCRAP_COUNT || 0,
-                likeCount: 0,
+                likeCount: row.LIKE_COUNT || 0,
                 user: {
                     id: row.MEMBER_ID,
                     username: normalizeUsername(row.NAME),
@@ -328,63 +331,165 @@ router.post('/posts/:postId/scrap', async (req, res) => {
         return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
     }
 
-    const connection = await db.getConnection();
+    let connection;
     try {
+        connection = await db.getConnection();
         await connection.beginTransaction();
 
+        const [[post]] = await connection.query(
+            `SELECT POST_ID FROM POST WHERE POST_ID = ?`,
+            [postId]
+        );
+
+        if (!post) {
+            await connection.rollback();
+            return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
+        }
+
         const [[existing]] = await connection.query(
-            `SELECT scrap_id FROM scrap WHERE user_id = ? AND post_id = ?`,
+            `SELECT SCRAP_ID FROM SCRAP WHERE MEMBER_ID = ? AND POST_ID = ?`,
             [userId, postId]
         );
 
         if (existing) {
             await connection.query(
-                `DELETE FROM scrap WHERE user_id = ? AND post_id = ?`,
+                `DELETE FROM SCRAP WHERE MEMBER_ID = ? AND POST_ID = ?`,
                 [userId, postId]
             );
             await connection.query(
-                `UPDATE post SET scrap_count = GREATEST(scrap_count - 1, 0) WHERE post_id = ?`,
+                `UPDATE POST SET SCRAP_COUNT = GREATEST(SCRAP_COUNT - 1, 0) WHERE POST_ID = ?`,
                 [postId]
             );
         } else {
             await connection.query(
-                `INSERT INTO scrap (user_id, post_id, created_date) VALUES (?, ?, NOW())`,
+                `INSERT INTO SCRAP (MEMBER_ID, POST_ID, CREATED_DATE) VALUES (?, ?, NOW())`,
                 [userId, postId]
             );
             await connection.query(
-                `UPDATE post SET scrap_count = scrap_count + 1 WHERE post_id = ?`,
+                `UPDATE POST SET SCRAP_COUNT = SCRAP_COUNT + 1 WHERE POST_ID = ?`,
                 [postId]
             );
         }
 
         const [[row]] = await connection.query(
-            `SELECT scrap_count AS scrapCount FROM post WHERE post_id = ?`,
+            `SELECT SCRAP_COUNT AS scrapCount FROM POST WHERE POST_ID = ?`,
             [postId]
         );
 
         await connection.commit();
         res.json({ scrapped: !existing, scrapCount: row?.scrapCount || 0 });
     } catch (err) {
-        await connection.rollback();
+        if (connection) await connection.rollback();
         console.error('[feed/scrap]', err);
         res.status(500).json({ message: '스크랩 처리 실패' });
     } finally {
-        connection.release();
+        if (connection) connection.release();
     }
 });
 
 // ──────────────────────────────────────────
 // 좋아요 기능
-// 현재 DB에 좋아요 테이블/post.like_count 컬럼이 없어서 제외
-// 프론트에서도 좋아요 버튼은 숨기거나 클릭 이벤트를 주석 처리하는 것을 추천
 // ──────────────────────────────────────────
-/*
+// ──────────────────────────────────────────
+// 좋아요 토글
+// POST /api/feed/posts/:postId/like
+// ──────────────────────────────────────────
 router.post('/posts/:postId/like', async (req, res) => {
-    return res.status(501).json({
-        message: '좋아요 기능은 현재 DB 구조에 없어 구현하지 않았습니다',
-    });
+    const userId = getLoginUserId(req);
+    const postId = Number(req.params.postId);
+
+    if (!userId) {
+        return res.status(401).json({ message: '로그인이 필요합니다' });
+    }
+
+    if (!postId || isNaN(postId)) {
+        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
+    }
+
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const [[post]] = await connection.query(
+            `SELECT POST_ID FROM POST WHERE POST_ID = ?`,
+            [postId]
+        );
+
+        if (!post) {
+            await connection.rollback();
+            return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
+        }
+
+        const [[existing]] = await connection.query(
+            `
+            SELECT LIKE_ID
+            FROM LIKES
+            WHERE MEMBER_ID = ? AND POST_ID = ?
+            `,
+            [userId, postId]
+        );
+
+        if (existing) {
+            await connection.query(
+                `
+                DELETE FROM LIKES
+                WHERE MEMBER_ID = ? AND POST_ID = ?
+                `,
+                [userId, postId]
+            );
+
+            await connection.query(
+                `
+                UPDATE POST
+                SET LIKE_COUNT = GREATEST(LIKE_COUNT - 1, 0)
+                WHERE POST_ID = ?
+                `,
+                [postId]
+            );
+        } else {
+            await connection.query(
+                `
+                INSERT INTO LIKES (MEMBER_ID, POST_ID, CREATED_DATE)
+                VALUES (?, ?, NOW())
+                `,
+                [userId, postId]
+            );
+
+            await connection.query(
+                `
+                UPDATE POST
+                SET LIKE_COUNT = LIKE_COUNT + 1
+                WHERE POST_ID = ?
+                `,
+                [postId]
+            );
+        }
+
+        const [[row]] = await connection.query(
+            `
+            SELECT LIKE_COUNT AS likeCount
+            FROM POST
+            WHERE POST_ID = ?
+            `,
+            [postId]
+        );
+
+        await connection.commit();
+
+        res.json({
+            liked: !existing,
+            likeCount: row?.likeCount || 0,
+        });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error('[feed/like]', err);
+        res.status(500).json({ message: '좋아요 처리 실패' });
+    } finally {
+        if (connection) connection.release();
+    }
 });
-*/
 
 // ──────────────────────────────────────────
 // 댓글 목록 조회
@@ -414,7 +519,7 @@ router.get('/posts/:postId/comments', async (req, res) => {
                 u.NAME,
                 c.CONTENT,
                 c.CREATED_DATE
-            FROM COMMENT c
+            FROM COMMENTS c
             JOIN USERS u ON c.MEMBER_ID = u.USER_ID
             WHERE c.POST_ID = ?
             ORDER BY c.CREATED_DATE ASC
@@ -423,16 +528,16 @@ router.get('/posts/:postId/comments', async (req, res) => {
         );
 
         const comments = rows.map((row) => ({
-            id: row.comment_id,
-            postId: row.post_id,
-            userId: row.user_id,
-            username: normalizeUsername(row.user_name),
+            id: row.COMMENT_ID,
+            postId: row.POST_ID,
+            userId: row.MEMBER_ID,
+            username: normalizeUsername(row.NAME),
 
             // 현재 user 테이블에 profile_image 컬럼이 없어서 빈 문자열 처리
             avatar: '',
 
-            text: row.content,
-            createdAt: row.created_date,
+            text: row.CONTENT,
+            createdAt: row.CREATED_DATE,
         }));
 
         res.json({ comments });
@@ -487,9 +592,19 @@ router.post('/posts/:postId/comments', async (req, res) => {
     }
 
     try {
+
+        const [[post]] = await db.query(
+            `SELECT POST_ID FROM POST WHERE POST_ID = ?`,
+            [postId]
+        );
+
+        if (!post) {
+            return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
+        }
+
         const [result] = await db.query(
             `
-            INSERT INTO \`comment\` (post_id, user_id, content, created_date)
+            INSERT INTO COMMENTS (POST_ID, MEMBER_ID, CONTENT, CREATED_DATE)
             VALUES (?, ?, ?, NOW())
             `,
             [postId, userId, text.trim()]
@@ -550,11 +665,8 @@ router.put('/posts/:postId/comments/:commentId', async (req, res) => {
     try {
         const [result] = await db.query(
             `
-            UPDATE \`comment\`
-            SET content = ?
-            WHERE comment_id = ?
-              AND post_id = ?
-              AND user_id = ?
+            UPDATE COMMENTS SET CONTENT = ?
+            WHERE COMMENT_ID = ? AND POST_ID = ? AND MEMBER_ID = ?
             `,
             [text.trim(), commentId, postId, userId]
         );
@@ -609,10 +721,8 @@ router.delete('/posts/:postId/comments/:commentId', async (req, res) => {
     try {
         const [result] = await db.query(
             `
-            DELETE FROM \`comment\`
-            WHERE comment_id = ?
-              AND post_id = ?
-              AND user_id = ?
+            DELETE FROM COMMENTS
+            WHERE COMMENT_ID = ? AND POST_ID = ? AND MEMBER_ID = ?
             `,
             [commentId, postId, userId]
         );
@@ -663,9 +773,7 @@ router.post('/posts/:postId/report', async (req, res) => {
     try {
         const [[post]] = await db.query(
             `
-            SELECT user_id AS reportedId
-            FROM post
-            WHERE post_id = ?
+            SELECT MEMBER_ID AS reportedId FROM POST WHERE POST_ID = ?
             `,
             [postId]
         );
@@ -682,9 +790,7 @@ router.post('/posts/:postId/report', async (req, res) => {
 
         const [[dup]] = await db.query(
             `
-            SELECT report_id
-            FROM report
-            WHERE reporter_id = ? AND post_id = ?
+            SELECT REPORT_ID FROM REPORT WHERE REPORTER_ID = ? AND POST_ID = ?
             `,
             [reporterId, postId]
         );
@@ -698,14 +804,7 @@ router.post('/posts/:postId/report', async (req, res) => {
 
         const [result] = await db.query(
             `
-            INSERT INTO report (
-                reporter_id,
-                reported_id,
-                post_id,
-                reason,
-                status,
-                created_date
-            )
+            INSERT INTO REPORT (REPORTER_ID, REPORTED_ID, POST_ID, REASON, STATUS, CREATED_DATE)
             VALUES (?, ?, ?, ?, 'pending', NOW())
             `,
             [reporterId, reportedId, postId, fullReason]
