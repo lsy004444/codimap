@@ -91,6 +91,8 @@ window.onload = function() {
 
         }
 
+        window.searchLocation = searchLocation; 
+
         //지도 축소 불가 경고 (zoom_changed는 무조건 레벨이 한번은 바뀌어서 다른거로 대체)
         //오... 다른방법이 없어서  그냥 zoom_changed로 지정
         kakao.maps.event.addListener(map, 'zoom_changed', function() {
@@ -148,13 +150,22 @@ window.onload = function() {
             const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
+
         //세부 동명(ex 돈암2동) 검색 시 기본 동명으로 안내
         function normalizedongName(query) {
-            const match = query.match(/^(.+?)(\d+)(동)$/);
-            if(match) {
-                return match[1] + match[3];
+            const match2 = query.match(/^(.+?)(\d+)(가|나|다)(동)$/);
+            //성수1가동 -> 성수동
+            if(match2) {
+                return match2[1] + match2[4];
             }
             return null;
+            //돈암2동 -> 돈암동
+            const match1 = query.match(/^(.+?)(\d+)(동)$/);
+            if(match1) {
+                return match1[1] + match1[3]; //성수1가동
+            }
+
+            return null
         }
 
         const searchInput = document.querySelector('.search-box input');
