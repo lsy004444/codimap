@@ -483,33 +483,67 @@ body {
     gap: 6px;
 }
 
-.shop-link-btn {
+.og-preview-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 8px 10px;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     text-decoration: none;
     color: var(--text-primary);
-    font-size: 12px;
-    font-family: var(--font-body);
-    cursor: pointer;
     transition: all var(--transition);
-    text-align: left;
+    overflow: hidden;
 }
-.shop-link-btn:hover {
+.og-preview-card:hover {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
     transform: translateX(3px);
 }
-.shop-link-icon { font-size: 14px; flex-shrink: 0; }
-.shop-link-name { font-weight: 600; }
-.shop-link-item { color: var(--text-muted); font-size: 11px; flex: 1; }
-.shop-link-btn:hover .shop-link-item { color: rgba(255,255,255,0.75); }
-.shop-link-arrow { margin-left: auto; opacity: 0.5; font-size: 11px; }
+.og-preview-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    background: var(--border) center/cover no-repeat;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+.og-preview-thumb.has-image { font-size: 0; }
+.og-preview-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.og-preview-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.og-preview-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.og-preview-domain {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.og-preview-card:hover .og-preview-desc,
+.og-preview-card:hover .og-preview-domain { color: rgba(255,255,255,0.75); }
 
 /* 댓글 섹션 */
 .modal-comment-section {

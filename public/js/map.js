@@ -316,7 +316,7 @@ function handleLogout() {
 window.openModal = async function() {
     try {
         const response = await fetch('/api/auth/mypage');
-        const result = await responst.json();
+        const result = await response.json();
         if(!result.success) {
             showToast('🔒 로그인이 필요합니다');
             return;
