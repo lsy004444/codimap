@@ -83,6 +83,7 @@ router.get('/posts', async (req, res) => {
                 p.CONTENT,
                 p.SCRAP_COUNT,
                 p.LIKE_COUNT,
+                u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
                 GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls
             FROM POST p
@@ -101,7 +102,8 @@ router.get('/posts', async (req, res) => {
                 p.SEASON,
                 p.CONTENT,
                 p.SCRAP_COUNT,
-                p.LIKE_COUNT
+                p.LIKE_COUNT,
+                u.ID
             ORDER BY p.CREATED_DATE DESC
             LIMIT ? OFFSET ?
             `,
@@ -123,6 +125,7 @@ router.get('/posts', async (req, res) => {
                 user: {
                     id: row.MEMBER_ID,
                     username: normalizeUsername(row.NAME),
+                    profileId: row.PROFILE_ID,
                     avatar: '',
                 },
                 images,
