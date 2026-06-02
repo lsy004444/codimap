@@ -100,7 +100,7 @@ async function loadMorePosts() {
                 viewCount: p.VIEW_COUNT || 0,
                 scrapCount: p.SCRAP_COUNT || 0,
                 likeCount: p.LIKE_COUNT || 0,
-                user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', avatar: '' },
+                user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', profileId: p.PROFILE_ID, avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
                 shops: p.LINK_URLS
                     ? p.LINK_URLS.split('||').map((url, index) => ({
