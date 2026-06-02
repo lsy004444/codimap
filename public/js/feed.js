@@ -536,7 +536,12 @@ $('report-submit-btn').addEventListener('click', async () => {
             reportOverlay.classList.add('hidden');
             return;
         }
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            const { message } = await res.json().catch(() => ({}));
+            showToast(message || '신고 처리에 실패했습니다');
+            reportOverlay.classList.add('hidden');
+            return;
+        }
 
         reportOverlay.classList.add('hidden');
         const checkedEl = document.querySelector('input[name="report-reason"]:checked');
@@ -583,9 +588,22 @@ function formatTime(iso) {
 }
 
 // ──────────────────────────────────────────
+// 내 좋아요·스크랩 초기 로드
+// ──────────────────────────────────────────
+async function loadMyInteractions() {
+    try {
+        const res = await fetch('/api/feed/my-interactions');
+        if (!res.ok) return;
+        const { likedIds, scrappedIds } = await res.json();
+        likedIds.forEach(id => state.likedIds.add(id));
+        scrappedIds.forEach(id => state.scrappedIds.add(id));
+    } catch { /* 비로그인 시 무시 */ }
+}
+
+// ──────────────────────────────────────────
 // 초기화
 // ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const region = urlParams.get('region');
     const season = urlParams.get('season');
@@ -599,11 +617,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     state.addressType = type;
     state.currentGu = gu ? decodeURIComponent(gu) : null;
-    
 
     const initialRegion = region ? decodeURIComponent(region) : '전국';
     const initialSeason = season || 'spring';
 
+    await loadMyInteractions();   // 카드 렌더링 전에 상태 복원
     initInfiniteScroll();
     resetFeed(initialRegion, initialSeason);
 });

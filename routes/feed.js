@@ -590,6 +590,29 @@ router.post('/posts/:postId/report', async (req, res) => {
 });
 
 // ──────────────────────────────────────────
+// 내 좋아요·스크랩 ID 목록
+// GET /api/feed/my-interactions
+// ──────────────────────────────────────────
+router.get('/my-interactions', async (req, res) => {
+    const userId = getLoginUserId(req);
+    if (!userId) return res.json({ likedIds: [], scrappedIds: [] });
+
+    try {
+        const [[likes], [scraps]] = await Promise.all([
+            db.query('SELECT POST_ID FROM LIKES WHERE MEMBER_ID = ?', [userId]),
+            db.query('SELECT POST_ID FROM SCRAP WHERE MEMBER_ID = ?', [userId]),
+        ]);
+        res.json({
+            likedIds: likes.map(r => r.POST_ID),
+            scrappedIds: scraps.map(r => r.POST_ID),
+        });
+    } catch (err) {
+        console.error('[feed/my-interactions]', err);
+        res.json({ likedIds: [], scrappedIds: [] });
+    }
+});
+
+// ──────────────────────────────────────────
 // url 미리보기
 // GET /api/feed/og-preview?url=...
 // ──────────────────────────────────────────
