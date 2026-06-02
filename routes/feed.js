@@ -1,6 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const axios = require('axios');
+
+const ogCache = new Map();
+
+function parseOgTags(html) {
+    const head = html.slice(0, 8000);
+    const get = (attr, name) => {
+        const p1 = new RegExp(`<meta[^>]+${attr}=["']${name}["'][^>]+content=["']([^"']*?)["']`, 'i');
+        const p2 = new RegExp(`<meta[^>]+content=["']([^"']*?)["'][^>]+${attr}=["']${name}["']`, 'i');
+        return (head.match(p1) || head.match(p2) || [])[1]?.trim() || '';
+    };
+    const titleM = head.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return {
+        title: get('property', 'og:title') || titleM?.[1]?.trim() || '',
+        image: get('property', 'og:image') || '',
+        description: get('property', 'og:description') || get('name', 'description') || '',
+    };
+}
 
 
 function getLoginUserId(req) {
@@ -568,6 +586,38 @@ router.post('/posts/:postId/report', async (req, res) => {
     } catch (err) {
         console.error('[feed/report]', err);
         res.status(500).json({ message: '신고 처리 실패' });
+    }
+});
+
+// ──────────────────────────────────────────
+// url 미리보기
+// GET /api/feed/og-preview?url=...
+// ──────────────────────────────────────────
+router.get('/og-preview', async (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url required' });
+
+    if (ogCache.has(url)) return res.json(ogCache.get(url));
+
+    let domain = url;
+    try { domain = new URL(url).hostname; } catch { /* ignore */ }
+
+    try {
+        const response = await axios.get(url, {
+            timeout: 4000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; codimap/1.0)',
+                Accept: 'text/html',
+            },
+            maxRedirects: 3,
+            responseType: 'text',
+        });
+        const og = parseOgTags(String(response.data));
+        const result = { title: og.title || domain, image: og.image, description: og.description, domain };
+        ogCache.set(url, result);
+        res.json(result);
+    } catch {
+        res.json({ title: domain, image: '', description: '', domain });
     }
 });
 

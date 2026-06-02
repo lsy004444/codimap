@@ -294,14 +294,40 @@ function openPostModal(post) {
 
     // 쇼핑 링크
     const shopEl = $('modal-shop-links');
-    shopEl.innerHTML = (post.shops || []).map(s => `
-        <a class="shop-link-btn" href="${s.url}" target="_blank" rel="noopener">
-            <span class="shop-link-icon">🛒</span>
-            <span class="shop-link-name">${s.name}</span>
-            <span class="shop-link-item">${s.item}</span>
-            <span class="shop-link-arrow">↗</span>
-        </a>
-    `).join('');
+    const shops = post.shops || [];
+    shopEl.innerHTML = shops.map((s, i) => {
+        let hostname = s.url;
+        try { hostname = new URL(s.url).hostname; } catch { /* ignore */ }
+        return `
+        <a class="og-preview-card" href="${escHtml(s.url)}" target="_blank" rel="noopener" data-og="${i}">
+            <div class="og-preview-thumb">🛒</div>
+            <div class="og-preview-content">
+                <div class="og-preview-title">${escHtml(hostname)}</div>
+                <div class="og-preview-desc"></div>
+                <div class="og-preview-domain">${escHtml(hostname)} ↗</div>
+            </div>
+        </a>`;
+    }).join('');
+
+    const currentPostId = post.id;
+    shops.forEach((s, i) => {
+        fetch(`/api/feed/og-preview?url=${encodeURIComponent(s.url)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(og => {
+                if (!og || state.currentPost?.id !== currentPostId) return;
+                const card = shopEl.querySelector(`[data-og="${i}"]`);
+                if (!card) return;
+                if (og.title) card.querySelector('.og-preview-title').textContent = og.title;
+                if (og.description) card.querySelector('.og-preview-desc').textContent = og.description;
+                if (og.image) {
+                    const thumb = card.querySelector('.og-preview-thumb');
+                    thumb.style.backgroundImage = `url('${og.image}')`;
+                    thumb.textContent = '';
+                    thumb.classList.add('has-image');
+                }
+            })
+            .catch(() => {});
+    });
 
     // 댓글 로드
     loadComments(post.id);
