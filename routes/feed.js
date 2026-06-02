@@ -1,126 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const axios = require('axios');
 
-// ──────────────────────────────────────────
-// 테스트용 MOCK 모드
-// true  = DB에 접근하지 않고 아래 mock 데이터로 화면/기능 확인
-// false = 실제 MySQL DB 사용
-// 테스트 끝나면 반드시 false로 바꾸기
-// ──────────────────────────────────────────
-const USE_MOCK_FEED = false;
+const ogCache = new Map();
 
-// ──────────────────────────────────────────
-// 테스트용 MOCK 데이터
-// DB에 INSERT하지 않고 피드 화면, 상세 모달, 댓글, 스크랩, 신고 확인용
-// 서버 재시작 시 mock 댓글/스크랩 상태는 초기화됨
-// ──────────────────────────────────────────
-const mockPosts = [
-    {
-        id: 1,
-        desc: 'DB에 넣지 않고 확인하는 테스트 게시물입니다 🌸',
-        region: '서울',
-        season: '봄',
-        viewCount: 0,
-        scrapCount: 3,
-        likeCount: 0, // 현재 DB에 좋아요 기능이 없어서 임시 0
-        user: {
-            id: 1,
-            username: '@testuser',
-            avatar: '',
-        },
-        images: [
-            'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=800',
-            'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800',
-        ],
-        shops: [
-            {
-                name: '쇼핑 링크',
-                item: '테스트 링크 1',
-                url: 'https://www.musinsa.com',
-            },
-        ],
-    },
-    {
-        id: 2,
-        desc: '두 번째 테스트 게시물입니다. 카드 클릭, 이미지, 무한스크롤 확인용이에요.',
-        region: '부산',
-        season: '여름',
-        viewCount: 0,
-        scrapCount: 1,
-        likeCount: 0, // 현재 DB에 좋아요 기능이 없어서 임시 0
-        user: {
-            id: 2,
-            username: '@sampleuser',
-            avatar: '',
-        },
-        images: [
-            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800',
-        ],
-        shops: [],
-    },
-    {
-        id: 3,
-        desc: '가을 필터 확인용 테스트 게시물입니다 🍂',
-        region: '서울',
-        season: '가을',
-        viewCount: 0,
-        scrapCount: 0,
-        likeCount: 0, // 현재 DB에 좋아요 기능이 없어서 임시 0
-        user: {
-            id: 3,
-            username: '@falluser',
-            avatar: '',
-        },
-        images: [
-            'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800',
-        ],
-        shops: [
-            {
-                name: '쇼핑 링크',
-                item: '테스트 링크 1',
-                url: 'https://www.musinsa.com',
-            },
-            {
-                name: '쇼핑 링크',
-                item: '테스트 링크 2',
-                url: 'https://www.zigzag.kr',
-            },
-        ],
-    },
-];
+function parseOgTags(html) {
+    const head = html.slice(0, 8000);
+    const get = (attr, name) => {
+        const p1 = new RegExp(`<meta[^>]+${attr}=["']${name}["'][^>]+content=["']([^"']*?)["']`, 'i');
+        const p2 = new RegExp(`<meta[^>]+content=["']([^"']*?)["'][^>]+${attr}=["']${name}["']`, 'i');
+        return (head.match(p1) || head.match(p2) || [])[1]?.trim() || '';
+    };
+    const titleM = head.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return {
+        title: get('property', 'og:title') || titleM?.[1]?.trim() || '',
+        image: get('property', 'og:image') || '',
+        description: get('property', 'og:description') || get('name', 'description') || '',
+    };
+}
 
-let mockComments = {
-    1: [
-        {
-            id: 1,
-            postId: 1,
-            userId: 1,
-            username: '@testuser',
-            avatar: '',
-            text: '테스트 댓글입니다!',
-            createdAt: new Date().toISOString(),
-        },
-    ],
-    2: [
-        {
-            id: 2,
-            postId: 2,
-            userId: 2,
-            username: '@sampleuser',
-            avatar: '',
-            text: '두 번째 게시물 댓글 확인용입니다.',
-            createdAt: new Date().toISOString(),
-        },
-    ],
-    3: [],
-};
-
-const mockScrappedByUser = new Map(); // userId -> Set<postId>
-const mockLikedByUser = new Map(); // userId -> Set<postId>
 
 function getLoginUserId(req) {
-    return req.session?.user_id || req.session?.userId || null;
+    return req.session?.user?.userId || null;
 }
 
 const SEASON_MAP = {
@@ -129,10 +31,6 @@ const SEASON_MAP = {
     fall: '가을',
     winter: '겨울',
 };
-
-function convertSeason(season) {
-    return SEASON_MAP[season] || season;
-}
 
 function getSeasonValues(season) {
     if (!season) return [];
@@ -150,41 +48,12 @@ function splitGroupConcat(value) {
     return value.split('||').filter(Boolean);
 }
 
-function filterMockPosts(query) {
-    const page = Number(query.page || 0);
-    const size = Number(query.size || 9);
-    const start = page * size;
-    const end = start + size;
-
-    const region = query.region;
-    const season = query.season ? convertSeason(query.season) : null;
-
-    let filtered = [...mockPosts];
-
-    if (region && region !== '전국') {
-        filtered = filtered.filter((post) => post.region === region);
-    }
-
-    if (season) {
-        filtered = filtered.filter((post) => post.season === season);
-    }
-
-    return {
-        posts: filtered.slice(start, end),
-        total: filtered.length,
-    };
-}
 
 // ──────────────────────────────────────────
 // 게시물 목록 조회
 // GET /api/feed/posts?page=0&size=9&region=서울&season=spring
 // ──────────────────────────────────────────
 router.get('/posts', async (req, res) => {
-    if (USE_MOCK_FEED) {
-        const { posts, total } = filterMockPosts(req.query);
-        return res.json({ posts, total });
-    }
-
     const { region, season, page = 0, size = 9 } = req.query;
     const limit = Number.parseInt(size, 10) || 9;
     const offset = (Number.parseInt(page, 10) || 0) * limit;
@@ -232,6 +101,7 @@ router.get('/posts', async (req, res) => {
                 p.CONTENT,
                 p.SCRAP_COUNT,
                 p.LIKE_COUNT,
+                u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
                 GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls
             FROM POST p
@@ -250,7 +120,8 @@ router.get('/posts', async (req, res) => {
                 p.SEASON,
                 p.CONTENT,
                 p.SCRAP_COUNT,
-                p.LIKE_COUNT
+                p.LIKE_COUNT,
+                u.ID
             ORDER BY p.CREATED_DATE DESC
             LIMIT ? OFFSET ?
             `,
@@ -272,6 +143,7 @@ router.get('/posts', async (req, res) => {
                 user: {
                     id: row.MEMBER_ID,
                     username: normalizeUsername(row.NAME),
+                    profileId: row.PROFILE_ID,
                     avatar: '',
                 },
                 images,
@@ -298,36 +170,11 @@ router.post('/posts/:postId/scrap', async (req, res) => {
     const userId = getLoginUserId(req);
     const postId = Number(req.params.postId);
 
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        const mockUserId = userId ?? 1;
-        const post = mockPosts.find((p) => p.id === postId);
-
-        if (!post) {
-            return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
-        }
-
-        if (!mockScrappedByUser.has(mockUserId)) {
-            mockScrappedByUser.set(mockUserId, new Set());
-        }
-        const userScraps = mockScrappedByUser.get(mockUserId);
-
-        if (userScraps.has(postId)) {
-            userScraps.delete(postId);
-            post.scrapCount = Math.max((post.scrapCount || 0) - 1, 0);
-            return res.json({ scrapped: false, scrapCount: post.scrapCount });
-        }
-
-        userScraps.add(postId);
-        post.scrapCount = (post.scrapCount || 0) + 1;
-        return res.json({ scrapped: true, scrapCount: post.scrapCount });
-    }
-
     if (!userId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
     }
 
-    if (!postId) {
+    if (!postId || isNaN(postId)) {
         return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
     }
 
@@ -496,16 +343,10 @@ router.post('/posts/:postId/like', async (req, res) => {
 // GET /api/feed/posts/:postId/comments
 // ──────────────────────────────────────────
 router.get('/posts/:postId/comments', async (req, res) => {
+    const loginUserId = getLoginUserId(req);
     const postId = Number(req.params.postId);
 
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        return res.json({
-            comments: mockComments[postId] || [],
-        });
-    }
-
-    if (!postId) {
+    if (!postId || isNaN(postId)) {
         return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
     }
 
@@ -532,12 +373,10 @@ router.get('/posts/:postId/comments', async (req, res) => {
             postId: row.POST_ID,
             userId: row.MEMBER_ID,
             username: normalizeUsername(row.NAME),
-
-            // 현재 user 테이블에 profile_image 컬럼이 없어서 빈 문자열 처리
             avatar: '',
-
             text: row.CONTENT,
             createdAt: row.CREATED_DATE,
+            isOwn: loginUserId && Number(row.MEMBER_ID) === Number(loginUserId),
         }));
 
         res.json({ comments });
@@ -561,38 +400,17 @@ router.post('/posts/:postId/comments', async (req, res) => {
         return res.status(400).json({ message: '댓글 내용을 입력하세요' });
     }
 
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        const mockUserId = userId ?? 1;
-        const newComment = {
-            id: Date.now(),
-            postId,
-            userId: mockUserId,
-            username: '@testuser',
-            avatar: '',
-            text: text.trim(),
-            createdAt: new Date().toISOString(),
-        };
-
-        if (!mockComments[postId]) {
-            mockComments[postId] = [];
-        }
-
-        mockComments[postId].push(newComment);
-
-        return res.status(201).json(newComment);
+    if (!postId || isNaN(postId)) {
+        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
     }
 
     if (!userId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
     }
 
-    if (!postId) {
-        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
-    }
+
 
     try {
-
         const [[post]] = await db.query(
             `SELECT POST_ID FROM POST WHERE POST_ID = ?`,
             [postId]
@@ -635,25 +453,6 @@ router.put('/posts/:postId/comments/:commentId', async (req, res) => {
         return res.status(400).json({ message: '댓글 내용을 입력하세요' });
     }
 
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        const mockUserId = userId ?? 1;
-        const comments = mockComments[postId] || [];
-        const comment = comments.find((c) => c.id === commentId);
-
-        if (!comment) {
-            return res.status(404).json({ message: '댓글을 찾을 수 없습니다' });
-        }
-
-        if (comment.userId !== mockUserId) {
-            return res.status(403).json({ message: '수정 권한이 없습니다' });
-        }
-
-        comment.text = text.trim();
-
-        return res.json({ message: '댓글 수정 성공' });
-    }
-
     if (!userId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
     }
@@ -690,25 +489,6 @@ router.delete('/posts/:postId/comments/:commentId', async (req, res) => {
     const userId = getLoginUserId(req);
     const postId = Number(req.params.postId);
     const commentId = Number(req.params.commentId);
-
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        const mockUserId = userId ?? 1;
-        const comments = mockComments[postId] || [];
-        const commentIndex = comments.findIndex((c) => c.id === commentId);
-
-        if (commentIndex === -1) {
-            return res.status(404).json({ message: '댓글을 찾을 수 없습니다' });
-        }
-
-        if (comments[commentIndex].userId !== mockUserId) {
-            return res.status(403).json({ message: '삭제 권한이 없습니다' });
-        }
-
-        comments.splice(commentIndex, 1);
-
-        return res.json({ message: '댓글 삭제 성공' });
-    }
 
     if (!userId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
@@ -748,26 +528,16 @@ router.post('/posts/:postId/report', async (req, res) => {
     const postId = Number(req.params.postId);
     const { reason, detail } = req.body;
 
-    if (!reason) {
-        return res.status(400).json({ message: '신고 사유를 선택하세요' });
-    }
-
-    // ── 테스트용 MOCK 응답: DB에 접근하지 않음 ──
-    if (USE_MOCK_FEED) {
-        return res.status(201).json({
-            message: '신고 접수 성공',
-            reportId: Date.now(),
-            reason,
-            detail: detail || '',
-        });
-    }
-
     if (!reporterId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
     }
 
-    if (!postId) {
+    if (!postId || isNaN(postId)) {
         return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
+    }
+
+    if (!reason) {
+        return res.status(400).json({ message: '신고 사유를 선택하세요' });
     }
 
     try {
@@ -799,7 +569,6 @@ router.post('/posts/:postId/report', async (req, res) => {
             return res.status(409).json({ message: '이미 신고한 게시물입니다' });
         }
 
-        // 현재 report 테이블에는 detail 컬럼이 없어서 reason에 합쳐 저장
         const fullReason = detail?.trim() ? `${reason} - ${detail.trim()}` : reason;
 
         const [result] = await db.query(
@@ -817,6 +586,61 @@ router.post('/posts/:postId/report', async (req, res) => {
     } catch (err) {
         console.error('[feed/report]', err);
         res.status(500).json({ message: '신고 처리 실패' });
+    }
+});
+
+// ──────────────────────────────────────────
+// 내 좋아요·스크랩 ID 목록
+// GET /api/feed/my-interactions
+// ──────────────────────────────────────────
+router.get('/my-interactions', async (req, res) => {
+    const userId = getLoginUserId(req);
+    if (!userId) return res.json({ likedIds: [], scrappedIds: [] });
+
+    try {
+        const [[likes], [scraps]] = await Promise.all([
+            db.query('SELECT POST_ID FROM LIKES WHERE MEMBER_ID = ?', [userId]),
+            db.query('SELECT POST_ID FROM SCRAP WHERE MEMBER_ID = ?', [userId]),
+        ]);
+        res.json({
+            likedIds: likes.map(r => r.POST_ID),
+            scrappedIds: scraps.map(r => r.POST_ID),
+        });
+    } catch (err) {
+        console.error('[feed/my-interactions]', err);
+        res.json({ likedIds: [], scrappedIds: [] });
+    }
+});
+
+// ──────────────────────────────────────────
+// url 미리보기
+// GET /api/feed/og-preview?url=...
+// ──────────────────────────────────────────
+router.get('/og-preview', async (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url required' });
+
+    if (ogCache.has(url)) return res.json(ogCache.get(url));
+
+    let domain = url;
+    try { domain = new URL(url).hostname; } catch { /* ignore */ }
+
+    try {
+        const response = await axios.get(url, {
+            timeout: 4000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; codimap/1.0)',
+                Accept: 'text/html',
+            },
+            maxRedirects: 3,
+            responseType: 'text',
+        });
+        const og = parseOgTags(String(response.data));
+        const result = { title: og.title || domain, image: og.image, description: og.description, domain };
+        ogCache.set(url, result);
+        res.json(result);
+    } catch {
+        res.json({ title: domain, image: '', description: '', domain });
     }
 });
 

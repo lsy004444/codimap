@@ -89,7 +89,7 @@ async function loadMorePosts() {
                 url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
             }
             const res = await fetch(url);
-            console.log('API 응답 상태: , res.status, url');
+            console.log('API 응답 상태: ', res.status, url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const newPosts = data.map(p => ({
@@ -99,10 +99,16 @@ async function loadMorePosts() {
                 season: p.SEASON,
                 viewCount: p.VIEW_COUNT || 0,
                 scrapCount: p.SCRAP_COUNT || 0,
-                likeCount: 0,
-                user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', avatar: '' },
+                likeCount: p.LIKE_COUNT || 0,
+                user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', profileId: p.PROFILE_ID, avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
-                shops: [],
+                shops: p.LINK_URLS
+                    ? p.LINK_URLS.split('||').map((url, index) => ({
+                        name: `링크 ${index + 1}`,
+                        item: url,
+                        url,
+                    }))
+                    : [],
             }));
             state.hasMore = false;
             state.posts.push(...newPosts);
@@ -271,7 +277,7 @@ function openPostModal(post) {
     usernameEl.textContent = post.user.username;
     $('modal-user-region').textContent = `${post.region} · ${seasonName(post.season)}`;
 
-    const goToProfile = () => { window.location.href = `/mypage?user_id=${post.user.id}`; };
+    const goToProfile = () => { window.location.href = `/mypage?profileId=${post.user.profileId}`; };
     avatarEl.style.cursor   = 'pointer';
     usernameEl.style.cursor = 'pointer';
     avatarEl.onclick   = goToProfile;
@@ -288,14 +294,40 @@ function openPostModal(post) {
 
     // 쇼핑 링크
     const shopEl = $('modal-shop-links');
-    shopEl.innerHTML = (post.shops || []).map(s => `
-        <a class="shop-link-btn" href="${s.url}" target="_blank" rel="noopener">
-            <span class="shop-link-icon">🛒</span>
-            <span class="shop-link-name">${s.name}</span>
-            <span class="shop-link-item">${s.item}</span>
-            <span class="shop-link-arrow">↗</span>
-        </a>
-    `).join('');
+    const shops = post.shops || [];
+    shopEl.innerHTML = shops.map((s, i) => {
+        let hostname = s.url;
+        try { hostname = new URL(s.url).hostname; } catch { /* ignore */ }
+        return `
+        <a class="og-preview-card" href="${escHtml(s.url)}" target="_blank" rel="noopener" data-og="${i}">
+            <div class="og-preview-thumb">🛒</div>
+            <div class="og-preview-content">
+                <div class="og-preview-title">${escHtml(hostname)}</div>
+                <div class="og-preview-desc"></div>
+                <div class="og-preview-domain">${escHtml(hostname)} ↗</div>
+            </div>
+        </a>`;
+    }).join('');
+
+    const currentPostId = post.id;
+    shops.forEach((s, i) => {
+        fetch(`/api/feed/og-preview?url=${encodeURIComponent(s.url)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(og => {
+                if (!og || state.currentPost?.id !== currentPostId) return;
+                const card = shopEl.querySelector(`[data-og="${i}"]`);
+                if (!card) return;
+                if (og.title) card.querySelector('.og-preview-title').textContent = og.title;
+                if (og.description) card.querySelector('.og-preview-desc').textContent = og.description;
+                if (og.image) {
+                    const thumb = card.querySelector('.og-preview-thumb');
+                    thumb.style.backgroundImage = `url('${og.image}')`;
+                    thumb.textContent = '';
+                    thumb.classList.add('has-image');
+                }
+            })
+            .catch(() => {});
+    });
 
     // 댓글 로드
     loadComments(post.id);
@@ -373,8 +405,7 @@ function buildCommentEl(postId, comment) {
     wrap.className = 'comment-item';
     wrap.dataset.id = comment.id;
 
-    // window.__userId 는 서버에서 로그인 세션 연동 시 주입 (현재는 undefined)
-    const isOwn = window.__userId && comment.userId === window.__userId;
+    const isOwn = Boolean(comment.isOwn);
 
     wrap.innerHTML = `
         <div class="comment-avatar" style="background-image:url('${comment.avatar}')"></div>
@@ -505,10 +536,16 @@ $('report-submit-btn').addEventListener('click', async () => {
             reportOverlay.classList.add('hidden');
             return;
         }
-        if (!res.ok) throw new Error();
+        if (!res.ok) {
+            const { message } = await res.json().catch(() => ({}));
+            showToast(message || '신고 처리에 실패했습니다');
+            reportOverlay.classList.add('hidden');
+            return;
+        }
 
         reportOverlay.classList.add('hidden');
-        document.querySelector('input[name="report-reason"]:checked').checked = false;
+        const checkedEl = document.querySelector('input[name="report-reason"]:checked');
+        if (checkedEl) checkedEl.checked = false;
         $('report-detail').value = '';
         showToast('신고가 접수됐습니다. 검토 후 처리됩니다.');
     } catch {
@@ -551,9 +588,22 @@ function formatTime(iso) {
 }
 
 // ──────────────────────────────────────────
+// 내 좋아요·스크랩 초기 로드
+// ──────────────────────────────────────────
+async function loadMyInteractions() {
+    try {
+        const res = await fetch('/api/feed/my-interactions');
+        if (!res.ok) return;
+        const { likedIds, scrappedIds } = await res.json();
+        likedIds.forEach(id => state.likedIds.add(id));
+        scrappedIds.forEach(id => state.scrappedIds.add(id));
+    } catch { /* 비로그인 시 무시 */ }
+}
+
+// ──────────────────────────────────────────
 // 초기화
 // ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const region = urlParams.get('region');
     const season = urlParams.get('season');
@@ -567,11 +617,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     state.addressType = type;
     state.currentGu = gu ? decodeURIComponent(gu) : null;
-    
 
     const initialRegion = region ? decodeURIComponent(region) : '전국';
     const initialSeason = season || 'spring';
 
+    await loadMyInteractions();   // 카드 렌더링 전에 상태 복원
     initInfiniteScroll();
     resetFeed(initialRegion, initialSeason);
 });

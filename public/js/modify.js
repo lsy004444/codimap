@@ -1,22 +1,57 @@
+// 아이디: 영문, 숫자, 기호만 허용 + 정확히 8자리
+function isValidUserId(userId) {
+    const idPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{8}$/;
+    return idPattern.test(userId);
+}
+
+// 비밀번호: 영문, 숫자, 기호만 허용 + 길이 제한 없음
+function isValidPassword(password) {
+    const passwordPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]+$/;
+    return passwordPattern.test(password);
+}
+
 // 변경하기 버튼을 누를 경우 발생하는 이벤트
-function completeModify() {
-    const userId = document.getElementById("userId").value;
-    const password = document.getElementById("password").value;
+async function completeModify() {
+    const userId = document.getElementById("userId").value.trim();
+    const password = document.getElementById("password").value.trim();
     
-    if(!userId) {
-        alert("변경할 아이디를 입력해주세요.");
+    // 아이디, 비밀번호 둘 다 비어있을 경우
+    if(!userId && !password) {
+        alert("변경할 아이디 또는 비밀번호를 입력해주세요.");
         return;
     }
 
-    if(!password)
-    {
-        alert("변경할 비밀번호를 입력해주세요.");
+    if (userId && !isValidUserId(userId)) {
+        alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+        return;
+    }
+
+    if (password && !isValidPassword(password)) {
+        alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
         return;
     }
     
-    // 아이디 or 비밀번호 수정 후 팝업 창 띄움
-    alert("회원정보 수정이 완료되었습니다!");
- 
-    // 변경하기 버튼 누르면 마이페이지 화면으로 이동
-    window.location.href = "/mypage";
+   try {
+    const response = await fetch("/api/auth/modify", {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            newId: userId,
+            newPassword: password
+        })
+    });
+
+    const result = await response.json();
+
+    alert(result.message);
+
+    if(result.success) {
+        window.location.href = `/mypage?profileId=${encodeURIComponent(result.profileId)}`;
+    }
+   } catch(error) {
+    console.error(error);
+    alert("회원정보 수정 중 오류가 발생했습니다.");
+   }
 }

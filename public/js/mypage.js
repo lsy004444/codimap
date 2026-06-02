@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async() => {
         const currentProfileId = urlProfileId || loginUserProfileId;
 
         if(idInput) {
-            idInput.value = currentProfileId;
+            idInput.value = `@${currentProfileId}`;
         }
 
         // URL의 사용자 아이디와 로그인한 사용자 아이디가 다르면 프로필 수정 버튼 숨김
