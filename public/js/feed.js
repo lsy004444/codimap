@@ -89,7 +89,7 @@ async function loadMorePosts() {
                 url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
             }
             const res = await fetch(url);
-            console.log('API 응답 상태: , res.status, url');
+            console.log('API 응답 상태:', res.status, url);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const newPosts = data.map(p => ({
@@ -99,7 +99,7 @@ async function loadMorePosts() {
                 season: p.SEASON,
                 viewCount: p.VIEW_COUNT || 0,
                 scrapCount: p.SCRAP_COUNT || 0,
-                likeCount: 0,
+                likeCount: p.LIKE_COUNT || 0,
                 user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
                 shops: [],
@@ -508,7 +508,8 @@ $('report-submit-btn').addEventListener('click', async () => {
         if (!res.ok) throw new Error();
 
         reportOverlay.classList.add('hidden');
-        document.querySelector('input[name="report-reason"]:checked').checked = false;
+        const checkedEl = document.querySelector('input[name="report-reason"]:checked');
+        if (checkedEl) checkedEl.checked = false;
         $('report-detail').value = '';
         showToast('신고가 접수됐습니다. 검토 후 처리됩니다.');
     } catch {
