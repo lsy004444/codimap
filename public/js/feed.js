@@ -89,7 +89,11 @@ async function loadMorePosts() {
                 url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
             }
             const res = await fetch(url);
+<<<<<<< HEAD
             console.log('API 응답 상태:', res.status, url);
+=======
+            console.log('API 응답 상태: ', res.status, url);
+>>>>>>> 252e761fc46e7ac3bc2d745ab11583c9b6da09fb
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const newPosts = data.map(p => ({
