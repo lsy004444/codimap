@@ -4,7 +4,7 @@ const db = require('../config/db');
 
 
 function getLoginUserId(req) {
-    return req.session?.user_id || req.session?.userId || null;
+    return req.session?.user?.userId || null;
 }
 
 const SEASON_MAP = {
@@ -380,13 +380,15 @@ router.post('/posts/:postId/comments', async (req, res) => {
         return res.status(400).json({ message: '댓글 내용을 입력하세요' });
     }
 
+    if (!postId || isNaN(postId)) {
+        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
+    }
+
     if (!userId) {
         return res.status(401).json({ message: '로그인이 필요합니다' });
     }
 
-    if (!postId || isNaN(postId)) {
-        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
-    }
+
 
     try {
         const [[post]] = await db.query(
