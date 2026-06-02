@@ -13,24 +13,28 @@ router.get('/nearby', async(req, res) => {
         if(gu) {
             query = `
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
-                u.NAME,
-                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS
+                u.NAME, u.ID AS PROFILE_ID,
+                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
                 JOIN USERS u ON p.MEMBER_ID = u.USER_ID
                 LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
+                LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
                 WHERE r.COUNTRY = ?
             `;
             params = [gu];
         } else {
             query = `
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
-                u.NAME,
-                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS
+                u.NAME, u.ID AS PROFILE_ID,
+                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
                 JOIN USERS u ON p.MEMBER_ID = u.USER_ID
                 LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
+                LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
                 WHERE r.LATITUDE BETWEEN ? AND ?
                 AND r.LONGITUDE BETWEEN ? AND ?
             `;
@@ -53,7 +57,7 @@ router.get('/nearby', async(req, res) => {
             params.push(seasonMap[season] || season);
         }
 
-        query += ' GROUP BY p.POST_ID, r.REGION_NAME, r.LATITUDE, r.LONGITUDE, u.NAME';
+        query += ' GROUP BY p.POST_ID, r.REGION_NAME, r.LATITUDE, r.LONGITUDE, u.NAME, u.ID';
 
         const [rows] = await db.query(query, params);
         res.json(rows);
