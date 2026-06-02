@@ -102,7 +102,13 @@ async function loadMorePosts() {
                 likeCount: p.LIKE_COUNT || 0,
                 user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
-                shops: [],
+                shops: p.LINK_URLS
+                    ? p.LINK_URLS.split('||').map((url, index) => ({
+                        name: `링크 ${index + 1}`,
+                        item: url,
+                        url,
+                    }))
+                    : [],
             }));
             state.hasMore = false;
             state.posts.push(...newPosts);
@@ -373,8 +379,7 @@ function buildCommentEl(postId, comment) {
     wrap.className = 'comment-item';
     wrap.dataset.id = comment.id;
 
-    // window.__userId 는 서버에서 로그인 세션 연동 시 주입 (현재는 undefined)
-    const isOwn = window.__userId && comment.userId === window.__userId;
+    const isOwn = Boolean(comment.isOwn);
 
     wrap.innerHTML = `
         <div class="comment-avatar" style="background-image:url('${comment.avatar}')"></div>
