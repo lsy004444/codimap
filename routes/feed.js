@@ -325,6 +325,7 @@ router.post('/posts/:postId/like', async (req, res) => {
 // GET /api/feed/posts/:postId/comments
 // ──────────────────────────────────────────
 router.get('/posts/:postId/comments', async (req, res) => {
+    const loginUserId = getLoginUserId(req);
     const postId = Number(req.params.postId);
 
     if (!postId || isNaN(postId)) {
@@ -354,12 +355,10 @@ router.get('/posts/:postId/comments', async (req, res) => {
             postId: row.POST_ID,
             userId: row.MEMBER_ID,
             username: normalizeUsername(row.NAME),
-
-            // 현재 user 테이블에 profile_image 컬럼이 없어서 빈 문자열 처리
             avatar: '',
-
             text: row.CONTENT,
             createdAt: row.CREATED_DATE,
+            isOwn: loginUserId && Number(row.MEMBER_ID) === Number(loginUserId),
         }));
 
         res.json({ comments });
