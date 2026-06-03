@@ -1,5 +1,18 @@
 const loginbtn=document.getElementById('login');
 
+window.showToast = function(message) {
+    const toast = document.getElementById("login-toast");
+
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 1000);
+};
+
 // 로그인 버튼 클릭했을 때 동작하는 코드
 loginbtn.addEventListener('click',async function(event) {
     event.preventDefault();
@@ -29,8 +42,11 @@ loginbtn.addEventListener('click',async function(event) {
         const result = await response.json();
 
         if(result.success) {
-            alert("로그인 되었습니다.");
-            window.location.href = "/map";
+            window.showToast("🔒로그인 되었습니다.");
+
+            setTimeout(() => {
+                window.location.href = "/map";
+            }, 1000);
         } else {
             alert(result.message);
         }
