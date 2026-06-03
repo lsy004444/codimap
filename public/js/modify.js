@@ -61,10 +61,13 @@ async function completeModify() {
 
     const result = await response.json();
 
-    alert(result.message);
+    //alert(result.message);
+    window.showToast(result.message);
 
     if(result.success) {
-        window.location.href = `/mypage?profileId=${encodeURIComponent(result.profileId)}`;
+        setTimeout(() => {
+            window.location.href = `/mypage?profileId=${encodeURIComponent(result.profileId)}`;
+        }, 2000);
     }
    } catch(error) {
     console.error(error);
