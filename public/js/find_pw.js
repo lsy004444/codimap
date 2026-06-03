@@ -1,3 +1,16 @@
+window.showToast = function(message) {
+    const toast = document.getElementById("find-toast");
+
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 1000);
+};
+
 // html 문서가 로딩된 뒤 js 실행
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("findPwForm");
@@ -9,7 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const emailValue = emailInput.value.trim();
 
         if(emailValue === "") {
-            alert("이메일을 입력해주세요.");
+            window.showToast("이메일을 입력해주세요.");
+            //alert("이메일을 입력해주세요.");
             emailInput.focus();
             return;
         }
@@ -17,7 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if(!emailRegex.test(emailValue)) {
-            alert("올바른 이메일 형식이 아닙니다.");
+            window.showToast("올바른 이메일 형식이 아닙니다.");
+            //alert("올바른 이메일 형식이 아닙니다.");
             emailInput.focus();
             return;
         }
@@ -37,10 +52,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
 
-            alert(result.message);
+            //alert(result.message);
+            window.showToast(result.message);
 
             if(result.success) {
-                window.location.href = "/login";
+                setTimeout(() => {
+                     window.location.href = "/login";
+                }, 2000);
             } else {
                 sendEmailBtn.disabled = false;
                 sendEmailBtn.textContent = "이메일 전송";

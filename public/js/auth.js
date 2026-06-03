@@ -23,7 +23,7 @@ loginbtn.addEventListener('click',async function(event) {
 
     // 로그인에 성공했을 경우 
     if(email === "" && password === "") {
-        alert("이메일과 비밀번호를 입력해주세요!");
+        window.showToast("이메일과 비밀번호를 입력해주세요!");
         return;
     }
 
@@ -51,8 +51,7 @@ loginbtn.addEventListener('click',async function(event) {
             alert(result.message);
         }
     } catch (error) {
-        console.error(error);
-        alert("로그인 요청 중 오류가 발생했습니다.");
+        window.showToast("🔒로그인 요청 중 오류가 발생했습니다.");
     }
 })
 

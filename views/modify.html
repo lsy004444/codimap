@@ -6,6 +6,7 @@
     <title>개인정보 수정 페이지</title>
 </head>
 <body>
+    <div class="modify-page">
     <div class="modify-wrapper">
         <button type="button" class="btn-back" onclick="window.history.back()">뒤로</button>
         <h1 class="modify-title">아이디 / 비밀번호 변경</h1>
@@ -20,6 +21,8 @@
         </div>
         <button type="button" id="modifyBtn" name="modifyBtn" onclick="completeModify()">변경하기</button>
     </form>
+    </div>
+    <div id="modify-toast" class="modify-toast hidden"></div>
     </div>
     <script src="/js/modify.js"></script>
 </body>
