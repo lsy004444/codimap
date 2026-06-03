@@ -8,9 +8,12 @@
 <body>
     <div class="mypage-wrapper">
         <div style="position:relative; width:100%; margin-bottom:40px; text-align:center;">
-        <button onclick="window.history.back()" class="btn-back" style="position:absolute; left:0; top:50%; transform:translateY(-50%); margin:0;">뒤로</button>
-        <h1 class="mypage-title" style="margin:0; display:inline-block;">내 정보</h1>
-    </div>
+            <button onclick="window.history.back()" class="btn-back" style="position:absolute; left:0; top:50%; transform:translateY(-50%); margin:0;">
+                뒤로
+            </button>
+            <h1 class="mypage-title" style="margin:0; display:inline-block;">내 정보</h1>
+        </div>
+
         <form>
             <div class="input-group">
                 <label class="label-text">아이디</label>   
@@ -27,22 +30,22 @@
         </form>
 
         <div id="scrap" class="tab-content grid-container active">
-            <div id="scrapList" class="gridList">
+            <div id="scrapList" class="gridList"></div>
         </div>
 
         <div id="following" class="tab-content follow-container">
-            <div id="followList">
+            <div id="followList"></div>
         </div>
 
         <div id="posts" class="tab-content grid-container">
-            <div id="postList" class="gridList">
+            <div id="postList" class="gridList"></div>
         </div>
 
         <div id="comments" class="tab-content comment-container">
-            <div id="commentList">
+            <div id="commentList"></div>
         </div>
     </div>
 
-    <script src="/js/mypage.js?v=5"></script>
+    <script src="/js/mypage.js?v=6"></script>
 </body>
 </html>

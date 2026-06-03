@@ -72,18 +72,19 @@ function renderPostCard(post) {
     const content = escapeHTML(post.CONTENT || "");
 
     return `
-    <div class="grid post-card" onclick="location.href='/feed?postId=${post.POST_ID}'">
-        ${
-            imageUrl
-                ? `<img src="${escapeHTML(imageUrl)}" alt="게시물 이미지">`
-                : `<div class="empty-image">이미지 없음</div>`
-        }
-        <div class="post-info">ㅈ
-            <p>${content}</p>ㅇ
-            <small>좋아요 ${post.LIKE_COUNT || 0}, 스크랩 ${post.SCRAP_COUNT || 0}</small>
+        <div class="grid post-card" onclick="location.href='/feed?postId=${post.POST_ID}'">
+            ${
+                imageUrl
+                    ? `<img src="${escapeHTML(imageUrl)}" alt="게시물 이미지">`
+                    : `<div class="empty-image">이미지 없음</div>`
+            }
+
+            <div class="post-info">
+                <p>${content}</p>
+                <small>좋아요 ${post.LIKE_COUNT || 0}, 스크랩 ${post.SCRAP_COUNT || 0}</small>
+            </div>
         </div>
-    <div>
-`;
+    `;
 }
 
 async function loadScraps(profileId) {
