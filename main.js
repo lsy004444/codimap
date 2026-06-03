@@ -2,6 +2,7 @@ const express = require('express'),
       path = require('path'),
       session = require('express-session'),
       authRouter = require("./routes/auth"),
+      mypageRouter = require("./routes/mypage"),
       app = express();
 
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use(session({
 }));
 
 app.use("/api/auth", authRouter);
+app.use("/api/mypage", mypageRouter);
 
 const outfitRouter = require('./routes/outfit');
 app.use('/api/outfit', outfitRouter);

@@ -21,38 +21,25 @@
             <div class="tab">
                 <button type="button" class="tab-item active" onclick="openTab(event, 'scrap')">스크랩</button>
                 <button type="button" class="tab-item" onclick="openTab(event, 'following')">팔로잉/팔로워 목록</button>
-                <button type="button" class="tab-item" onclick="openTab(event, 'posts')">내 게시물</button>
-                <button type="button" class="tab-item" onclick="openTab(event, 'comments')">내 댓글</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'posts')">게시물 목록</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'comments')">댓글 목록</button>
             </div>
         </form>
 
         <div id="scrap" class="tab-content grid-container active">
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
+            <div id="scrapList" class="gridList">
         </div>
 
         <div id="following" class="tab-content follow-container">
-            <div class="follow">팔로잉 목록</div>
-            <div class="follow">팔로워 목록</div>
+            <div id="followList">
         </div>
 
         <div id="posts" class="tab-content grid-container">
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
-            <div class="grid"></div>
+            <div id="postList" class="gridList">
         </div>
 
         <div id="comments" class="tab-content comment-container">
-            <div class="comment">댓글 1</div>
-            <div class="comment">댓글 2</div>
-            <div class="comment">댓글 3</div>
+            <div id="commentList">
         </div>
     </div>
 
