@@ -83,7 +83,26 @@
     
         <div>
           <div class="link-header">
-            <p class="section-label" style="margin:0;">쇼핑몰 링크</p>
+            <div style="display:flex; align-items:center; gap:8px;">
+  <p class="section-label" style="margin:0;">쇼핑몰 링크</p>
+  <span style="font-size:11px; color:#9ca3af; display:flex; align-items:center; gap:4px;">
+    수익성 링크가 있다면
+    <span style="width:16px; height:16px; background:#f3f4f6; border-radius:4px; display:inline-flex; align-items:center; justify-content:center;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </span>
+    를 눌러
+    <span style="width:16px; height:16px; background:#f0fdf4; border-radius:4px; display:inline-flex; align-items:center; justify-content:center;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
+        <line x1="12" y1="1" x2="12" y2="23"/>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+      </svg>
+    </span>
+    로 바꿔주세요
+  </span>
+</div>
             <button class="btn-add-link" onclick="addLinkRow()">+ 링크 추가</button>
           </div>
           <div class="link-list" id="linkList"></div>
