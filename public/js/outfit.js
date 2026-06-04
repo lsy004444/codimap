@@ -228,7 +228,7 @@ function selectSeason(season) {
 function confirmLocation() {
   if (!pendingLocation) return;
   if (!selectedSeason) {
-    alert('계절을 선택해주세요.');
+    showToast('계절을 선택해주세요.');
     return;
   }
   //추가
@@ -309,12 +309,12 @@ function handleCancel() {
 
 function handleRegister() {
   if (uploadedFiles.length === 0) {
-    alert('사진을 한 장 이상 업로드해주세요.');
+    showToast('사진을 한 장 이상 업로드해주세요.');
     return;
   }
   const desc = document.getElementById('descInput').value.trim();
   if (!desc) {
-    alert('게시물 설명을 입력해주세요.');
+    showToast('게시물 설명을 입력해주세요.');
     return;
   }
 
