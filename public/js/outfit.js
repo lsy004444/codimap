@@ -318,6 +318,22 @@ function handleRegister() {
     return;
   }
 
+  const locationSelected = pendingLocation || 
+  document.getElementById('selectedLocationArea').style.display !== 'none';
+
+if (!locationSelected) {
+  alert('지역을 선택해주세요.');
+  return;
+}
+
+const metaBox = document.getElementById('metaBox');
+const seasonSelected = selectedSeason || metaBox.style.display !== 'none';
+
+if (!seasonSelected) {
+  alert('계절을 선택해주세요.');
+  return;
+}
+
   const links = Array.from(document.querySelectorAll('.link-row')).map(row => {
     const icon      = row.querySelector('.link-icon');
     const input     = row.querySelector('.link-input');
