@@ -221,12 +221,12 @@ window.openDetailModal = async function(postId) {
 
         const post = data.post;
 
-        // 1. 모달창 띄우기 및 제목 변경
+
         const modalOverlay = document.getElementById('uploadModalOverlay');
         if(modalOverlay) modalOverlay.classList.add('show');
         document.body.style.overflow = 'hidden';
 
-        // 2. 여러 장 이미지 파싱 및 프리뷰 출력 (`||` 구분자 처리)
+
         const previewList = document.getElementById('previewList');
         if (previewList) {
             previewList.innerHTML = '';
@@ -244,7 +244,7 @@ window.openDetailModal = async function(postId) {
             }
         }
 
-        // 3. 지역 및 계절 메타데이터 표시
+
         const metaBox = document.getElementById('metaBox');
         const metaTags = document.getElementById('metaTags');
         if (metaBox && metaTags) {
@@ -259,40 +259,38 @@ window.openDetailModal = async function(postId) {
             }
         }
 
-        // 4. 설명란 채우기
+
         const descInput = document.getElementById('descInput');
         if (descInput) descInput.value = post.CONTENT || '';
 
-        // 5. 상품 링크 바인딩 (기존 outfit.js의 링크 목록 파싱 연동)
         const linkList = document.getElementById('linkList');
-        if (linkList) {
-            linkList.innerHTML = '';
-            let parsedLinks = [];
-            if (post.LINKS) {
-                try {
-                    parsedLinks = typeof post.LINKS === 'string' ? JSON.parse(post.LINKS) : post.LINKS;
-                } catch(e) { parsedLinks = []; }
-            }
+if (linkList) {
+    linkList.innerHTML = '';
+    
+  
+    if (post.LINK_URLS) {
+        const urls = post.LINK_URLS.split('||');
+        urls.forEach((url) => {
+            if (!url.trim()) return;
+            const row = document.createElement('div');
+            row.className = 'link-row';
+            row.innerHTML = `
+                <div class="link-icon">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                </div>
+                <input class="link-input" type="text" readonly value="${escapeHTML(url.trim())}" />
+            `;
+            linkList.appendChild(row);
+        });
+    } else {
+        linkList.innerHTML = '<div style="color:#9ca3af; font-size:13px;">등록된 상품 링크가 없습니다.</div>';
+    }
+}
 
-            if (parsedLinks && parsedLinks.length > 0) {
-                parsedLinks.forEach((link) => {
-                    const row = document.createElement('div');
-                    row.className = 'link-row';
-                    row.style = "display:flex; align-items:center; margin-bottom:8px;";
-                    row.innerHTML = `
-                        <div class="link-icon" style="background:${link.affiliate ? '#f0fdf4' : '#f3f4f6'}; padding:6px; border-radius:4px; margin-right:8px;">
-                            ${link.affiliate ? '💸' : '🔗'}
-                        </div>
-                        <input class="link-input" type="text" readonly value="${escapeHTML(link.url)}" style="flex:1; background:#f9fafb; border:1px solid #e5e7eb; padding:6px; border-radius:4px;" />
-                    `;
-                    linkList.appendChild(row);
-                });
-            } else {
-                linkList.innerHTML = '<div style="color:#9ca3af; font-size:13px;">등록된 상품 링크가 없습니다.</div>';
-            }
-        }
-
-        // 6. 하단 저장 버튼 ➡️ [삭제하기] 전용 버튼으로 전역 매핑
+  
         const registerBtn = document.getElementById('registerBtn');
         if (registerBtn) {
             registerBtn.innerText = "삭제하기";
