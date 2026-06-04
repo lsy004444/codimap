@@ -322,7 +322,7 @@ function handleRegister() {
   document.getElementById('selectedLocationArea').style.display !== 'none';
 
 if (!locationSelected) {
-  alert('지역을 선택해주세요.');
+  showToast('지역을 선택해주세요.');
   return;
 }
 
@@ -330,7 +330,7 @@ const metaBox = document.getElementById('metaBox');
 const seasonSelected = selectedSeason || metaBox.style.display !== 'none';
 
 if (!seasonSelected) {
-  alert('계절을 선택해주세요.');
+  showToast('계절을 선택해주세요.');
   return;
 }
 
@@ -369,18 +369,30 @@ if (!seasonSelected) {
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      alert('등록되었습니다!');
+      showToast('등록되었습니다!');
       closeModal();
     } else {
-      alert('등록 실패: ' + data.message);
+      showToast('등록 실패: ' + data.message);
     }
   })
   .catch(err => {
     console.error('오류:', err);
-    alert('서버 오류가 발생했습니다.');
+    showToast('서버 오류가 발생했습니다.');
   });
 }
 
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'upload-toast hidden';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.remove('hidden'), 10);
+  setTimeout(() => {
+    toast.classList.add('hidden');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
 
 window.openModal         = openModal;
 window.closeModal        = closeModal;
@@ -396,5 +408,5 @@ window.confirmLocation   = confirmLocation;
 window.addLinkRow        = addLinkRow;
 window.removeLinkRow     = removeLinkRow;
 window.toggleAffiliate   = toggleAffiliate;
-
+window.showToast = showToast;
 })();
