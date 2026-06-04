@@ -108,6 +108,11 @@ button:hover {
     text-decoration: underline; 
 }
 
+.divider {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
 .login-toast {
     margin-top: 14px;
 
