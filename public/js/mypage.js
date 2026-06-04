@@ -1,6 +1,18 @@
 //const { response } = require("express");
 
 // 탭을 눌렀을 경우 발생하는 이벤트
+
+if (!window.showToast) {
+            window.showToast = function(message) {
+                const toast = document.createElement('div');
+                toast.className = 'upload-toast';
+                toast.textContent = message;
+                toast.style = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:5px; z-index:10000; transition:all 0.3s;";
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+            }
+        }
+
 function openTab(event, tabId) {
     const tabItems = document.querySelectorAll('.tab-item');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -20,37 +32,6 @@ function openTab(event, tabId) {
     document.getElementById(tabId).classList.add('active');
 }
 
-// document.addEventListener("DOMContentLoaded", async() => {
-//     const idInput = document.getElementById("id");
-//     const modify = document.getElementById("modify");
-
-//     const params = new URLSearchParams(window.location.search);
-//     const urlProfileId = params.get("profileId");
-
-//     try {
-//         const response = await fetch("/api/auth/mypage");
-//         const result = await response.json();
-
-//         if(!result.success) {
-//             alert(result.message);
-//             window.location.href="/login";
-//             return;
-//         }
-
-//         userIdInput.value = result.user.profileId;
-//     } catch(error) {
-//         console.error(error);
-//         alert("사용자 정보를 불러오는 중 오류가 발생했습니다.");
-//         window.location.href="/login";
-//     }
-
-//     if(modify) {
-//         modify.addEventListener("click", () => {
-//             window.location.href = "/modify";
-//         });
-//     }
-// });
-
 function escapeHTML(value) {
     if(value === null || value === undefined) return "";
 
@@ -67,12 +48,18 @@ function getFirstImage(IMAGE_URLS) {
     return IMAGE_URLS.split("||")[0];
 }
 
-function renderPostCard(post) {
+// 💥 [수정] 게시물 카드 생성 시, 내 게시물 목록 탭일 때만 상세 모달창이 열리도록 변경합니다.
+function renderPostCard(post, isMyPostTab = false) {
     const imageUrl = getFirstImage(post.IMAGE_URLS);
     const content = escapeHTML(post.CONTENT || "");
 
+    // 내 게시물 탭에서 띄운 카드라면 openDetailModal 실행, 스크랩 탭 등 다른 곳은 기존대로 피드로 이동합니다.
+    const clickEvent = isMyPostTab 
+        ? `window.openDetailModal('${post.POST_ID}')` 
+        : `location.href='/feed?postId=${post.POST_ID}'`;
+
     return `
-        <div class="grid post-card" onclick="location.href='/feed?postId=${post.POST_ID}'">
+        <div class="grid post-card" onclick="${clickEvent}" style="cursor:pointer;">
             ${
                 imageUrl
                     ? `<img src="${escapeHTML(imageUrl)}" alt="게시물 이미지">`
@@ -105,7 +92,8 @@ async function loadScraps(profileId) {
             return;
         }
 
-        scrapList.innerHTML = result.scraps.map(renderPostCard).join("");
+        // 스크랩 탭은 기존 이동 방식 유지
+        scrapList.innerHTML = result.scraps.map(post => renderPostCard(post, false)).join("");
     } catch (error) {
         console.error(error);
         scrapList.innerHTML = `<p class="empty-message">스크랩 목록을 불러오지 못했습니다.</p>`;
@@ -179,7 +167,8 @@ async function loadPosts(profileId) {
             return;
         }
 
-        postList.innerHTML = result.posts.map(renderPostCard).join("");
+        // 💥 [수정] 내 게시물 탭이므로 True 인자값을 넘겨 모달이 열리도록 매핑합니다.
+        postList.innerHTML = result.posts.map(post => renderPostCard(post, true)).join("");
 
     } catch (error) {
         console.error(error);
@@ -218,6 +207,138 @@ async function loadComments(profileId) {
     }
 }
 
+// 🟢 [추가] 마이페이지 내 게시물 전용 모달 상세 열기 로직
+window.openDetailModal = async function(postId) {
+    try {
+        // 서버에서 단건 상세 코디맵 정보 가져오기
+        const response = await fetch(`/api/outfit/detail/${postId}`);
+        const data = await response.json();
+        
+        if (!data.success || !data.post) {
+            window.showToast('⚠️ 게시물 정보를 가져오지 못했습니다.');
+            return;
+        }
+
+        const post = data.post;
+
+        // 1. 모달창 띄우기 및 제목 변경
+        const modalOverlay = document.getElementById('uploadModalOverlay');
+        if(modalOverlay) modalOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        // 2. 여러 장 이미지 파싱 및 프리뷰 출력 (`||` 구분자 처리)
+        const previewList = document.getElementById('previewList');
+        if (previewList) {
+            previewList.innerHTML = '';
+            if (post.IMAGE_URLS) {
+                const images = post.IMAGE_URLS.split('||');
+                images.forEach((imgUrl, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML = `
+                        <img src="${escapeHTML(imgUrl)}" alt="preview-${idx}" />
+                        ${idx === 0 ? '<div class="badge-rep">대표</div>' : ''}
+                    `;
+                    previewList.appendChild(item);
+                });
+            }
+        }
+
+        // 3. 지역 및 계절 메타데이터 표시
+        const metaBox = document.getElementById('metaBox');
+        const metaTags = document.getElementById('metaTags');
+        if (metaBox && metaTags) {
+            if (post.LOCATION || post.SEASON) {
+                metaBox.style.display = 'block';
+                metaTags.innerHTML = `
+                    ${post.LOCATION ? `<div class="meta-tag" style="display:inline-block; margin-right:8px; padding:4px 8px; background:#f3f4f6; border-radius:4px; font-size:12px;">📍 <span>${escapeHTML(post.LOCATION)}</span></div>` : ''}
+                    ${post.SEASON ? `<div class="meta-tag" style="display:inline-block; padding:4px 8px; background:#f3f4f6; border-radius:4px; font-size:12px;">🗓️ <span>${escapeHTML(post.SEASON)}</span></div>` : ''}
+                `;
+            } else {
+                metaBox.style.display = 'none';
+            }
+        }
+
+        // 4. 설명란 채우기
+        const descInput = document.getElementById('descInput');
+        if (descInput) descInput.value = post.CONTENT || '';
+
+        // 5. 상품 링크 바인딩 (기존 outfit.js의 링크 목록 파싱 연동)
+        const linkList = document.getElementById('linkList');
+        if (linkList) {
+            linkList.innerHTML = '';
+            let parsedLinks = [];
+            if (post.LINKS) {
+                try {
+                    parsedLinks = typeof post.LINKS === 'string' ? JSON.parse(post.LINKS) : post.LINKS;
+                } catch(e) { parsedLinks = []; }
+            }
+
+            if (parsedLinks && parsedLinks.length > 0) {
+                parsedLinks.forEach((link) => {
+                    const row = document.createElement('div');
+                    row.className = 'link-row';
+                    row.style = "display:flex; align-items:center; margin-bottom:8px;";
+                    row.innerHTML = `
+                        <div class="link-icon" style="background:${link.affiliate ? '#f0fdf4' : '#f3f4f6'}; padding:6px; border-radius:4px; margin-right:8px;">
+                            ${link.affiliate ? '💸' : '🔗'}
+                        </div>
+                        <input class="link-input" type="text" readonly value="${escapeHTML(link.url)}" style="flex:1; background:#f9fafb; border:1px solid #e5e7eb; padding:6px; border-radius:4px;" />
+                    `;
+                    linkList.appendChild(row);
+                });
+            } else {
+                linkList.innerHTML = '<div style="color:#9ca3af; font-size:13px;">등록된 상품 링크가 없습니다.</div>';
+            }
+        }
+
+        // 6. 하단 저장 버튼 ➡️ [삭제하기] 전용 버튼으로 전역 매핑
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) {
+            registerBtn.innerText = "삭제하기";
+            registerBtn.onclick = function() {
+                window.handleDeletePost(postId);
+            };
+        }
+
+    } catch (err) {
+        console.error(err);
+        window.showToast('데이터를 가져오는 도중 문제가 발생했습니다.');
+    }
+};
+
+// 🟢 [추가] 모달창 닫기 및 취소 함수 공통화
+window.closeModal = window.handleCancel = function() {
+    const modalOverlay = document.getElementById('uploadModalOverlay');
+    if(modalOverlay) modalOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+};
+
+// 🟢 [추가] 모달창 내 삭제하기 액션 실행 함수
+window.handleDeletePost = function(postId) {
+    if (!confirm('🚨 이 게시물을 정말로 삭제하시겠습니까?\n삭제된 코디 목록은 복구되지 않습니다.')) {
+        return;
+    }
+
+    fetch(`/api/outfit/delete/${postId}`, {
+        method: 'DELETE'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.showToast('✅ 정상적으로 삭제되었습니다.');
+            window.closeModal();
+            location.reload(); // 화면 새로고침하여 리스트 동기화
+        } else {
+            window.showToast('❌ 삭제 작업 실패: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        window.showToast('❌ 서버 통신 오류가 발생했습니다.');
+    });
+};
+
 document.addEventListener("DOMContentLoaded", async() => {
     const idInput = document.getElementById("id");
     const modify = document.getElementById("modify");
@@ -252,12 +373,18 @@ document.addEventListener("DOMContentLoaded", async() => {
         if (modify) {
             if (currentProfileId !== loginUserProfileId) {
                 modify.style.setProperty("display", "none", "important");
+                
+                // 타인 프로필을 조회 중인 경우 내 게시물이 아니므로 삭제 권한 제어 (버튼 숨김 처리)
+                const registerBtn = document.getElementById('registerBtn');
+                if(registerBtn) registerBtn.style.display = 'none';
           } else {
                 modify.style.setProperty("display", "inline-block", "important");
+                const registerBtn = document.getElementById('registerBtn');
+                if(registerBtn) registerBtn.style.display = 'inline-block';
           }
             modify.addEventListener("click", () => {
                 window.location.href = "/modify";
-        });
+            });
         
      } 
      await loadScraps(currentProfileId);

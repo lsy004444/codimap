@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/mypage.css">
+    <link rel="stylesheet" href="/css/outfit.css">
     <title>마이페이지</title>
 </head>
 <body>
@@ -45,6 +46,41 @@
             <div id="commentList"></div>
         </div>
     </div>
+
+    
+
+    <div class="upload-modal-overlay" id="uploadModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h1>게시물 삭제</h1>
+      <div class="btn-group">
+        <button class="btn-cancel" onclick="window.handleCancel()">취소</button>
+        <button id="registerBtn" class="btn-register" style="background:#ef4444;" onclick="">삭제</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div>
+        <p class="section-label">등록된 사진</p>
+        <div class="preview-list" id="previewList"></div>
+        <div class="meta-box" id="metaBox" style="display:none;">
+          <p class="meta-box-label">게시물 정보</p>
+          <div class="meta-tags" id="metaTags"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <p class="section-label">게시물 설명</p>
+        <textarea id="descInput" readonly placeholder="내용이 없습니다."></textarea>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <p class="section-label">쇼핑몰 링크</p>
+        <div class="link-list" id="linkList"></div>
+      </div>
+      <div style="height:8px;"></div>
+    </div>
+  </div>
+</div>
 
     <script src="/js/mypage.js?v=6"></script>
 </body>
