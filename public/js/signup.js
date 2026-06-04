@@ -76,7 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            alert("이메일 중복확인 중 오류가 발생했습니다.");
+            window.showToast("이메일 중복확인 중 오류가 발생했습니다.");
+            //alert("이메일 중복확인 중 오류가 발생했습니다.");
             isEmailChecked = false;
         }
 });
@@ -115,7 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            alert("아이디 중복확인 중 오류가 발생했습니다.");
+            window.showToast("아이디 중복확인 중 오류가 발생했습니다.");
+            //alert("아이디 중복확인 중 오류가 발생했습니다.");
             isIdChecked = false;
         }
     });
@@ -226,7 +228,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            alert("회원가입 요청 중 오류가 발생했습니다.");
+            window.toast("회원가입 요청 중 오류가 발생했습니다.");
+           //alert("회원가입 요청 중 오류가 발생했습니다.");
         }
      });
 });

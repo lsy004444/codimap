@@ -71,6 +71,7 @@ async function completeModify() {
     }
    } catch(error) {
     console.error(error);
-    alert("회원정보 수정 중 오류가 발생했습니다.");
+    window.showToast("회원정보 수정 중 오류가 발생했습니다.");
+    //alert("회원정보 수정 중 오류가 발생했습니다.");
    }
 }

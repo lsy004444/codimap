@@ -65,7 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch(error) {
             console.error(error);
-            alert("임시 비밀번호 전송 중 오류가 발생했습니다.");
+            window.showToast("임시 비밀번호 전송 중 오류가 발생했습니다.");
+            //alert("임시 비밀번호 전송 중 오류가 발생했습니다.");
 
             sendEmailBtn.disabled = false;
             sendEmailBtn.textContent = "이메일 전송";
