@@ -228,7 +228,7 @@ function selectSeason(season) {
 function confirmLocation() {
   if (!pendingLocation) return;
   if (!selectedSeason) {
-    alert('계절을 선택해주세요.');
+    showToast('계절을 선택해주세요.');
     return;
   }
   //추가
@@ -309,14 +309,30 @@ function handleCancel() {
 
 function handleRegister() {
   if (uploadedFiles.length === 0) {
-    alert('사진을 한 장 이상 업로드해주세요.');
+    showToast('사진을 한 장 이상 업로드해주세요.');
     return;
   }
   const desc = document.getElementById('descInput').value.trim();
   if (!desc) {
-    alert('게시물 설명을 입력해주세요.');
+    showToast('게시물 설명을 입력해주세요.');
     return;
   }
+
+  const locationSelected = pendingLocation || 
+  document.getElementById('selectedLocationArea').style.display !== 'none';
+
+if (!locationSelected) {
+  showToast('지역을 선택해주세요.');
+  return;
+}
+
+const metaBox = document.getElementById('metaBox');
+const seasonSelected = selectedSeason || metaBox.style.display !== 'none';
+
+if (!seasonSelected) {
+  showToast('계절을 선택해주세요.');
+  return;
+}
 
   const links = Array.from(document.querySelectorAll('.link-row')).map(row => {
     const icon      = row.querySelector('.link-icon');
@@ -353,18 +369,30 @@ function handleRegister() {
   .then(res => res.json())
   .then(data => {
     if (data.success) {
-      alert('등록되었습니다!');
+      showToast('등록되었습니다!');
       closeModal();
     } else {
-      alert('등록 실패: ' + data.message);
+      showToast('등록 실패: ' + data.message);
     }
   })
   .catch(err => {
     console.error('오류:', err);
-    alert('서버 오류가 발생했습니다.');
+    showToast('서버 오류가 발생했습니다.');
   });
 }
 
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'upload-toast hidden';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.remove('hidden'), 10);
+  setTimeout(() => {
+    toast.classList.add('hidden');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
 
 window.openModal         = openModal;
 window.closeModal        = closeModal;
@@ -380,5 +408,5 @@ window.confirmLocation   = confirmLocation;
 window.addLinkRow        = addLinkRow;
 window.removeLinkRow     = removeLinkRow;
 window.toggleAffiliate   = toggleAffiliate;
-
+window.showToast = showToast;
 })();
