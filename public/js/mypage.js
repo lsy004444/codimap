@@ -238,6 +238,12 @@ document.addEventListener("DOMContentLoaded", async() => {
         // URL에 profileId가 있으면 그 프로필을 보여주고, 없으면 로그인한 내 프로필을 보여줌
         const currentProfileId = urlProfileId || loginUserProfileId;
 
+        const profileTitle = document.getElementById("profileTitle");
+
+        if(profileTitle) {
+            profileTitle.textContent = `@${currentProfileId}`;
+        }
+
         if(idInput) {
             idInput.value = `@${currentProfileId}`;
         }
