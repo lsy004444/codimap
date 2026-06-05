@@ -103,7 +103,8 @@ router.get('/posts', async (req, res) => {
                 p.LIKE_COUNT,
                 u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
-                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls,
+                MAX(pl.AFFILIATE) AS has_affiliate
             FROM POST p
             JOIN USERS u ON p.MEMBER_ID = u.USER_ID
             JOIN REGION r ON p.REGION_ID = r.REGION_ID
@@ -147,6 +148,7 @@ router.get('/posts', async (req, res) => {
                     avatar: '',
                 },
                 images,
+                hasAffiliate: Boolean(row.has_affiliate),
                 shops: links.map((url, index) => ({
                     name: '쇼핑 링크',
                     item: `링크 ${index + 1}`,
@@ -595,20 +597,61 @@ router.post('/posts/:postId/report', async (req, res) => {
 // ──────────────────────────────────────────
 router.get('/my-interactions', async (req, res) => {
     const userId = getLoginUserId(req);
-    if (!userId) return res.json({ likedIds: [], scrappedIds: [] });
+    if (!userId) return res.json({ userId: null, likedIds: [], scrappedIds: [], followingIds: [] });
 
     try {
-        const [[likes], [scraps]] = await Promise.all([
+        const [[likes], [scraps], [followings]] = await Promise.all([
             db.query('SELECT POST_ID FROM LIKES WHERE MEMBER_ID = ?', [userId]),
             db.query('SELECT POST_ID FROM SCRAP WHERE MEMBER_ID = ?', [userId]),
+            db.query('SELECT FOLLOWING_ID FROM FOLLOW WHERE FOLLOWER_ID = ?', [userId]),
         ]);
         res.json({
+            userId,
             likedIds: likes.map(r => r.POST_ID),
             scrappedIds: scraps.map(r => r.POST_ID),
+            followingIds: followings.map(r => r.FOLLOWING_ID),
         });
     } catch (err) {
         console.error('[feed/my-interactions]', err);
-        res.json({ likedIds: [], scrappedIds: [] });
+        res.json({ userId: null, likedIds: [], scrappedIds: [], followingIds: [] });
+    }
+});
+
+// ──────────────────────────────────────────
+// 팔로우 토글
+// POST /api/feed/users/:targetUserId/follow
+// ──────────────────────────────────────────
+router.post('/users/:targetUserId/follow', async (req, res) => {
+    const userId = getLoginUserId(req);
+    const targetUserId = Number(req.params.targetUserId);
+
+    if (!userId) return res.status(401).json({ message: '로그인이 필요합니다' });
+    if (!targetUserId || userId === targetUserId) {
+        return res.status(400).json({ message: '잘못된 요청입니다' });
+    }
+
+    try {
+        const [[existing]] = await db.query(
+            'SELECT FOLLOW_ID FROM FOLLOW WHERE FOLLOWER_ID = ? AND FOLLOWING_ID = ?',
+            [userId, targetUserId]
+        );
+
+        if (existing) {
+            await db.query(
+                'DELETE FROM FOLLOW WHERE FOLLOWER_ID = ? AND FOLLOWING_ID = ?',
+                [userId, targetUserId]
+            );
+            res.json({ followed: false });
+        } else {
+            await db.query(
+                'INSERT INTO FOLLOW (FOLLOWER_ID, FOLLOWING_ID, CREATED_DATE) VALUES (?, ?, NOW())',
+                [userId, targetUserId]
+            );
+            res.json({ followed: true });
+        }
+    } catch (err) {
+        console.error('[feed/follow]', err);
+        res.status(500).json({ message: '팔로우 처리 실패' });
     }
 });
 
