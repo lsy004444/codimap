@@ -6,6 +6,7 @@
     <title>로그인 페이지</title>
 </head>
 <body>
+    <div class="login-page">
     <div class="login-wrapper">
         <h1 class="login-title">CODIMAP</h1>
     <form>
@@ -20,8 +21,12 @@
         <button type="button" id="login" name="login">로그인</button>
         <div class="find_pw">
             <a href="find_pw">비밀번호 찾기</a>
+            <span class="divider">|</span>
+            <a href="/signup">회원가입</a>
         </div>
     </form>
+    </div>
+        <div id="login-toast" class="login-toast hidden"></div>
     </div>
     <script src="/js/auth.js"></script>
 </body>

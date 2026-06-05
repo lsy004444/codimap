@@ -6,6 +6,7 @@
     <title>비밀번호 찾기 페이지</title>
 </head>
 <body>
+    <div class="find-page">
     <div class="find-wrapper">
         <button type="button" class="btn-back" onclick="window.history.back()">뒤로</button>
         <h1 class="find-title">비밀번호 찾기</h1>
@@ -16,6 +17,8 @@
         </div>
         <button type="submit" id="sendEmailBtn" name="sendEmailBtn">이메일 전송</button>
     </form>
+    </div>
+    <div id="find-toast" class="find-toast hidden"></div>
     </div>
     <script src="/js/find_pw.js"></script>
 </body>
