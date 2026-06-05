@@ -486,6 +486,7 @@ body {
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
+.affiliate-notice.hidden { display: none; }
 
 /* 쇼핑 섹션 */
 .modal-shop-section {
