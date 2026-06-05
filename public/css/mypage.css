@@ -140,6 +140,9 @@ button:hover {
 /* 스크랩 / 내 게시물 그리드 */
 .tab-content.active.grid-container {
     display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 30px;
 }
 
 .grid-container {
@@ -207,4 +210,48 @@ button:hover {
     border-radius: 10px;
     box-sizing: border-box;
     color: #555;
+}
+
+/*마이페이지 게시물 그리드 형태로*/
+#postList, #scrapList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 30px;
+    width: 100%;
+}
+
+#postList .grid, #scrapList .grid {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+#postList .grid img, #scrapList .grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gridList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.gridList .grid {
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #e0e0e0;
+}
+
+.gridList .grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
