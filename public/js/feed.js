@@ -293,7 +293,7 @@ function openPostModal(post) {
         followBtn.classList.add('hidden');
     } else {
         followBtn.classList.remove('hidden');
-        const isFollowing = state.followingIds.has(post.user.id);
+        const isFollowing = state.followingIds.has(Number(post.user.id));
         followBtn.textContent = isFollowing ? '팔로잉' : '팔로우';
         followBtn.classList.toggle('following', isFollowing);
     }
@@ -409,12 +409,12 @@ $('follow-btn').addEventListener('click', async () => {
         const { followed } = await res.json();
         const btn = $('follow-btn');
         if (followed) {
-            state.followingIds.add(post.user.id);
+            state.followingIds.add(Number(post.user.id));
             btn.textContent = '팔로잉';
             btn.classList.add('following');
             showToast('팔로우했습니다');
         } else {
-            state.followingIds.delete(post.user.id);
+            state.followingIds.delete(Number(post.user.id));
             btn.textContent = '팔로우';
             btn.classList.remove('following');
             showToast('팔로우를 취소했습니다');
@@ -640,11 +640,11 @@ async function loadMyInteractions() {
     try {
         const res = await fetch('/api/feed/my-interactions');
         if (!res.ok) return;
-        const { userId, likedIds, scrappedIds, followingIds } = await res.json();
-        state.myUserId = userId;
-        likedIds.forEach(id => state.likedIds.add(id));
-        scrappedIds.forEach(id => state.scrappedIds.add(id));
-        followingIds.forEach(id => state.followingIds.add(id));
+        const { userId, likedIds = [], scrappedIds = [], followingIds = [] } = await res.json();
+        state.myUserId = Number(userId) || null;
+        likedIds.forEach(id => state.likedIds.add(Number(id)));
+        scrappedIds.forEach(id => state.scrappedIds.add(Number(id)));
+        followingIds.forEach(id => state.followingIds.add(Number(id)));
     } catch { /* 비로그인 시 무시 */ }
 }
 
