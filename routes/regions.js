@@ -15,7 +15,8 @@ router.get('/nearby', async(req, res) => {
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
                 u.NAME, u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
-                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS,
+                MAX(pl.AFFILIATE) AS HAS_AFFILIATE
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
                 JOIN USERS u ON p.MEMBER_ID = u.USER_ID
@@ -29,7 +30,8 @@ router.get('/nearby', async(req, res) => {
                 SELECT p.*, r.REGION_NAME, r.LATITUDE, r.LONGITUDE,
                 u.NAME, u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
-                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS LINK_URLS,
+                MAX(pl.AFFILIATE) AS HAS_AFFILIATE
                 FROM POST p
                 JOIN REGION r ON p.REGION_ID = r.REGION_ID
                 JOIN USERS u ON p.MEMBER_ID = u.USER_ID

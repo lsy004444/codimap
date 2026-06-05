@@ -12,8 +12,10 @@ const state = {
     pageSize: 9,
     isLoading: false,
     hasMore: true,
+    myUserId: null,
     scrappedIds: new Set(),
     likedIds: new Set(),
+    followingIds: new Set(),
     posts: [],
     currentPost: null,
     currentSlide: 0,
@@ -102,6 +104,7 @@ async function loadMorePosts() {
                 likeCount: p.LIKE_COUNT || 0,
                 user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', profileId: p.PROFILE_ID, avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
+                hasAffiliate: Boolean(p.HAS_AFFILIATE),
                 shops: p.LINK_URLS
                     ? p.LINK_URLS.split('||').map((url, index) => ({
                         name: `링크 ${index + 1}`,
@@ -283,6 +286,18 @@ function openPostModal(post) {
     avatarEl.onclick   = goToProfile;
     usernameEl.onclick = goToProfile;
 
+    // 팔로우 버튼
+    const followBtn = $('follow-btn');
+    const isOwnPost = state.myUserId && post.user.id === state.myUserId;
+    if (!state.myUserId || isOwnPost) {
+        followBtn.classList.add('hidden');
+    } else {
+        followBtn.classList.remove('hidden');
+        const isFollowing = state.followingIds.has(post.user.id);
+        followBtn.textContent = isFollowing ? '팔로잉' : '팔로우';
+        followBtn.classList.toggle('following', isFollowing);
+    }
+
     // 좋아요 / 스크랩 상태
     $('like-btn').classList.toggle('active', state.likedIds.has(post.id));
     $('like-count').textContent  = post.likeCount;
@@ -291,6 +306,12 @@ function openPostModal(post) {
 
     // 설명
     $('modal-desc').textContent = post.desc;
+    const affiliateNotice = $('affiliate-notice');
+    if (post.hasAffiliate) {
+        affiliateNotice.classList.remove('hidden');
+    } else {
+        affiliateNotice.classList.add('hidden');
+    }
 
     // 쇼핑 링크
     const shopEl = $('modal-shop-links');
@@ -376,6 +397,31 @@ $('scrap-btn').addEventListener('click', () => {
     if (!state.currentPost) return;
     const card = feedGrid.querySelector(`.feed-card-scrap-badge[data-id="${state.currentPost.id}"]`)?.closest('.feed-card');
     toggleScrap(state.currentPost.id, card);
+});
+
+$('follow-btn').addEventListener('click', async () => {
+    const post = state.currentPost;
+    if (!post) return;
+    try {
+        const res = await fetch(`/api/feed/users/${post.user.id}/follow`, { method: 'POST' });
+        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (!res.ok) throw new Error();
+        const { followed } = await res.json();
+        const btn = $('follow-btn');
+        if (followed) {
+            state.followingIds.add(post.user.id);
+            btn.textContent = '팔로잉';
+            btn.classList.add('following');
+            showToast('팔로우했습니다');
+        } else {
+            state.followingIds.delete(post.user.id);
+            btn.textContent = '팔로우';
+            btn.classList.remove('following');
+            showToast('팔로우를 취소했습니다');
+        }
+    } catch {
+        showToast('처리에 실패했습니다');
+    }
 });
 
 // ──────────────────────────────────────────
@@ -594,9 +640,11 @@ async function loadMyInteractions() {
     try {
         const res = await fetch('/api/feed/my-interactions');
         if (!res.ok) return;
-        const { likedIds, scrappedIds } = await res.json();
+        const { userId, likedIds, scrappedIds, followingIds } = await res.json();
+        state.myUserId = userId;
         likedIds.forEach(id => state.likedIds.add(id));
         scrappedIds.forEach(id => state.scrappedIds.add(id));
+        followingIds.forEach(id => state.followingIds.add(id));
     } catch { /* 비로그인 시 무시 */ }
 }
 
