@@ -22,7 +22,7 @@
                 <div class="logo">CODIMAP</div>
                 <div class="search-box">
                     <input type="text" placeholder="지역을 검색하시오">
-                    <button id="search-btn" onclick="searchLocation(document.querySelector('.search-box input').value)">
+                    <button id="search-btn" onclick="window.searchLocation(document.querySelector('.search-box input').value)">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
                         stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"/>
@@ -56,10 +56,23 @@
                   <span>마이페이지</span>
                 </div>
               </div>
-              <div class="bubble-logout" id="logoutBtn">
-                <i class="ti ti-logout" aria-hidden="true"></i>
-                <span>로그아웃</span>
-              </div>
+             
+                <div style="position:fixed; bottom:30px; left:0; right:0; display:flex; justify-content:center; align-items:center; gap:0;">
+                    <div class="bubble-logout" onclick="
+                        document.body.style.transition='opacity 0.4s ease';
+                        document.body.style.opacity='0';
+                        setTimeout(()=>window.location.href='/login', 400);
+                    ">
+                        <i class="ti ti-login" aria-hidden="true"></i>
+                        <span>로그인</span>
+                    </div>
+                    <span style="color:rgba(255,255,255,0.5); font-size:16px; margin: 0 4px;">|</span>
+                    <div class="bubble-logout" id="logoutBtn">
+                        <i class="ti ti-logout" aria-hidden="true"></i>
+                        <span>로그아웃</span>
+                    </div>
+                    
+                </div>
             </div>
 
             <div id="current-filter-info" class="filter-status">

@@ -4,7 +4,22 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f0f2f5; 
+    background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
+    overflow: hidden;
+}
+
+.bubble-bg {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float ease-in-out infinite;
+    z-index: 0;
+    filter: blur(30px);
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
 }
 
 .find-page {
@@ -15,96 +30,112 @@ body {
 
 .find-wrapper {
     position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: white;
-    padding: 90px 50px 60px;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+    padding: 50px 60px;
+    width: 100%;
+    max-width: 420px;
 }
 
 .btn-back {
-    position: absolute;
-    left: 28px;
-    top: 24px;
-
-    width: 64px;
-    height: 54px;
-
-    border: none;
-    border-radius: 9px;
-    background-color: #3f51b5;
-    color: white;
-
-    font-size: 16px;
-    font-weight: 700;
+    background: none !important;
+    border: none !important;
+    font-size: 0.8rem;
+    color: #ccc !important;
     cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+    display: block;
+    align-self: flex-start;
+    letter-spacing: 1px;
+    box-shadow: none !important;
+    transition: color 0.2s;
+    position: static;
+    width: auto;
+    height: auto;
+    border-radius: 0;
 }
 
 .btn-back:hover {
-    background-color: #3445a5;
+    color: #aaa !important;
+    background: none !important;
+    transform: none !important;
 }
 
 .find-title {
-    margin-top: 0;
-    margin-bottom: 40px;
-    color: #333;
-    font-size: 2.8rem;
-    font-weight: bold;
+    margin: 0 0 40px 0;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #222;
+    font-family: 'Outfit', sans-serif;
 }
 
 #findPwForm {
     display: flex;
     flex-direction: column;
-    gap: 20px; 
-    width: 100%; 
+    gap: 16px;
+    width: 100%;
     align-items: center;
 }
 
 .input-group {
     display: flex;
-    flex-direction: column;  
-    align-items: center;     
+    flex-direction: column;
     width: 100%;
-    gap: 8px;               
-    margin-bottom: 20px;
+    gap: 6px;
 }
 
 .label-text {
-    width: auto;             
-    text-align: center;     
-    margin-right: 0; 
-    font-size: 1.1rem;
-    color: #555;
-    font-weight: bold;
-    margin-bottom: 5px;
+    font-size: 0.8rem;
+    color: #bbb;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-align: left;
 }
 
 input[type="text"], input[type="email"] {
-    width: 300px;           
-    padding: 12px; 
-    border: 1px solid #ddd;
-    border-radius: 8px; 
-    font-size: 1.1rem;
-    box-sizing: border-box; 
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    color: #555;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px rgba(200, 160, 184, 0.15);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus, input[type="email"]:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 20px rgba(200, 160, 184, 0.25);
 }
 
 button {
-    margin-top: 10px;
-    width: 300px;           
+    margin-top: 24px;
+    width: 100%;
     padding: 15px;
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: white;
-    background-color: #3c4fb1;
-    border: none;
-    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #555;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1.5px solid rgba(200, 180, 210, 0.4);
+    border-radius: 30px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px rgba(200, 160, 184, 0.15);
+    backdrop-filter: blur(10px);
 }
 
 button:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
     background-color: #283577; 
 }
 

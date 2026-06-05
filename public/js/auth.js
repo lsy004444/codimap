@@ -45,7 +45,7 @@ loginbtn.addEventListener('click',async function(event) {
             window.showToast("🔒로그인 되었습니다.");
 
             setTimeout(() => {
-                window.location.href = "/map";
+                window.location.href = "/";
             }, 1000);
         } else {
             alert(result.message);

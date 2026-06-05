@@ -51,25 +51,17 @@ function getFirstImage(IMAGE_URLS) {
 // 💥 [수정] 게시물 카드 생성 시, 내 게시물 목록 탭일 때만 상세 모달창이 열리도록 변경합니다.
 function renderPostCard(post, isMyPostTab = false) {
     const imageUrl = getFirstImage(post.IMAGE_URLS);
-    const content = escapeHTML(post.CONTENT || "");
 
-    // 내 게시물 탭에서 띄운 카드라면 openDetailModal 실행, 스크랩 탭 등 다른 곳은 기존대로 피드로 이동합니다.
     const clickEvent = isMyPostTab 
         ? `window.openDetailModal('${post.POST_ID}')` 
         : `location.href='/feed?postId=${post.POST_ID}'`;
 
     return `
-        <div class="grid post-card" onclick="${clickEvent}" style="cursor:pointer;">
-            ${
-                imageUrl
-                    ? `<img src="${escapeHTML(imageUrl)}" alt="게시물 이미지">`
-                    : `<div class="empty-image">이미지 없음</div>`
+        <div class="grid" onclick="${clickEvent}" style="cursor:pointer;">
+            ${imageUrl
+                ? `<img src="${escapeHTML(imageUrl)}" alt="게시물 이미지" style="width:100%; height:100%; object-fit:cover;">`
+                : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:13px;">이미지 없음</div>`
             }
-
-            <div class="post-info">
-                <p>${content}</p>
-                <small>좋아요 ${post.LIKE_COUNT || 0}, 스크랩 ${post.SCRAP_COUNT || 0}</small>
-            </div>
         </div>
     `;
 }

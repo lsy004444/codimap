@@ -4,7 +4,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    background-color: #f0f2f5;
+     background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
     padding: 50px 20px;
     box-sizing: border-box;
 }
@@ -28,6 +28,7 @@ body {
     color: #333;
     font-size: 2.4rem;
     font-weight: bold;
+    font-family: 'Outfit', sans-serif;
 }
 
 form {
@@ -82,16 +83,16 @@ button {
     padding: 10px 15px;
     font-size: 1rem;
     font-weight: bold;
-    color: white;
-    background-color: #3c4fb1;
-    border: none;
-    border-radius: 8px;
+    color: #555;
+    background-color: rgba(255,255,255,0.8);
+    border: 1.5px solid rgba(200,180,210,0.4);
+    border-radius: 20px;
     cursor: pointer;
     white-space: nowrap;
 }
 
 button:hover {
-    background-color: #283577;
+    background-color: rgba(255,255,255,0.95);
 }
 
 .tab {
@@ -121,8 +122,8 @@ button:hover {
 }
 
 .tab-item.active {
-    color: #3c4fb1;
-    border-bottom: 3px solid #3c4fb1;
+    color: #f4a8bf;
+    border-bottom: 3px solid #f4a8bf;
 }
 
 /* 기본적으로 탭 내용 숨김 */
@@ -139,6 +140,9 @@ button:hover {
 /* 스크랩 / 내 게시물 그리드 */
 .tab-content.active.grid-container {
     display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 30px;
 }
 
 .grid-container {
@@ -206,4 +210,48 @@ button:hover {
     border-radius: 10px;
     box-sizing: border-box;
     color: #555;
+}
+
+/*마이페이지 게시물 그리드 형태로*/
+#postList, #scrapList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 30px;
+    width: 100%;
+}
+
+#postList .grid, #scrapList .grid {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+#postList .grid img, #scrapList .grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gridList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.gridList .grid {
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #e0e0e0;
+}
+
+.gridList .grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
