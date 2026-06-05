@@ -104,6 +104,7 @@ async function loadMorePosts() {
                 likeCount: p.LIKE_COUNT || 0,
                 user: { id: p.MEMBER_ID, username: p.NAME ? '@' + p.NAME : '@user', profileId: p.PROFILE_ID, avatar: '' },
                 images: p.IMAGE_URLS ? p.IMAGE_URLS.split('||') : [],
+                isFollowing: Boolean(p.IS_FOLLOWING),
                 hasAffiliate: Boolean(p.HAS_AFFILIATE),
                 shops: p.LINK_URLS
                     ? p.LINK_URLS.split('||').map((url, index) => ({
@@ -293,7 +294,8 @@ function openPostModal(post) {
         followBtn.classList.add('hidden');
     } else {
         followBtn.classList.remove('hidden');
-        const isFollowing = state.followingIds.has(Number(post.user.id));
+        const isFollowing = state.followingIds.has(Number(post.user.id)) || Boolean(post.isFollowing);
+        if (isFollowing) state.followingIds.add(Number(post.user.id));
         followBtn.textContent = isFollowing ? '팔로잉' : '팔로우';
         followBtn.classList.toggle('following', isFollowing);
     }
