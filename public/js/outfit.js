@@ -264,7 +264,7 @@ function addLinkRow() {
   row.innerHTML = `
     <div class="link-icon"
          id="linkIcon-${linkCount}"
-         data-affiliate="false"
+         data-affiliate="0"
          onclick="window.toggleAffiliate(${linkCount})"
          title="클릭하면 수익성 링크로 설정"
          style="cursor:pointer;">
@@ -280,15 +280,15 @@ function addLinkRow() {
 
 function toggleAffiliate(idx) {
   const icon        = document.getElementById(`linkIcon-${idx}`);
-  const isAffiliate = icon.dataset.affiliate === 'true';
+  const isAffiliate = icon.dataset.affiliate === '1';
 
   if (isAffiliate) {
-    icon.dataset.affiliate = 'false';
+    icon.dataset.affiliate = '0';
     icon.style.background  = '#f3f4f6';
     icon.innerHTML         = svgLink;
     icon.title             = '클릭하면 수익성 링크로 설정';
   } else {
-    icon.dataset.affiliate = 'true';
+    icon.dataset.affiliate = '1';
     icon.style.background  = '#f0fdf4';
     icon.innerHTML         = svgDollar;
     icon.title             = '클릭하면 일반 링크로 변경';
@@ -338,7 +338,7 @@ if (!seasonSelected) {
     const icon      = row.querySelector('.link-icon');
     const input     = row.querySelector('.link-input');
     const url       = input ? input.value.trim() : '';
-    const affiliate = icon ? icon.dataset.affiliate === 'true' : false;
+    const affiliate = icon ? icon.dataset.affiliate === '1' : false;
     return { url, affiliate };
   }).filter(item => item.url !== '');
 
