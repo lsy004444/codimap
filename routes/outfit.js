@@ -162,8 +162,8 @@ router.post('/register', upload.array('images', 10), async (req, res) => {
         for (const link of links) {
             if (link.url && link.url.trim() !== '') {
                 await conn.query(
-                    'INSERT INTO POST_LINK (URL, POST_ID) VALUES (?, ?)',
-                    [link.url.trim(), postId]
+                    'INSERT INTO POST_LINK (URL, POST_ID, AFFILIATE) VALUES (?, ?, ?)',
+                    [link.url.trim(), postId, link.affiliate ? 1 : 0]
                 );
             }
         }
