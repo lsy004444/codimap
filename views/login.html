@@ -11,6 +11,7 @@
     <div class="bubble-bg" style="width:450px;height:450px;background:rgba(169,204,227,0.25);top:55%;left:58%;transform:translate(-50%,-50%);animation-duration:10s;"></div>
     <div class="bubble-bg" style="width:380px;height:180px;background:rgba(255,183,197,0.35);top:60px;left:120px;animation-duration:12s;"></div>
     
+    <div class="login-page">
     <div class="login-wrapper">
         <button class ="back-btn" onclick="window.history.back()">← 뒤로</button>
         <h1 class="login-title">CODIMAP</h1>
@@ -26,8 +27,12 @@
         <button type="button" id="login" name="login">로그인</button>
         <div class="find_pw">
             <a href="find_pw">비밀번호 찾기</a>
+            <span class="divider">|</span>
+            <a href="/signup">회원가입</a>
         </div>
     </form>
+    </div>
+        <div id="login-toast" class="login-toast hidden"></div>
     </div>
     <script src="/js/auth.js"></script>
 </body>

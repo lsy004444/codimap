@@ -29,6 +29,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return passwordPattern.test(password);
     }
 
+    window.showToast = function(message) {
+    const toast = document.getElementById("signup-toast");
+
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 1000);
+};
+
     // 이메일 중복확인 버튼 클릭 시 발생
     emailBtn.addEventListener("click", async(event) => {
         event.preventDefault();
@@ -36,13 +49,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const email = emailInput.value.trim();
 
         if(email === "") {
-            alert("이메일을 입력해주세요.");
+            window.showToast("이메일을 입력해주세요");
+            //alert("이메일을 입력해주세요.");
             emailInput.focus();
             return;
         }
 
         if(!isValidEmail(email)) {
-            alert("올바른 이메일 형식으로 입력해주세요.");
+            window.showToast("올바른 이메일 형식으로 입력해주세요.");
+            //alert("올바른 이메일 형식으로 입력해주세요.");
             emailInput.focus();
             return;
         }
@@ -61,7 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            alert("이메일 중복확인 중 오류가 발생했습니다.");
+            window.showToast("이메일 중복확인 중 오류가 발생했습니다.");
+            //alert("이메일 중복확인 중 오류가 발생했습니다.");
             isEmailChecked = false;
         }
 });
@@ -73,13 +89,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const userId = userIdInput.value.trim();
 
         if(userId === "") {
-            alert("아이디를 입력해주세요.");
+            window.showToast("아이디를 입력해주세요.");
+            //alert("아이디를 입력해주세요.");
             userIdInput.focus();
             return;
         }
 
         if (!isValidUserId(userId)) {
-            alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+            window.showToast("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+            //alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
             userIdInput.focus();
             return;
         }
@@ -98,7 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            alert("아이디 중복확인 중 오류가 발생했습니다.");
+            window.showToast("아이디 중복확인 중 오류가 발생했습니다.");
+            //alert("아이디 중복확인 중 오류가 발생했습니다.");
             isIdChecked = false;
         }
     });
@@ -121,55 +140,64 @@ document.addEventListener("DOMContentLoaded", () => {
          const password = passwordInput.value.trim();
             
          if(name === "") {
-            alert("이름을 입력해주세요.");
+            window.showToast("이름을 입력해주세요.");
+            //alert("이름을 입력해주세요.");
             nameInput.focus();
             return;
          }
 
          if(email === "") {
-             alert("이메일을 입력해주세요.");
+            window.showToast("이메일을 입력해주세요.");
+            //alert("이메일을 입력해주세요.");
             emailInput.focus();
             return;
          }
 
          if(!isValidEmail(email)) {
-             alert("올바른 이메일 형식으로 입력해주세요.");
+            window.showToast("올바른 이메일 형식으로 입력해주세요.");
+            //alert("올바른 이메일 형식으로 입력해주세요.");
              emailInput.focus();
              return;
          }
 
          if(!isEmailChecked) {
-             alert("이메일 중복확인을 해주세요.");
+            window.showToast("이메일 중복확인을 해주세요.");
+             //alert("이메일 중복확인을 해주세요.");
              emailBtn.focus();
               return;
          }
 
          if(userId === "") {
-             alert("아이디를 입력해주세요.");
+            window.showToast("아이디를 입력해주세요.");
+             //alert("아이디를 입력해주세요.");
              userIdInput.focus();
              return;
          }
 
          if (!isValidUserId(userId)) {
-            alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+            window.showToast("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+            //alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
             userIdInput.focus();
             return;
         }
 
          if (!isIdChecked) {
-            alert("아이디 중복확인을 해주세요.");
+            window.showToast("아이디 중복확인을 해주세요.");
+            //alert("아이디 중복확인을 해주세요.");
             userIdBtn.focus();
             return;
         }
 
         if (password === "") {
-            alert("비밀번호를 입력해주세요.");
+            window.showToast("비밀번호를 입력해주세요.");
+            //alert("비밀번호를 입력해주세요.");
             passwordInput.focus();
             return;
         }
 
         if (!isValidPassword(password)) {
-            alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
+            window.showToast("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
+            //alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
             passwordInput.focus();
             return;
         }
@@ -190,14 +218,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
 
-            alert(result.message);
+            //alert(result.message);
+            window.showToast(result.message);
 
             if(result.success) {
-                window.location.href = "/login";
+                setTimeout(() => {
+                     window.location.href = "/login";
+                }, 2000);
             }
         } catch (error) {
             console.error(error);
-            alert("회원가입 요청 중 오류가 발생했습니다.");
+            window.toast("회원가입 요청 중 오류가 발생했습니다.");
+           //alert("회원가입 요청 중 오류가 발생했습니다.");
         }
      });
 });

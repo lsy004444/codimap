@@ -10,6 +10,19 @@ function isValidPassword(password) {
     return passwordPattern.test(password);
 }
 
+window.showToast = function(message) {
+    const toast = document.getElementById("modify-toast");
+
+    toast.textContent = message;
+    toast.classList.remove("hidden");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+    }, 1000);
+};
+
 // 변경하기 버튼을 누를 경우 발생하는 이벤트
 async function completeModify() {
     const userId = document.getElementById("userId").value.trim();
@@ -17,17 +30,20 @@ async function completeModify() {
     
     // 아이디, 비밀번호 둘 다 비어있을 경우
     if(!userId && !password) {
-        alert("변경할 아이디 또는 비밀번호를 입력해주세요.");
+        window.showToast("변경할 아이디 또는 비밀번호를 입력해주세요.");
+        //alert("변경할 아이디 또는 비밀번호를 입력해주세요.");
         return;
     }
 
     if (userId && !isValidUserId(userId)) {
-        alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+        window.showToast("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
+        //alert("아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.");
         return;
     }
 
     if (password && !isValidPassword(password)) {
-        alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
+        window.showToast("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
+        //alert("비밀번호는 영문, 숫자, 기호만 사용할 수 있습니다.");
         return;
     }
     
@@ -45,13 +61,17 @@ async function completeModify() {
 
     const result = await response.json();
 
-    alert(result.message);
+    //alert(result.message);
+    window.showToast(result.message);
 
     if(result.success) {
-        window.location.href = `/mypage?profileId=${encodeURIComponent(result.profileId)}`;
+        setTimeout(() => {
+            window.location.href = `/mypage?profileId=${encodeURIComponent(result.profileId)}`;
+        }, 2000);
     }
    } catch(error) {
     console.error(error);
-    alert("회원정보 수정 중 오류가 발생했습니다.");
+    window.showToast("회원정보 수정 중 오류가 발생했습니다.");
+    //alert("회원정보 수정 중 오류가 발생했습니다.");
    }
 }

@@ -10,6 +10,7 @@
      <div class="bubble-bg" style="width:500px;height:500px;background:rgba(255,183,197,0.4);top:50%;left:45%;transform:translate(-50%,-50%);animation-duration:8s;"></div>
     <div class="bubble-bg" style="width:450px;height:450px;background:rgba(169,204,227,0.25);top:55%;left:58%;transform:translate(-50%,-50%);animation-duration:10s;"></div>
     <div class="bubble-bg" style="width:280px;height:280px;background:rgba(255,183,197,0.35);top:60px;left:100px;animation-duration:12s;"></div>
+    <div class="modify-page">
     <div class="modify-wrapper">
         <button type="button" class="btn-back" onclick="window.history.back()">← 뒤로</button>
         <h1 class="modify-title">아이디 / 비밀번호 변경</h1>
@@ -24,6 +25,8 @@
         </div>
         <button type="button" id="modifyBtn" name="modifyBtn" onclick="completeModify()">변경하기</button>
     </form>
+    </div>
+    <div id="modify-toast" class="modify-toast hidden"></div>
     </div>
     <script src="/js/modify.js"></script>
 </body>

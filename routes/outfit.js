@@ -187,4 +187,55 @@ router.post('/register', upload.array('images', 10), async (req, res) => {
     }
 });
 
+// 게시물 상세 조회
+router.get('/detail/:id', async (req, res) => {
+    const postId = req.params.id;
+    
+    try {
+        const [results] = await db.query(
+            `SELECT P.*, 
+                GROUP_CONCAT(DISTINCT I.URL ORDER BY I.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
+                GROUP_CONCAT(DISTINCT PL.URL ORDER BY PL.LINK_ID SEPARATOR '||') AS LINK_URLS
+             FROM POST P
+             LEFT JOIN IMAGE I ON P.POST_ID = I.POST_ID
+             LEFT JOIN POST_LINK PL ON P.POST_ID = PL.POST_ID
+             WHERE P.POST_ID = ?
+             GROUP BY P.POST_ID`,
+            [postId]
+        );
+
+        if (!results || results.length === 0) {
+            return res.json({ success: false, message: '존재하지 않는 게시물입니다.' });
+        }
+
+        return res.json({ success: true, post: results[0] });
+
+    } catch (err) {
+        console.error('상세조회 오류:', err);
+        return res.status(500).json({ success: false, message: '서버 에러가 발생했습니다.' });
+    }
+});
+
+// 게시물 삭제
+router.delete('/delete/:id', async (req, res) => {
+    const postId = req.params.id;
+
+    try {
+        await db.query('DELETE FROM POST_LINK WHERE POST_ID = ?', [postId]);
+        await db.query('DELETE FROM IMAGE WHERE POST_ID = ?', [postId]);
+        const [result] = await db.query('DELETE FROM POST WHERE POST_ID = ?', [postId]);
+
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: '이미 삭제되었거나 존재하지 않는 게시물입니다.' });
+        }
+
+        return res.json({ success: true, message: '삭제되었습니다.' });
+
+    } catch (err) {
+        console.error('삭제 오류:', err);
+        return res.status(500).json({ success: false, message: '서버 에러가 발생했습니다.' });
+    }
+});
+
 module.exports = router;
+

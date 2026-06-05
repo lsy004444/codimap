@@ -22,6 +22,14 @@ body {
     50% { transform: translateY(-15px); }
 }
 
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+}
+
 .login-wrapper {
     position: relative;
     z-index: 1;
@@ -155,4 +163,32 @@ button:active {
     color: #aaa !important;
     transform: none !important;
     box-shadow: none !important;
+}
+
+.divider {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.login-toast {
+    margin-top: 14px;
+
+    background: #1a1714;
+    color: white;
+    padding: 10px 22px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 2000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    white-space: nowrap;
+
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.login-toast.hidden {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
 }
