@@ -57,6 +57,7 @@ router.get('/posts', async (req, res) => {
     const { region, season, page = 0, size = 9 } = req.query;
     const limit = Number.parseInt(size, 10) || 9;
     const offset = (Number.parseInt(page, 10) || 0) * limit;
+    const viewerId = getLoginUserId(req) || 0;
 
     const conditions = [];
     const params = [];
@@ -104,7 +105,8 @@ router.get('/posts', async (req, res) => {
                 u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
                 GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls,
-                MAX(pl.AFFILIATE) AS has_affiliate
+                MAX(pl.AFFILIATE) AS has_affiliate,
+                EXISTS(SELECT 1 FROM FOLLOW WHERE FOLLOWER_ID = ? AND FOLLOWING_ID = p.MEMBER_ID) AS is_following
             FROM POST p
             JOIN USERS u ON p.MEMBER_ID = u.USER_ID
             JOIN REGION r ON p.REGION_ID = r.REGION_ID
@@ -126,7 +128,7 @@ router.get('/posts', async (req, res) => {
             ORDER BY p.CREATED_DATE DESC
             LIMIT ? OFFSET ?
             `,
-            [...params, limit, offset]
+            [viewerId, ...params, limit, offset]
         );
 
         const posts = rows.map((row) => {
@@ -148,6 +150,7 @@ router.get('/posts', async (req, res) => {
                     avatar: '',
                 },
                 images,
+                isFollowing: Boolean(row.is_following),
                 hasAffiliate: Boolean(row.has_affiliate),
                 shops: links.map((url, index) => ({
                     name: '쇼핑 링크',
