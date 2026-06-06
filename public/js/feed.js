@@ -592,7 +592,7 @@ function showToast(msg) {
 
 function redirectToLogin() {
     showToast('로그인이 필요합니다');
-    setTimeout(() => { window.location.href = '/login'; }, 1500);
+    setTimeout(() => { window.top.location.href = '/login'; }, 1500);
 }
 
 function escHtml(str) {
