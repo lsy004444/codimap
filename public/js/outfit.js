@@ -112,6 +112,7 @@ function parseMetadata(file) {
       const [hh, mm]  = timePart.split(':');
       formattedDate   = `${y}.${m}.${d} · ${hh}:${mm}`;
       season          = getSeason(parseInt(m, 10));
+      selectedSeason = season;
     }
 
     let locationStr = null;
@@ -361,7 +362,7 @@ if (!seasonSelected) {
     formData.append('latitude', pendingLocation.latitude);
     formData.append('longitude', pendingLocation.longitude);
   }
-  formData.append('season', pendingLocation?.season || '');
+  formData.append('season', pendingLocation?.season || selectedSeason || '');
   fetch('/api/outfit/register', {
     method: 'POST',
     body: formData
