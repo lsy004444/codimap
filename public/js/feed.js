@@ -249,7 +249,10 @@ function openPostModal(post) {
     usernameEl.textContent = post.user.username;
     $('modal-user-region').textContent = `${post.region} · ${seasonName(post.season)}`;
 
-    const goToProfile = () => { window.location.href = `/mypage?profileId=${post.user.profileId}`; };
+    const goToProfile = () => {
+        if (!state.myUserId) { redirectToLogin(); return; }
+        window.location.href = `/mypage?profileId=${post.user.profileId}`;
+    };
     avatarEl.style.cursor   = 'pointer';
     usernameEl.style.cursor = 'pointer';
     avatarEl.onclick   = goToProfile;
