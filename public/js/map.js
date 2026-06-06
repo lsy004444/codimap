@@ -299,7 +299,7 @@ function initSeasonButtons() {
 
             //iframe에 변경사항 전달
             const feedFrame = document.getElementById('feed-frame');
-            if(feedFrame && feedFrame.contentWindow) {
+            if(feedFrame && feedFrame.contentWindow && typeof feedFrame.contentWindow.feedUpdateFilter === 'function') {
                 feedFrame.contentWindow.feedUpdateFilter(
                     currentRegionName || '전국',
                     season.id
@@ -338,6 +338,16 @@ window.openModal = async function() {
         showToast('🔒 로그인이 필요합니다');
     }
 }
+
+window.addEventListener('message', function(e) {
+    if (e.data?.type === 'redirect-login') {
+        const mapContainer = document.getElementById('map-container');
+        const sidePanel = document.getElementById('side-panel');
+        mapContainer?.classList.remove('shrink');
+        sidePanel?.classList.add('hidden');
+        window.location.href = '/login';
+    }
+});
 
 //경고창 팝업
 window.showToast = function(msg) {
