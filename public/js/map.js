@@ -339,6 +339,16 @@ window.openModal = async function() {
     }
 }
 
+window.addEventListener('message', function(e) {
+    if (e.data?.type === 'redirect-login') {
+        const mapContainer = document.getElementById('map-container');
+        const sidePanel = document.getElementById('side-panel');
+        mapContainer?.classList.remove('shrink');
+        sidePanel?.classList.add('hidden');
+        window.location.href = '/login';
+    }
+});
+
 //경고창 팝업
 window.showToast = function(msg) {
     const toast = document.getElementById('map-toast');
