@@ -46,38 +46,6 @@ function initInfiniteScroll() {
     if (sentinel) observer.observe(sentinel);
 }
 
-// async function loadMorePosts() {
-//     state.isLoading = true;
-//     sentinel.style.visibility = 'visible';
-
-//     try {
-//         const params = new URLSearchParams({
-//             page: state.page,
-//             size: state.pageSize,
-//         });
-//         if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
-//         if (state.currentSeason) params.set('season', state.currentSeason);
-
-//         const res = await fetch(`/api/feed/posts?${params}`);
-//         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-//         const { posts: newPosts, total } = await res.json();
-
-//         state.hasMore = state.posts.length + newPosts.length < total;
-//         state.page++;
-//         state.posts.push(...newPosts);
-
-//         renderCards(newPosts);
-//         $('feed-count-num').textContent = total;
-//     } catch (err) {
-//         console.error('게시물 로드 실패:', err);
-//         showToast('게시물을 불러오지 못했습니다');
-//     }
-
-//     state.isLoading = false;
-//     if (!state.hasMore) sentinel.style.visibility = 'hidden';
-// }
-
-//loadmoreposts 수정버전
 async function loadMorePosts() {
     state.isLoading = true;
     sentinel.style.visibility = 'visible';
@@ -202,7 +170,7 @@ function resetFeed(region, season) {
 async function toggleScrap(postId, cardEl) {
     try {
         const res = await fetch(`/api/feed/posts/${postId}/scrap`, { method: 'POST' });
-        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (res.status === 401) { redirectToLogin(); return; }
         if (!res.ok) throw new Error();
 
         const { scrapped, scrapCount } = await res.json();
@@ -232,7 +200,7 @@ async function toggleScrap(postId, cardEl) {
 async function toggleLike(postId) {
     try {
         const res = await fetch(`/api/feed/posts/${postId}/like`, { method: 'POST' });
-        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (res.status === 401) { redirectToLogin(); return; }
         if (!res.ok) throw new Error();
 
         const { liked, likeCount } = await res.json();
@@ -406,7 +374,7 @@ $('follow-btn').addEventListener('click', async () => {
     if (!post) return;
     try {
         const res = await fetch(`/api/feed/users/${post.user.id}/follow`, { method: 'POST' });
-        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (res.status === 401) { redirectToLogin(); return; }
         if (!res.ok) throw new Error();
         const { followed } = await res.json();
         const btn = $('follow-btn');
@@ -502,7 +470,7 @@ function startEditComment(postId, comment, wrapEl) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: newText }),
             });
-            if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+            if (res.status === 401) { redirectToLogin(); return; }
             if (!res.ok) throw new Error();
             showToast('댓글이 수정됐습니다');
             await loadComments(postId);
@@ -518,7 +486,7 @@ function startEditComment(postId, comment, wrapEl) {
 async function deleteComment(postId, commentId) {
     try {
         const res = await fetch(`/api/feed/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
-        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (res.status === 401) { redirectToLogin(); return; }
         if (!res.ok) throw new Error();
         showToast('댓글이 삭제됐습니다');
         await loadComments(postId);
@@ -541,7 +509,7 @@ async function submitComment() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text }),
         });
-        if (res.status === 401) { showToast('로그인이 필요합니다'); return; }
+        if (res.status === 401) { redirectToLogin(); return; }
         if (!res.ok) throw new Error();
 
         input.value = '';
@@ -575,8 +543,7 @@ $('report-submit-btn').addEventListener('click', async () => {
             body: JSON.stringify({ reason, detail }),
         });
         if (res.status === 401) {
-            showToast('로그인이 필요합니다');
-            reportOverlay.classList.add('hidden');
+            redirectToLogin();
             return;
         }
         if (res.status === 409) {
@@ -621,6 +588,11 @@ function showToast(msg) {
     toast.classList.remove('hidden');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+function redirectToLogin() {
+    showToast('로그인이 필요합니다');
+    setTimeout(() => { window.location.href = '/login'; }, 1500);
 }
 
 function escHtml(str) {
