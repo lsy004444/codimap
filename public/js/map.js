@@ -33,8 +33,10 @@ window.onload = function() {
                     var regionName = extractDongName(fullAddress);
                     currentRegionName = regionName;
 
-                    //구.동 판별 추가
-                    if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                    //시, 구, 동 구분
+                    if(!fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                        currentAddressType = 'city';
+                    } else if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
                         currentAddressType = 'gu';
                     } else {
                         currentAddressType = 'dong';
@@ -107,22 +109,17 @@ window.onload = function() {
             var center = map.getCenter();
 
             geocoder.coord2RegionCode(center.getLng(), center.getLat(), function(result, status) {
-                if (status===kakao.maps.services.Status.OK) {
-                    for (var i=0; i < result.length; i++){
+                if (status === kakao.maps.services.Status.OK) {
+                    for (var i = 0; i < result.length; i++) {
                         if(result[i].region_type === 'H') {
-                            var currentRegion = result[i].region_3depth_name;
-
-                            console.log("현재 화면 중심 지역:", currentRegion);
+                            var r = result[i];
+                            var currentRegion = r.region_3depth_name || r.region_2depth_name || r.region_1depth_name;
                             updateStatusUI(currentRegion, selectedSeason);
-                            
-                            // 서버에 데이터 요청 칸!!!!!!//
-
                             break;
                         }
                     }
                 }
             });
-
         });
 
         kakao.maps.event.addListener(map, 'click', function() {
@@ -147,7 +144,7 @@ window.onload = function() {
         });
 
         function extractDongName(address) {
-            const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
+            const match = address.match(/([가-힣]+(동|가|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
 
@@ -194,7 +191,10 @@ window.onload = function() {
 
             if(currentAddressType === 'gu') {
                 feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&gu=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=gu`;
-            } else {
+            } else if (currentAddressType === 'city'){
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&city=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=city`;
+            } 
+            else{
                 feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=dong`;
             }
     }
