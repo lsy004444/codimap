@@ -592,6 +592,7 @@ function showToast(msg) {
 
 function redirectToLogin() {
     showToast('로그인이 필요합니다');
+<<<<<<< HEAD
     setTimeout(() => {
         if (window.parent !== window) {
             window.parent.postMessage({ type: 'redirect-login' }, '*');
@@ -599,6 +600,9 @@ function redirectToLogin() {
             window.location.href = '/login';
         }
     }, 1500);
+=======
+    setTimeout(() => { window.top.location.href = '/login'; }, 1500);
+>>>>>>> 7e639aea81e437a1e23acc76f832134441065487
 }
 
 function escHtml(str) {
