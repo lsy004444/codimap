@@ -343,6 +343,20 @@ if (!seasonSelected) {
     return { url, affiliate };
   }).filter(item => item.url !== '');
 
+  const invalidLinks = links.filter(item => {
+  try {
+    new URL(item.url);
+    return false; // 유효한 URL
+  } catch {
+    return true; // 유효하지 않은 URL
+  }
+});
+
+if (invalidLinks.length > 0) {
+  showToast('올바른 URL 형식으로 입력해주세요. (예: https://...)');
+  return;
+}
+
 
   const formData = new FormData();
 
