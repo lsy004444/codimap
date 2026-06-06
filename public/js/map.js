@@ -299,7 +299,7 @@ function initSeasonButtons() {
 
             //iframe에 변경사항 전달
             const feedFrame = document.getElementById('feed-frame');
-            if(feedFrame && feedFrame.contentWindow) {
+            if(feedFrame && feedFrame.contentWindow && typeof feedFrame.contentWindow.feedUpdateFilter === 'function') {
                 feedFrame.contentWindow.feedUpdateFilter(
                     currentRegionName || '전국',
                     season.id
