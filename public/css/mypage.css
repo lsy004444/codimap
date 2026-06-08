@@ -178,20 +178,64 @@ button:hover {
 
 /* 팔로잉/팔로워 탭 */
 .follow-container.active {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: block;
     margin-top: 30px;
+    width: 100%;
+}
+
+.follow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.follow-col {
+    background: rgba(255,255,255,0.7);
+    border: 1.5px solid rgba(200,180,210,0.3);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.follow-col h3 {
+    font-size: 0.85rem;
+    color: #bbb;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin: 0 0 14px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .follow {
-    width: 100%;
-    padding: 18px;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+    padding: 10px 8px;
     border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    background: none !important;
+    border: none !important;
+    margin-bottom: 4px;
     box-sizing: border-box;
-    color: #555;
+}
+
+.follow:hover {
+    background: rgba(255,183,197,0.08) !important;
+}
+
+.follow strong {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.follow span {
+    font-size: 0.85rem;
+    color: #bbb;
 }
 
 /* 댓글 탭 */

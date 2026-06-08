@@ -105,33 +105,34 @@ async function loadFollows(profileId) {
             return;
         }
 
-        const followersHTML = result.followers.length === 0
-            ? `<p class="empty-message">팔로워가 없습니다.</p>`
-            : result.followers.map(user => `
-                <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
-                    <strong>@${escapeHTML(user.ID)}</strong>
-                    <span>${escapeHTML(user.NAME || "")}</span>
+                const followersHTML = result.followers.length === 0
+                    ? `<p class="empty-message">팔로워가 없습니다.</p>`
+                    : result.followers.map(user => `
+                        <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
+                            <strong>@${escapeHTML(user.ID)}</strong>
+                            <span>${escapeHTML(user.NAME || "")}</span>
+                        </div>
+                    `).join("");
+
+                const followingsHTML = result.followings.length === 0
+                    ? `<p class="empty-message">팔로잉한 사용자가 없습니다.</p>`
+                    : result.followings.map(user => `
+                        <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
+                            <strong>@${escapeHTML(user.ID)}</strong>
+                            <span>${escapeHTML(user.NAME || "")}</span>
+                        </div>
+                    `).join("");
+
+                followList.innerHTML = `
+            <div class="follow-grid">
+                <div class="follow-col">
+                    <h3>팔로워 ${result.followers.length}</h3>
+                    ${followersHTML}
                 </div>
-            `).join("");
-
-        const followingsHTML = result.followings.length === 0
-            ? `<p class="empty-message">팔로잉한 사용자가 없습니다.</p>`
-            : result.followings.map(user => `
-                <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
-                    <strong>@${escapeHTML(user.ID)}</strong>
-                    <span>${escapeHTML(user.NAME || "")}</span>
+                <div class="follow-col">
+                    <h3>팔로잉 ${result.followings.length}</h3>
+                    ${followingsHTML}
                 </div>
-            `).join("");
-
-        followList.innerHTML = `
-            <div class="follow-section">
-                <h3>팔로워</h3>
-                ${followersHTML}
-            </div>
-
-            <div class="follow-section">
-                <h3>팔로잉</h3>
-                ${followingsHTML}
             </div>
         `;
 
