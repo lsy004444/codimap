@@ -112,6 +112,7 @@ function parseMetadata(file) {
       const [hh, mm]  = timePart.split(':');
       formattedDate   = `${y}.${m}.${d} · ${hh}:${mm}`;
       season          = getSeason(parseInt(m, 10));
+      selectedSeason = season;
     }
 
     let locationStr = null;
@@ -342,6 +343,20 @@ if (!seasonSelected) {
     return { url, affiliate };
   }).filter(item => item.url !== '');
 
+  const invalidLinks = links.filter(item => {
+  try {
+    new URL(item.url);
+    return false; // 유효한 URL
+  } catch {
+    return true; // 유효하지 않은 URL
+  }
+});
+
+if (invalidLinks.length > 0) {
+  showToast('올바른 URL 형식으로 입력해주세요. (예: https://...)');
+  return;
+}
+
 
   const formData = new FormData();
 
@@ -361,7 +376,7 @@ if (!seasonSelected) {
     formData.append('latitude', pendingLocation.latitude);
     formData.append('longitude', pendingLocation.longitude);
   }
-  formData.append('season', pendingLocation?.season || '');
+  formData.append('season', pendingLocation?.season || selectedSeason || '');
   fetch('/api/outfit/register', {
     method: 'POST',
     body: formData
