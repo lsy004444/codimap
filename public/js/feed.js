@@ -338,6 +338,11 @@ function closePostModal() {
     postOverlay.classList.add('hidden');
     document.body.style.overflow = '';
     state.currentPost = null;
+
+    // 단일 게시물 모드(iframe)로 열린 경우 부모에게 닫기 요청
+    if ($('feed-root').style.display === 'none' && window.parent !== window) {
+        window.parent.postMessage({ type: 'close-post-frame' }, '*');
+    }
 }
 
 // ── 슬라이더 ──
@@ -636,6 +641,20 @@ async function loadMyInteractions() {
 }
 
 // ──────────────────────────────────────────
+// 단일 게시물 조회
+// ──────────────────────────────────────────
+async function openPostById(postId) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}`);
+        if (!res.ok) throw new Error();
+        const { post } = await res.json();
+        openPostModal(post);
+    } catch {
+        showToast('게시물을 불러오지 못했습니다');
+    }
+}
+
+// ──────────────────────────────────────────
 // 초기화
 // ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -646,11 +665,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lng = urlParams.get('lng');
     const type = urlParams.get('type') || 'dong';
     const gu = urlParams.get('gu');
+    const postId = urlParams.get('postId');
     const city = urlParams.get('city');
 
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
-
     state.addressType = type;
     state.currentGu = gu ? decodeURIComponent(gu) : null;
     state.currentCity = city ? decodeURIComponent(city) : null;
@@ -659,6 +678,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initialSeason = season || 'spring';
 
     await loadMyInteractions();   // 카드 렌더링 전에 상태 복원
-    initInfiniteScroll();
-    resetFeed(initialRegion, initialSeason);
+    
+    if (postId) {
+        // 단일 게시물 모드: 배경 피드 숨기고 모달만
+        $('feed-root').style.display = 'none';
+        document.body.style.background = 'transparent';
+        openPostById(Number(postId));
+    } else {
+        initInfiniteScroll();
+        resetFeed(initialRegion, initialSeason);
+    }
 });

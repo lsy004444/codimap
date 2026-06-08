@@ -54,7 +54,7 @@ function renderPostCard(post, isMyPostTab = false) {
 
     const clickEvent = isMyPostTab 
         ? `window.openDetailModal('${post.POST_ID}')` 
-        : `location.href='/feed?postId=${post.POST_ID}'`;
+        : `window.openScrapFrame('${post.POST_ID}')`;
 
     return `
         <div class="grid" onclick="${clickEvent}" style="cursor:pointer;">
@@ -198,6 +198,29 @@ async function loadComments(profileId) {
         commentList.innerHTML = `<p class="empty-message">댓글을 불러오지 못했습니다.</p>`;
     }
 }
+
+//피드 모달 추가
+window.openScrapFrame = function(postId) {
+    const overlay = document.getElementById('postFrameOverlay');
+    const frame   = document.getElementById('postFrame');
+    frame.src = `/feed?postId=${postId}`;
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+window.closePostFrame = function() {
+    const overlay = document.getElementById('postFrameOverlay');
+    const frame   = document.getElementById('postFrame');
+    overlay.style.display = 'none';
+    frame.src = 'about:blank';   // iframe 정리
+    document.body.style.overflow = '';
+};
+
+window.addEventListener('message', (e) => {
+    if (e.data?.type === 'close-post-frame') {
+        window.closePostFrame();
+    }
+});
 
 // 🟢 [추가] 마이페이지 내 게시물 전용 모달 상세 열기 로직
 window.openDetailModal = async function(postId) {

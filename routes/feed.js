@@ -168,6 +168,79 @@ router.get('/posts', async (req, res) => {
 });
 
 // ──────────────────────────────────────────
+// 단일 게시물 조회
+// GET /api/feed/posts/:postId
+// ──────────────────────────────────────────
+router.get('/posts/:postId', async (req, res) => {
+    const viewerId = getLoginUserId(req) || 0;
+    const postId = Number(req.params.postId);
+
+    if (!postId || isNaN(postId)) {
+        return res.status(400).json({ message: '잘못된 게시물 ID입니다' });
+    }
+
+    try {
+        const [[row]] = await db.query(
+            `
+            SELECT
+                p.POST_ID, p.MEMBER_ID, u.NAME, r.REGION_NAME,
+                p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
+                p.SCRAP_COUNT, p.LIKE_COUNT, u.ID AS PROFILE_ID,
+                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls,
+                MAX(pl.AFFILIATE) AS has_affiliate,
+                EXISTS(SELECT 1 FROM FOLLOW WHERE FOLLOWER_ID = ? AND FOLLOWING_ID = p.MEMBER_ID) AS is_following
+            FROM POST p
+            JOIN USERS u ON p.MEMBER_ID = u.USER_ID
+            JOIN REGION r ON p.REGION_ID = r.REGION_ID
+            LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
+            LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
+            WHERE p.POST_ID = ?
+            GROUP BY
+                p.POST_ID, p.MEMBER_ID, u.NAME, r.REGION_NAME,
+                p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
+                p.SCRAP_COUNT, p.LIKE_COUNT, u.ID
+            `,
+            [viewerId, postId]
+        );
+
+        if (!row) return res.status(404).json({ message: '게시물을 찾을 수 없습니다' });
+
+        const images = splitGroupConcat(row.image_urls);
+        const links = splitGroupConcat(row.link_urls);
+
+        res.json({
+            post: {
+                id: row.POST_ID,
+                desc: row.CONTENT,
+                region: row.REGION_NAME,
+                season: row.SEASON,
+                viewCount: row.VIEW_COUNT || 0,
+                scrapCount: row.SCRAP_COUNT || 0,
+                likeCount: row.LIKE_COUNT || 0,
+                user: {
+                    id: row.MEMBER_ID,
+                    username: normalizeUsername(row.NAME),
+                    profileId: row.PROFILE_ID,
+                    avatar: '',
+                },
+                images,
+                isFollowing: Boolean(row.is_following),
+                hasAffiliate: Boolean(row.has_affiliate),
+                shops: links.map((url, index) => ({
+                    name: '쇼핑 링크',
+                    item: `링크 ${index + 1}`,
+                    url,
+                })),
+            },
+        });
+    } catch (err) {
+        console.error('[feed/post single]', err);
+        res.status(500).json({ message: '게시물 조회 실패' });
+    }
+});
+
+// ──────────────────────────────────────────
 // 스크랩 토글
 // POST /api/feed/posts/:postId/scrap
 // ──────────────────────────────────────────
