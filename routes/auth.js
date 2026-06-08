@@ -266,6 +266,20 @@ router.get("/check-id", async(req, res) => {
         });
     }
 });
+// 타 유저 프로필
+router.get('/user/:profileId', async (req, res) => {
+    try {
+        const { profileId } = req.params;
+        const [rows] = await pool.query(
+            'SELECT USER_ID FROM USERS WHERE ID = ?', [profileId]
+        );
+        if(rows.length === 0) return res.status(404).json({ success: false });
+        return res.json({ success: true, userId: rows[0].USER_ID });
+    } catch(error) {
+        return res.status(500).json({ success: false });
+    }
+});
+
 
 // 마이페이지
 router.get("/mypage", (req, res) => {
