@@ -363,10 +363,27 @@ document.addEventListener("DOMContentLoaded", async() => {
         if (modify) {
             if (currentProfileId !== loginUserProfileId) {
                 modify.style.setProperty("display", "none", "important");
-                
                 // 타인 프로필을 조회 중인 경우 내 게시물이 아니므로 삭제 권한 제어 (버튼 숨김 처리)
                 const registerBtn = document.getElementById('registerBtn');
                 if(registerBtn) registerBtn.style.display = 'none';
+
+                //타인 프로필: 스크랩, 댓글 탭 숨기기
+                const scrapTab = document.querySelector('button[onclick*="scrap"]');
+                const commentTab = document.querySelector('button[onclick*="comments"]');
+                if(scrapTab) scrapTab.remove();
+                if(commentTab) commentTab.remove();
+
+                const scrapContent = document.getElementById('scrap');
+                const commentContent = document.getElementById('comments');
+                if(scrapContent) scrapContent.remove();
+                if(commentContent) commentContent.remove();
+
+                // 기본 탭을 게시물 목록으로 설정
+                const postsTab = document.querySelector('button[onclick*="posts"]');
+                const postsContent = document.getElementById('posts');
+                if(postsTab) postsTab.classList.add('active');
+                if(postsContent) postsContent.classList.add('active');
+
           } else {
                 modify.style.setProperty("display", "inline-block", "important");
                 const registerBtn = document.getElementById('registerBtn');
@@ -377,11 +394,19 @@ document.addEventListener("DOMContentLoaded", async() => {
             });
         
      } 
-     await loadScraps(currentProfileId);
-     await loadFollows(currentProfileId);
-     await loadPosts(currentProfileId);
-     await loadComments(currentProfileId);
+    //  await loadScraps(currentProfileId);
+    //  await loadFollows(currentProfileId);
+    //  await loadPosts(currentProfileId);
+    //  await loadComments(currentProfileId);
+
     
+    await loadFollows(currentProfileId);
+    await loadPosts(currentProfileId);
+    if(currentProfileId === loginUserProfileId) {
+        await loadScraps(currentProfileId);
+        await loadComments(currentProfileId);
+    }
+        
     } catch (error) {
         console.error(error);
         window.location.href = "/login";

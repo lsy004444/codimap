@@ -25,14 +25,14 @@
             </div>
 
             <div class="tab">
-                <button type="button" class="tab-item active" onclick="openTab(event, 'scrap')">스크랩</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'scrap')">스크랩</button>
                 <button type="button" class="tab-item" onclick="openTab(event, 'following')">팔로잉/팔로워 목록</button>
-                <button type="button" class="tab-item" onclick="openTab(event, 'posts')">게시물 목록</button>
+                <button type="button" class="tab-item active" onclick="openTab(event, 'posts')">게시물 목록</button>
                 <button type="button" class="tab-item" onclick="openTab(event, 'comments')">댓글 목록</button>
             </div>
         </form>
 
-        <div id="scrap" class="tab-content active">
+        <div id="scrap" class="tab-content">
             <div id="scrapList" class="gridList"></div>
         </div>
 
@@ -40,7 +40,7 @@
             <div id="followList"></div>
         </div>
 
-        <div id="posts" class="tab-content">
+        <div id="posts" class="tab-content active">
             <div id="postList" class="gridList"></div>
         </div>
 
