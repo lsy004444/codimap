@@ -334,6 +334,11 @@ function closePostModal() {
     postOverlay.classList.add('hidden');
     document.body.style.overflow = '';
     state.currentPost = null;
+
+    // 단일 게시물 모드(iframe)로 열린 경우 부모에게 닫기 요청
+    if ($('feed-root').style.display === 'none' && window.parent !== window) {
+        window.parent.postMessage({ type: 'close-post-frame' }, '*');
+    }
 }
 
 // ── 슬라이더 ──
@@ -660,7 +665,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
-
     state.addressType = type;
     state.currentGu = gu ? decodeURIComponent(gu) : null;
 
@@ -668,10 +672,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initialSeason = season || 'spring';
 
     await loadMyInteractions();   // 카드 렌더링 전에 상태 복원
-    initInfiniteScroll();
-    resetFeed(initialRegion, initialSeason);
-
+    
     if (postId) {
-    openPostById(Number(postId));
+        // 단일 게시물 모드: 배경 피드 숨기고 모달만
+        $('feed-root').style.display = 'none';
+        document.body.style.background = 'transparent';
+        openPostById(Number(postId));
+    } else {
+        initInfiniteScroll();
+        resetFeed(initialRegion, initialSeason);
     }
 });
