@@ -632,6 +632,20 @@ async function loadMyInteractions() {
 }
 
 // ──────────────────────────────────────────
+// 단일 게시물 조회
+// ──────────────────────────────────────────
+async function openPostById(postId) {
+    try {
+        const res = await fetch(`/api/feed/posts/${postId}`);
+        if (!res.ok) throw new Error();
+        const { post } = await res.json();
+        openPostModal(post);
+    } catch {
+        showToast('게시물을 불러오지 못했습니다');
+    }
+}
+
+// ──────────────────────────────────────────
 // 초기화
 // ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -642,6 +656,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lng = urlParams.get('lng');
     const type = urlParams.get('type') || 'dong';
     const gu = urlParams.get('gu');
+    const postId = urlParams.get('postId');
 
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
@@ -655,4 +670,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadMyInteractions();   // 카드 렌더링 전에 상태 복원
     initInfiniteScroll();
     resetFeed(initialRegion, initialSeason);
+
+    if (postId) {
+    openPostById(Number(postId));
+    }
 });
