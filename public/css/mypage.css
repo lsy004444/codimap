@@ -238,6 +238,41 @@ button:hover {
     color: #bbb;
 }
 
+.follow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.follow-item .follow {
+    flex: 1;
+}
+
+.follow-btn {
+    margin-top: 0 !important;
+    padding: 6px 14px !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    color: white !important;
+    background: #f4a8bf !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+}
+
+.follow-btn.following {
+    background: #e0e0e0 !important;
+    color: #888 !important;
+}
+
+.follow-btn:hover {
+    transform: none !important;
+    opacity: 0.85;
+}
 /* 댓글 탭 */
 .comment-container.active {
     display: flex;
@@ -254,6 +289,20 @@ button:hover {
     border-radius: 10px;
     box-sizing: border-box;
     color: #555;
+}
+
+/*팔로우 버튼 디자인*/
+#profileFollowBtn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 80px;
+    text-align: center;
+}
+
+#profileFollowBtn:hover {
+    transform: translateY(-50%) !important;  
 }
 
 /*마이페이지 게시물 그리드 형태로*/

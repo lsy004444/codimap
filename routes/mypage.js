@@ -2,8 +2,6 @@ const express = require("express");
 const pool = require("../config/db");
 const router = express.Router();
 
-
-
 // 스크랩 목록
 router.get("/:profileId/scraps", async (req, res) => {
     try{

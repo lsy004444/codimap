@@ -93,37 +93,69 @@ async function loadScraps(profileId) {
 }
 
 async function loadFollows(profileId) {
-    const followList = document.getElementById("followList");
+     const followList = document.getElementById("followList");
     if(!followList) return;
-
     try {
-        const response = await fetch(`/api/mypage/${encodeURIComponent(profileId)}/follows`);
-        const result = await response.json();
+        const [followRes, myInteractionsRes, myInfoRes] = await Promise.all([
+            fetch(`/api/mypage/${encodeURIComponent(profileId)}/follows`),
+            fetch('/api/feed/my-interactions'),
+            fetch('/api/auth/mypage')
+        ]);
+
+        const result = await followRes.json();
+        const myInteractions = await myInteractionsRes.json();
+        const myInfo = await myInfoRes.json();
 
         if (!result.success) {
             followList.innerHTML = `<p class="empty-message">${escapeHTML(result.message)}</p>`;
             return;
         }
+        const myProfileId = myInfo.user?.profileId;
+        const myFollowingIds = new Set(myInteractions.followingIds?.map(Number) || []);
 
-                const followersHTML = result.followers.length === 0
-                    ? `<p class="empty-message">팔로워가 없습니다.</p>`
-                    : result.followers.map(user => `
+        const followersHTML = result.followers.length === 0
+            ? `<p class="empty-message">팔로워가 없습니다.</p>`
+            : result.followers.map(user => {
+                const isFollowing = myFollowingIds.has(Number(user.USER_ID)); // ✅ 수정
+                const isMe = user.ID === myProfileId;
+                return `
+                    <div class="follow-item">
                         <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
                             <strong>@${escapeHTML(user.ID)}</strong>
                             <span>${escapeHTML(user.NAME || "")}</span>
                         </div>
-                    `).join("");
+                        ${!isMe ? `
+                        <button class="follow-btn ${isFollowing ? 'following' : ''}"
+                            data-target-id="${escapeHTML(user.USER_ID)}"
+                            onclick="toggleFollowBtn(this, '${escapeHTML(user.USER_ID)}')">
+                            ${isFollowing ? '팔로잉' : '팔로우'}
+                        </button>` : ''}
+                    </div>
+                `;
+            }).join("");
 
-                const followingsHTML = result.followings.length === 0
-                    ? `<p class="empty-message">팔로잉한 사용자가 없습니다.</p>`
-                    : result.followings.map(user => `
-                        <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
-                            <strong>@${escapeHTML(user.ID)}</strong>
-                            <span>${escapeHTML(user.NAME || "")}</span>
-                        </div>
-                    `).join("");
+        const followingsHTML = result.followings.length === 0
+    ? `<p class="empty-message">팔로잉한 사용자가 없습니다.</p>`
+    : result.followings.map(user => {
+        const isFollowing = myFollowingIds.has(Number(user.USER_ID));
+        const isMe = user.ID === myProfileId;
+        return `
+            <div class="follow-item">
+                <div class="follow" onclick="location.href='/mypage?profileId=${encodeURIComponent(user.ID)}'">
+                    <strong>@${escapeHTML(user.ID)}</strong>
+                    <span>${escapeHTML(user.NAME || "")}</span>
+                </div>
+                ${!isMe ? `
+                <button class="follow-btn ${isFollowing ? 'following' : ''}"
+                    data-target-id="${escapeHTML(user.USER_ID)}"
+                    onclick="toggleFollowBtn(this, '${escapeHTML(user.USER_ID)}')">
+                    ${isFollowing ? '팔로잉' : '팔로우'}
+                </button>` : ''}
+            </div>
+        `;
+    }).join("");
 
-                followList.innerHTML = `
+        followList.innerHTML = `
             <div class="follow-grid">
                 <div class="follow-col">
                     <h3>팔로워 ${result.followers.length}</h3>
@@ -139,6 +171,30 @@ async function loadFollows(profileId) {
     } catch (error) {
         console.error(error);
         followList.innerHTML = `<p class="empty-message">팔로우 목록을 불러오지 못했습니다.</p>`;
+    }
+}
+
+async function toggleFollowBtn(btn, targetUserId) {
+    try {
+        const res = await fetch(`/api/feed/users/${targetUserId}/follow`, { method: 'POST' });
+        if(res.status === 401) { window.location.href = '/login'; return; }
+        if(!res.ok) throw new Error();
+
+        const { followed } = await res.json();
+        if(followed) {
+            btn.textContent = '팔로잉';
+            btn.classList.add('following');
+        } else {
+            btn.textContent = '팔로우';
+            btn.classList.remove('following');
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const profileId = params.get("profileId") || (await fetch("/api/auth/mypage").then(r=>r.json())).user.profileId;
+        await loadFollows(profileId);
+
+    } catch {
+        window.showToast('팔로우 처리에 실패했습니다.');
     }
 }
 
@@ -369,70 +425,86 @@ document.addEventListener("DOMContentLoaded", async() => {
             return;
         }
         const loginUserProfileId = result.user.profileId;
-
-        // URL에 profileId가 있으면 그 프로필을 보여주고, 없으면 로그인한 내 프로필을 보여줌
         const currentProfileId = urlProfileId || loginUserProfileId;
 
         const profileTitle = document.getElementById("profileTitle");
+        if(profileTitle) profileTitle.textContent = `@${currentProfileId}`;
+        if(idInput) idInput.value = `@${currentProfileId}`;
 
-        if(profileTitle) {
-            profileTitle.textContent = `@${currentProfileId}`;
-        }
-
-        if(idInput) {
-            idInput.value = `@${currentProfileId}`;
-        }
-
-        // URL의 사용자 아이디와 로그인한 사용자 아이디가 다르면 프로필 수정 버튼 숨김
         if (modify) {
             if (currentProfileId !== loginUserProfileId) {
+                // 타인 프로필
                 modify.style.setProperty("display", "none", "important");
-                // 타인 프로필을 조회 중인 경우 내 게시물이 아니므로 삭제 권한 제어 (버튼 숨김 처리)
                 const registerBtn = document.getElementById('registerBtn');
                 if(registerBtn) registerBtn.style.display = 'none';
 
-                //타인 프로필: 스크랩, 댓글 탭 숨기기
+                // 스크랩, 댓글 탭 제거
                 const scrapTab = document.querySelector('button[onclick*="scrap"]');
                 const commentTab = document.querySelector('button[onclick*="comments"]');
                 if(scrapTab) scrapTab.remove();
                 if(commentTab) commentTab.remove();
-
                 const scrapContent = document.getElementById('scrap');
                 const commentContent = document.getElementById('comments');
                 if(scrapContent) scrapContent.remove();
                 if(commentContent) commentContent.remove();
 
-                // 기본 탭을 게시물 목록으로 설정
+                // 기본 탭 게시물로
                 const postsTab = document.querySelector('button[onclick*="posts"]');
                 const postsContent = document.getElementById('posts');
                 if(postsTab) postsTab.classList.add('active');
                 if(postsContent) postsContent.classList.add('active');
 
-          } else {
+                // 팔로우 버튼 추가
+                const followRes = await fetch('/api/feed/my-interactions');
+                const followData = await followRes.json();
+                const followingIds = new Set(followData.followingIds?.map(Number) || []);
+
+                const userInfoRes = await fetch(`/api/auth/user/${encodeURIComponent(currentProfileId)}`);
+                if(userInfoRes.ok) {
+                    const userInfo = await userInfoRes.json();
+                    const targetUserId = userInfo.userId;
+                    const alreadyFollowing = followingIds.has(Number(targetUserId));
+
+                    const followBtn = document.createElement('button');
+                    followBtn.id = 'profileFollowBtn';
+                    followBtn.textContent = alreadyFollowing ? '팔로잉' : '팔로우';
+                    followBtn.className = alreadyFollowing ? 'follow-btn following' : 'follow-btn';
+                    followBtn.style.cssText = '';
+                    followBtn.onclick = async function() {
+                        const res = await fetch(`/api/feed/users/${targetUserId}/follow`, { method: 'POST' });
+                        if(res.status === 401) { window.location.href = '/login'; return; }
+                        const { followed } = await res.json();
+                        followBtn.textContent = followed ? '팔로잉' : '팔로우';
+                        followBtn.className = followed ? 'follow-btn following' : 'follow-btn';
+
+                        //바로 갱신
+                        await loadFollows(currentProfileId);
+                    };
+                    const profileTitleDiv = document.querySelector('.mypage-wrapper > div');
+                    profileTitleDiv.appendChild(followBtn);
+                }
+
+            } else {
+                // 본인 프로필
                 modify.style.setProperty("display", "inline-block", "important");
                 const registerBtn = document.getElementById('registerBtn');
                 if(registerBtn) registerBtn.style.display = 'inline-block';
-          }
+            }
+
             modify.addEventListener("click", () => {
                 window.location.href = "/modify";
             });
-        
-     } 
-    //  await loadScraps(currentProfileId);
-    //  await loadFollows(currentProfileId);
-    //  await loadPosts(currentProfileId);
-    //  await loadComments(currentProfileId);
+        }
 
-    
-    await loadFollows(currentProfileId);
-    await loadPosts(currentProfileId);
-    if(currentProfileId === loginUserProfileId) {
-        await loadScraps(currentProfileId);
-        await loadComments(currentProfileId);
-    }
-        
+        await loadFollows(currentProfileId);
+        await loadPosts(currentProfileId);
+        if(currentProfileId === loginUserProfileId) {
+            await loadScraps(currentProfileId);
+            await loadComments(currentProfileId);
+        }
+
     } catch (error) {
         console.error(error);
         window.location.href = "/login";
-    }    
+    }
 });
