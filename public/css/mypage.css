@@ -364,3 +364,8 @@ button:hover {
     object-fit: cover;
     display: block;
 }
+
+#homeBtn:hover {
+    transform: translateY(-50%) scale(1.05) !important;
+    box-shadow: 0 4px 16px rgba(200,160,184,0.35);
+}
