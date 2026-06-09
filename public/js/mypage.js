@@ -201,7 +201,7 @@ async function toggleFollowBtn(btn, targetUserId) {
     }
 }
 
-async function loadPosts(profileId) {
+async function loadPosts(profileId, isMyProfile = false) {
     const postList = document.getElementById("postList");
     if (!postList) return;
 
@@ -219,8 +219,7 @@ async function loadPosts(profileId) {
             return;
         }
 
-        // 💥 [수정] 내 게시물 탭이므로 True 인자값을 넘겨 모달이 열리도록 매핑합니다.
-        postList.innerHTML = result.posts.map(post => renderPostCard(post, true)).join("");
+        postList.innerHTML = result.posts.map(post => renderPostCard(post, isMyProfile)).join("");
 
     } catch (error) {
         console.error(error);
@@ -247,7 +246,7 @@ async function loadComments(profileId) {
         }
 
         commentList.innerHTML = result.comments.map(comment => `
-            <div class="comment" onclick="location.href='/feed?postId=${comment.POST_ID}'">
+            <div class="comment" onclick="window.openScrapFrame('${comment.POST_ID}')" style="cursor:pointer;">
                 <p>${escapeHTML(comment.COMMENT_CONTENT)}</p>
                 <small>게시물: ${escapeHTML(comment.POST_CONTENT || "내용 없음")}</small>
             </div>
@@ -499,9 +498,11 @@ document.addEventListener("DOMContentLoaded", async() => {
             });
         }
 
+        const isMyProfile = currentProfileId === loginUserProfileId;
+
         await loadFollows(currentProfileId);
-        await loadPosts(currentProfileId);
-        if(currentProfileId === loginUserProfileId) {
+        await loadPosts(currentProfileId, isMyProfile);
+        if(isMyProfile) {
             await loadScraps(currentProfileId);
             await loadComments(currentProfileId);
         }

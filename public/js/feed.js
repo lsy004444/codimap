@@ -667,9 +667,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gu = urlParams.get('gu');
     const postId = urlParams.get('postId');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     const city = urlParams.get('city');
 >>>>>>> 330d794e951aefdbb3fabb28db1a1a1587578a57
+=======
+    const city = urlParams.get('city');
+>>>>>>> 0434de57bda689994f610669eb0bbd2bb4be54c2
 
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
