@@ -8,6 +8,7 @@ const state = {
     currentLng: null,
     addressType: 'dong',
     currentGu: null,
+    currentCity: null,
     page: 0,
     pageSize: 9,
     isLoading: false,
@@ -55,7 +56,10 @@ async function loadMorePosts() {
             let url;
             if(state.currentGu) {
                 url = `/api/regions/nearby?gu=${encodeURIComponent(state.currentGu)}&season=${state.currentSeason}`;
+            } else if (state.currentCity){
+                url = `/api/regions/nearby?city=${encodeURIComponent(state.currentCity)}&season=${state.currentSeason}`;
             } else {
+            
                 url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
             }
             const res = await fetch(url);
@@ -662,11 +666,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const type = urlParams.get('type') || 'dong';
     const gu = urlParams.get('gu');
     const postId = urlParams.get('postId');
+<<<<<<< HEAD
+=======
+    const city = urlParams.get('city');
+>>>>>>> 330d794e951aefdbb3fabb28db1a1a1587578a57
 
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
     state.addressType = type;
     state.currentGu = gu ? decodeURIComponent(gu) : null;
+    state.currentCity = city ? decodeURIComponent(city) : null;
 
     const initialRegion = region ? decodeURIComponent(region) : '전국';
     const initialSeason = season || 'spring';

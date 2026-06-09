@@ -4,22 +4,32 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-     background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
+    background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
     padding: 50px 20px;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
 }
 
 .mypage-wrapper {
+    height: 700px;
     display: flex;
     flex-direction: column;
     align-items: center;
     background-color: white;
-    padding: 50px;
+    padding: 4dvh;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     width: 100%;
-    max-width: 900px;
+    max-width: 800px;
     box-sizing: border-box;
+    position: relative;
+    overflow-y: hidden;
+    
 }
 
 .mypage-title {
@@ -135,6 +145,11 @@ button:hover {
 /* active 된 탭만 보이게 */
 .tab-content.active {
     display: block;
+
+    overflow-x: hidden;/*가로 스크롤 해제*/
+    overflow-y: auto;
+
+    max-height: 50vh;
 }
 
 /* 스크랩 / 내 게시물 그리드 */
@@ -178,22 +193,101 @@ button:hover {
 
 /* 팔로잉/팔로워 탭 */
 .follow-container.active {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: block;
     margin-top: 30px;
+    width: 100%;
+}
+
+.follow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.follow-col {
+    background: rgba(255,255,255,0.7);
+    border: 1.5px solid rgba(200,180,210,0.3);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.follow-col h3 {
+    font-size: 0.85rem;
+    color: #bbb;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin: 0 0 14px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .follow {
-    width: 100%;
-    padding: 18px;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+    padding: 10px 8px;
     border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    background: none !important;
+    border: none !important;
+    margin-bottom: 4px;
     box-sizing: border-box;
-    color: #555;
 }
 
+.follow:hover {
+    background: rgba(255,183,197,0.08) !important;
+}
+
+.follow strong {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.follow span {
+    font-size: 0.85rem;
+    color: #bbb;
+}
+
+.follow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.follow-item .follow {
+    flex: 1;
+}
+
+.follow-btn {
+    margin-top: 0 !important;
+    padding: 6px 14px !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    color: white !important;
+    background: #f4a8bf !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+}
+
+.follow-btn.following {
+    background: #e0e0e0 !important;
+    color: #888 !important;
+}
+
+.follow-btn:hover {
+    transform: none !important;
+    opacity: 0.85;
+}
 /* 댓글 탭 */
 .comment-container.active {
     display: flex;
@@ -212,6 +306,20 @@ button:hover {
     color: #555;
 }
 
+/*팔로우 버튼 디자인*/
+#profileFollowBtn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 80px;
+    text-align: center;
+}
+
+#profileFollowBtn:hover {
+    transform: translateY(-50%) !important;  
+}
+
 /*마이페이지 게시물 그리드 형태로*/
 #postList, #scrapList {
     display: grid;
@@ -219,6 +327,7 @@ button:hover {
     gap: 8px;
     margin-top: 30px;
     width: 100%;
+    overflow: hidden;
 }
 
 #postList .grid, #scrapList .grid {

@@ -193,16 +193,19 @@ router.get('/detail/:id', async (req, res) => {
     
     try {
         const [results] = await db.query(
-            `SELECT P.*, 
-                GROUP_CONCAT(DISTINCT I.URL ORDER BY I.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
-                GROUP_CONCAT(DISTINCT PL.URL ORDER BY PL.LINK_ID SEPARATOR '||') AS LINK_URLS
-             FROM POST P
-             LEFT JOIN IMAGE I ON P.POST_ID = I.POST_ID
-             LEFT JOIN POST_LINK PL ON P.POST_ID = PL.POST_ID
-             WHERE P.POST_ID = ?
-             GROUP BY P.POST_ID`,
-            [postId]
-        );
+    `SELECT P.*, 
+        R.REGION_NAME, R.CITY, R.COUNTRY,
+        CONCAT(R.CITY, ' ', R.COUNTRY, ' ', R.REGION_NAME) AS LOCATION,
+        GROUP_CONCAT(DISTINCT I.URL ORDER BY I.IMAGE_ID SEPARATOR '||') AS IMAGE_URLS,
+        GROUP_CONCAT(DISTINCT PL.URL ORDER BY PL.LINK_ID SEPARATOR '||') AS LINK_URLS
+     FROM POST P
+     LEFT JOIN REGION R ON P.REGION_ID = R.REGION_ID
+     LEFT JOIN IMAGE I ON P.POST_ID = I.POST_ID
+     LEFT JOIN POST_LINK PL ON P.POST_ID = PL.POST_ID
+     WHERE P.POST_ID = ?
+     GROUP BY P.POST_ID`,
+    [postId]
+);
 
         if (!results || results.length === 0) {
             return res.json({ success: false, message: '존재하지 않는 게시물입니다.' });

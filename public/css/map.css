@@ -169,28 +169,6 @@
     display: none;
 }
 
-/*신고 팝업이랑 통일*/
-.map-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
-    background: #1a1714;
-    color: white;
-    padding: 10px 22px;
-    border-radius: 20px;
-    font-size: 13px;
-    z-index: 2000;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-    transition: opacity 0.3s, transform 0.3s;
-    white-space: nowrap;
-}
-.map-toast.hidden { 
-    opacity: 0; 
-    pointer-events: none; 
-    transform: translateX(-50%) translateY(8px); 
-}
-
 /*페이지 이동 버튼 등록*/
 .hamburger-bar {
     position: absolute;

@@ -11,17 +11,16 @@ function isValidPassword(password) {
 }
 
 window.showToast = function(message) {
-    const toast = document.getElementById("modify-toast");
+    const existing = document.querySelector('.upload-toast');
+    if(existing) existing.remove();
 
+    const toast = document.createElement('div');
+    toast.className = 'upload-toast';
     toast.textContent = message;
-    toast.classList.remove("hidden");
-
-    clearTimeout(window.toastTimer);
-
-    window.toastTimer = setTimeout(() => {
-        toast.classList.add("hidden");
-    }, 1000);
-};
+    document.body.appendChild(toast);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => toast.remove(), 2500);
+}
 
 // 변경하기 버튼을 누를 경우 발생하는 이벤트
 async function completeModify() {

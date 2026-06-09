@@ -11,7 +11,13 @@
   <div id="postFrameOverlay" style="display:none; position:fixed; inset:0; z-index:9999;">
     <iframe id="postFrame" style="position:absolute; inset:0; width:100%; height:100%; border:0;"></iframe>
   </div>
+<<<<<<< HEAD
 
+=======
+    <div style="position:absolute; width:400px; height:400px; background:rgba(169,204,227,0.3); border-radius:50%; top:-100px; right:-100px; filter:blur(40px); pointer-events:none; animation:float 9s ease-in-out infinite;"></div>
+    <div style="position:absolute; width:300px; height:300px; background:rgba(255,183,197,0.25); border-radius:50%; bottom:-80px; left:-80px; filter:blur(35px); pointer-events:none; animation:float 11s ease-in-out infinite;"></div>
+    <div style="position:absolute; width:200px; height:200px; background:rgba(169,204,227,0.2); border-radius:50%; top:40%; right:10%; filter:blur(30px); pointer-events:none; animation:float 7s ease-in-out infinite;"></div>
+>>>>>>> 330d794e951aefdbb3fabb28db1a1a1587578a57
     <div class="mypage-wrapper">
         <div style="position:relative; width:100%; margin-bottom:40px; text-align:center;">
             <button onclick="window.history.back()" class="btn-back" style="position:absolute; left:0; top:50%; transform:translateY(-50%); margin:0;">
@@ -28,14 +34,14 @@
             </div>
 
             <div class="tab">
-                <button type="button" class="tab-item active" onclick="openTab(event, 'scrap')">스크랩</button>
+                <button type="button" class="tab-item" onclick="openTab(event, 'scrap')">스크랩</button>
                 <button type="button" class="tab-item" onclick="openTab(event, 'following')">팔로잉/팔로워 목록</button>
-                <button type="button" class="tab-item" onclick="openTab(event, 'posts')">게시물 목록</button>
+                <button type="button" class="tab-item active" onclick="openTab(event, 'posts')">게시물 목록</button>
                 <button type="button" class="tab-item" onclick="openTab(event, 'comments')">댓글 목록</button>
             </div>
         </form>
 
-        <div id="scrap" class="tab-content active">
+        <div id="scrap" class="tab-content">
             <div id="scrapList" class="gridList"></div>
         </div>
 
@@ -43,7 +49,7 @@
             <div id="followList"></div>
         </div>
 
-        <div id="posts" class="tab-content">
+        <div id="posts" class="tab-content active">
             <div id="postList" class="gridList"></div>
         </div>
 

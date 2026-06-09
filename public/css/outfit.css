@@ -276,8 +276,8 @@ textarea:focus { outline: none; border-color: #93c5fd; }
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%) translateY(0);
-    background: #1a1714;
-    color: white;
+    background: rgba(255,255,255,0.85);
+    color: #333;
     padding: 10px 22px;
     border-radius: 20px;
     font-size: 13px;

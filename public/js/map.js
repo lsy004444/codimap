@@ -33,8 +33,10 @@ window.onload = function() {
                     var regionName = extractDongName(fullAddress);
                     currentRegionName = regionName;
 
-                    //구.동 판별 추가
-                    if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                    //시, 구, 동 구분
+                    if(!fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
+                        currentAddressType = 'city';
+                    } else if(fullAddress.match(/[가-힣]+(구|군)(\s|$)/) && !fullAddress.match(/[가-힣]+(동|면|읍)(\s|$)/)) {
                         currentAddressType = 'gu';
                     } else {
                         currentAddressType = 'dong';
@@ -107,22 +109,17 @@ window.onload = function() {
             var center = map.getCenter();
 
             geocoder.coord2RegionCode(center.getLng(), center.getLat(), function(result, status) {
-                if (status===kakao.maps.services.Status.OK) {
-                    for (var i=0; i < result.length; i++){
+                if (status === kakao.maps.services.Status.OK) {
+                    for (var i = 0; i < result.length; i++) {
                         if(result[i].region_type === 'H') {
-                            var currentRegion = result[i].region_3depth_name;
-
-                            console.log("현재 화면 중심 지역:", currentRegion);
+                            var r = result[i];
+                            var currentRegion = r.region_3depth_name || r.region_2depth_name || r.region_1depth_name;
                             updateStatusUI(currentRegion, selectedSeason);
-                            
-                            // 서버에 데이터 요청 칸!!!!!!//
-
                             break;
                         }
                     }
                 }
             });
-
         });
 
         kakao.maps.event.addListener(map, 'click', function() {
@@ -147,7 +144,7 @@ window.onload = function() {
         });
 
         function extractDongName(address) {
-            const match = address.match(/([가-힣]+(동|면|읍)) (?=\s|$)/);
+            const match = address.match(/([가-힣]+(동|가|면|읍)) (?=\s|$)/);
             return match ? match[1] : address;
         }
 
@@ -194,7 +191,10 @@ window.onload = function() {
 
             if(currentAddressType === 'gu') {
                 feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&gu=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=gu`;
-            } else {
+            } else if (currentAddressType === 'city'){
+                feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&city=${encodeURIComponent(dongName)}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=city`;
+            } 
+            else{
                 feedFrame.src = `/feed?region=${encodeURIComponent(dongName)}&season=${selectedSeason}&lat=${currentCoords.getLat()}&lng=${currentCoords.getLng()}&type=dong`;
             }
     }
@@ -314,15 +314,6 @@ function initSeasonButtons() {
     });
 }
 
-//로그아웃 토스트 지정
-function handleLogout() {
-        showToast('로그아웃 되었습니다');
-        setTimeout(() => {
-             window.location.href = '/login?logout=true';
-        }, 500);
-       
-    }
-
 //로그인 없이 게시물 등록 버튼 접근 시 토스트 지정
 window.openModal = async function() {
     try {
@@ -351,14 +342,16 @@ window.addEventListener('message', function(e) {
 
 //경고창 팝업
 window.showToast = function(msg) {
-    const toast = document.getElementById('map-toast');
+    const existing = document.querySelector('.upload-toast');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'upload-toast';
     toast.textContent = msg;
-    toast.classList.remove('hidden');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
+    document.body.appendChild(toast);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => toast.remove(), 2500);
 }
-
-
 function toggleSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
     const menu = document.getElementById('sidebar-menu');
@@ -396,52 +389,61 @@ function handleMenuClick(e) {
     }
 }
 
-
-
-window.addEventListener('DOMContentLoaded', initSeasonButtons);
-
-// 로그아웃 했을 경우
 document.addEventListener("DOMContentLoaded", () => {
-    const logoutBtn = document.getElementById("logoutBtn");
+    // fade-in
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => document.body.style.opacity = '1', 50);
 
+    // 로그아웃
+    const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
+            const authRes = await fetch("/api/auth/mypage");
+            const authData = await authRes.json();
+
+                if (!authData.success) {
+                    showToast('🔒 로그인이 필요합니다.');
+                    setTimeout(() => {
+                        document.body.style.transition = 'opacity 0.4s ease';
+                        document.body.style.opacity = '0';
+                        setTimeout(() => window.location.href = "/login", 400);
+                    }, 1000);
+                    return;
+                }
             const response = await fetch("/api/auth/logout", {
                 method: "POST",
                 credentials: "include"
             });
-
             const result = await response.json();
 
             if (result.success) {
-                alert(result.message);
-                window.location.href = "/login";
-            } else {
-                alert("로그아웃에 실패했습니다.");
-            }
+                showToast('로그아웃 되었습니다.');
+                setTimeout(() => {
+                    document.body.style.transition = 'opacity 0.4s ease';
+                    document.body.style.opacity = '0';
+                    setTimeout(() => window.location.href = "/", 400);
+                }, 1000);
+            } 
         });
     }
-});
 
-document.addEventListener("DOMContentLoaded", () => {
+    // 마이페이지
     const mypageBtn = document.getElementById("mypageBtn");
-
-    if(!mypageBtn) return;
+    if (!mypageBtn) return;
 
     mypageBtn.addEventListener("click", async () => {
         try {
             const response = await fetch("/api/auth/mypage");
             const result = await response.json();
 
-            if(!result.success) {
+            if (!result.success) {
                 window.showToast('🔒 로그인이 필요합니다');
-                setTimeout( () => {
-                    window.location.href = '/login';
-                }, 1000);
+                setTimeout(() => window.location.href = '/login', 1000);
+                return; // ← 추가
             }
 
             const profileId = result.user.profileId;
-
             window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
         } catch (error) {
             console.error(error);
@@ -449,3 +451,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/css/auth.css">
+ 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
     <title>로그인 페이지</title>
 </head>
@@ -13,7 +14,7 @@
     
     <div class="login-page">
     <div class="login-wrapper">
-        <button class ="back-btn" onclick="window.history.back()">← 뒤로</button>
+        <button class ="back-btn" onclick="window.location.href='/'">← 뒤로</button>
         <h1 class="login-title">CODIMAP</h1>
     <form>
         <div class="input-group">
@@ -31,8 +32,7 @@
             <a href="/signup">회원가입</a>
         </div>
     </form>
-    </div>
-        <div id="login-toast" class="login-toast hidden"></div>
+    <div id="login-toast" class="login-toast hidden"></div>
     </div>
     <script src="/js/auth.js"></script>
 </body>
