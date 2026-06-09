@@ -314,15 +314,6 @@ function initSeasonButtons() {
     });
 }
 
-//로그아웃 토스트 지정
-function handleLogout() {
-        showToast('로그아웃 되었습니다');
-        setTimeout(() => {
-             window.location.href = '/login?logout=true';
-        }, 500);
-       
-    }
-
 //로그인 없이 게시물 등록 버튼 접근 시 토스트 지정
 window.openModal = async function() {
     try {
@@ -351,14 +342,16 @@ window.addEventListener('message', function(e) {
 
 //경고창 팝업
 window.showToast = function(msg) {
-    const toast = document.getElementById('map-toast');
+    const existing = document.querySelector('.upload-toast');
+    if(existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'upload-toast';
     toast.textContent = msg;
-    toast.classList.remove('hidden');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => toast.classList.add('hidden'), 2500);
+    document.body.appendChild(toast);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => toast.remove(), 2500);
 }
-
-
 function toggleSidebar() {
     const overlay = document.getElementById('sidebar-overlay');
     const menu = document.getElementById('sidebar-menu');
@@ -396,52 +389,61 @@ function handleMenuClick(e) {
     }
 }
 
-
-
-window.addEventListener('DOMContentLoaded', initSeasonButtons);
-
-// 로그아웃 했을 경우
 document.addEventListener("DOMContentLoaded", () => {
-    const logoutBtn = document.getElementById("logoutBtn");
+    // fade-in
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => document.body.style.opacity = '1', 50);
 
+    // 로그아웃
+    const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
+            const authRes = await fetch("/api/auth/mypage");
+            const authData = await authRes.json();
+
+                if (!authData.success) {
+                    showToast('🔒 로그인이 필요합니다.');
+                    setTimeout(() => {
+                        document.body.style.transition = 'opacity 0.4s ease';
+                        document.body.style.opacity = '0';
+                        setTimeout(() => window.location.href = "/login", 400);
+                    }, 1000);
+                    return;
+                }
             const response = await fetch("/api/auth/logout", {
                 method: "POST",
                 credentials: "include"
             });
-
             const result = await response.json();
 
             if (result.success) {
-                alert(result.message);
-                window.location.href = "/login";
-            } else {
-                alert("로그아웃에 실패했습니다.");
-            }
+                showToast('로그아웃 되었습니다.');
+                setTimeout(() => {
+                    document.body.style.transition = 'opacity 0.4s ease';
+                    document.body.style.opacity = '0';
+                    setTimeout(() => window.location.href = "/", 400);
+                }, 1000);
+            } 
         });
     }
-});
 
-document.addEventListener("DOMContentLoaded", () => {
+    // 마이페이지
     const mypageBtn = document.getElementById("mypageBtn");
-
-    if(!mypageBtn) return;
+    if (!mypageBtn) return;
 
     mypageBtn.addEventListener("click", async () => {
         try {
             const response = await fetch("/api/auth/mypage");
             const result = await response.json();
 
-            if(!result.success) {
+            if (!result.success) {
                 window.showToast('🔒 로그인이 필요합니다');
-                setTimeout( () => {
-                    window.location.href = '/login';
-                }, 1000);
+                setTimeout(() => window.location.href = '/login', 1000);
+                return; // ← 추가
             }
 
             const profileId = result.user.profileId;
-
             window.location.href = `/mypage?profileId=${encodeURIComponent(profileId)}`;
         } catch (error) {
             console.error(error);
@@ -449,3 +451,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
