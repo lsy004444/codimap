@@ -327,6 +327,7 @@ button:hover {
     gap: 8px;
     margin-top: 30px;
     width: 100%;
+    overflow: hidden;
 }
 
 #postList .grid, #scrapList .grid {
