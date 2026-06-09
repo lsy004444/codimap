@@ -4,13 +4,16 @@
 
 if (!window.showToast) {
             window.showToast = function(message) {
-                const toast = document.createElement('div');
-                toast.className = 'upload-toast';
-                toast.textContent = message;
-                toast.style = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:5px; z-index:10000; transition:all 0.3s;";
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 2500);
-            }
+            const existing = document.querySelector('.upload-toast');
+            if(existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'upload-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => toast.remove(), 2500);
+        }
         }
 
 function openTab(event, tabId) {

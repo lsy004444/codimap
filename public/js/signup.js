@@ -30,17 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.showToast = function(message) {
-    const toast = document.getElementById("signup-toast");
+    const existing = document.querySelector('.upload-toast');
+    if(existing) existing.remove();
 
+    const toast = document.createElement('div');
+    toast.className = 'upload-toast';
     toast.textContent = message;
-    toast.classList.remove("hidden");
-
-    clearTimeout(window.toastTimer);
-
-    window.toastTimer = setTimeout(() => {
-        toast.classList.add("hidden");
-    }, 1000);
-};
+    document.body.appendChild(toast);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => toast.remove(), 2500);
+}
 
     // 이메일 중복확인 버튼 클릭 시 발생
     emailBtn.addEventListener("click", async(event) => {
@@ -66,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
             const result = await response.json();
 
-            alert(result.message);
+            window.showToast(result.message);
 
             if(result.available) {
                 isEmailChecked = true;
@@ -106,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(`/api/auth/check-id?userId=${encodeURIComponent(userId)}`);
             const result = await response.json();
 
-            alert(result.message);
+            window.showToast(result.message);
 
             if(result.available) {
                 isIdChecked = true;
@@ -228,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (error) {
             console.error(error);
-            window.toast("회원가입 요청 중 오류가 발생했습니다.");
+            window.showToast("회원가입 요청 중 오류가 발생했습니다.");
            //alert("회원가입 요청 중 오류가 발생했습니다.");
         }
      });

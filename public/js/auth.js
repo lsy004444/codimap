@@ -1,17 +1,15 @@
 const loginbtn=document.getElementById('login');
 
+
 window.showToast = function(message) {
     const toast = document.getElementById("login-toast");
-
     toast.textContent = message;
     toast.classList.remove("hidden");
-
     clearTimeout(window.toastTimer);
-
     window.toastTimer = setTimeout(() => {
         toast.classList.add("hidden");
-    }, 1000);
-};
+    }, 2500);
+}
 
 // 로그인 버튼 클릭했을 때 동작하는 코드
 loginbtn.addEventListener('click',async function(event) {
@@ -48,7 +46,7 @@ loginbtn.addEventListener('click',async function(event) {
                 window.location.href = "/";
             }, 1000);
         } else {
-            alert(result.message);
+            window.showToast(result.message);
         }
     } catch (error) {
         window.showToast("🔒로그인 요청 중 오류가 발생했습니다.");
