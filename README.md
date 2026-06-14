@@ -53,11 +53,11 @@ DB_NAME=codimap_db
 node main.js
 ```
 
-**5. 브라우저 접속** !!수정필요
+**5. 브라우저 접속** 
 ```
-http://
+http://34.64.63.42
 ```
-또는 VM 배포 시 `http://<VM 외부 IP>/map` 으로 접속
+
 
 ---
 
