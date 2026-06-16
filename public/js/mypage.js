@@ -485,16 +485,17 @@ document.addEventListener("DOMContentLoaded", async() => {
                     const profileTitleDiv = document.querySelector('.mypage-wrapper > div');
                     profileTitleDiv.appendChild(followBtn);
 
-                    const homeBtn = document.createElement('button');
-                    homeBtn.innerHTML = '🏠';
-                    homeBtn.title = 'CODIMAP으로 이동';
-                    homeBtn.style.cssText = 'position:absolute; right:0; top:calc(50% + 52px); transform:translateY(0); margin:0; background:rgba(255,255,255,0.85); border:1.5px solid rgba(200,180,210,0.35); border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 16px rgba(200,160,184,0.2); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; transition:all 0.2s;';
-                    homeBtn.onmouseover = () => homeBtn.style.transform = 'translateY(0) scale(1.1)';
-                    homeBtn.onmouseout = () => homeBtn.style.transform = 'translateY(0) scale(1)';
-                    homeBtn.onclick = () => window.location.href = '/';
-                    profileTitleDiv.appendChild(homeBtn);
+                    if (window.top === window.self) {
+                        const homeBtn = document.createElement('button');
+                        homeBtn.innerHTML = '🏠';
+                        homeBtn.title = 'CODIMAP으로 이동';
+                        homeBtn.style.cssText = 'position:absolute; right:0; top:calc(50% + 52px); transform:translateY(0); margin:0; background:rgba(255,255,255,0.85); border:1.5px solid rgba(200,180,210,0.35); border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 16px rgba(200,160,184,0.2); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; transition:all 0.2s;';
+                        homeBtn.onmouseover = () => homeBtn.style.transform = 'translateY(0) scale(1.1)';
+                        homeBtn.onmouseout = () => homeBtn.style.transform = 'translateY(0) scale(1)';
+                        homeBtn.onclick = () => window.location.href = '/';
+                        profileTitleDiv.appendChild(homeBtn);
+                    }
                 }
-
             } else {
                 // 본인 프로필
                 modify.style.setProperty("display", "inline-block", "important");
@@ -507,10 +508,16 @@ document.addEventListener("DOMContentLoaded", async() => {
                 homeBtn.style.cssText = 'position:absolute; right:0; top:50%; transform:translateY(-50%); margin:0; background:rgba(255,255,255,0.85); border:1.5px solid rgba(200,180,210,0.35); border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 16px rgba(200,160,184,0.2); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; transition:all 0.2s;';
                 homeBtn.onmouseover = () => homeBtn.style.transform = 'translateY(-50%) scale(1.1)';
                 homeBtn.onmouseout = () => homeBtn.style.transform = 'translateY(-50%) scale(1)';
-                homeBtn.onclick = () => window.location.href = '/';
+                homeBtn.onclick = () => {
+                    if (window.top !== window.self) {
+                        window.top.location.href = '/';
+                    } else {
+                        window.location.href = '/';
+                    }
+                };
                 const profileTitleDiv = document.querySelector('.mypage-wrapper > div');
                 profileTitleDiv.appendChild(homeBtn);
-                        }
+            }
 
             modify.addEventListener("click", () => {
                 window.location.href = "/modify";

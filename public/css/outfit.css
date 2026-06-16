@@ -272,6 +272,15 @@ textarea:focus { outline: none; border-color: #93c5fd; }
   pointer-events: auto;
 }
 
+.upload-modal-overlay.show * {
+    user-select: none;
+}
+
+.upload-modal-overlay.show input,
+.upload-modal-overlay.show textarea {
+    user-select: text;
+}
+
 .upload-toast {
     position: fixed;
     bottom: 24px;
