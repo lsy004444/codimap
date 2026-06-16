@@ -330,6 +330,12 @@ window.openModal = async function() {
     }
 }
 
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+        document.body.style.opacity = '1';
+    }
+});
+
 window.addEventListener('message', function(e) {
     if (e.data?.type === 'redirect-login') {
         const mapContainer = document.getElementById('map-container');
