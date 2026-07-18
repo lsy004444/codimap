@@ -63,6 +63,9 @@ app.get('/upload', (req, res) => {
 app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
+app.get('/ai-chat', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/ai-chat.html'));
+});
 
 const feedRouter = require("./routes/feed");
 app.use("/api/feed", feedRouter);
@@ -70,6 +73,10 @@ app.use("/api/feed", feedRouter);
 // regions.js 
 const regionsRouter = require('./routes/regions');
 app.use('/api/regions', regionsRouter);
+
+//ai.js
+const aiRouter = require('./routes/ai');
+app.use('/api/ai', aiRouter);
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
 
