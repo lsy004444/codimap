@@ -450,5 +450,27 @@ document.addEventListener("DOMContentLoaded", () => {
             window.showToast('🔒 로그인이 필요합니다');
         }
     });
-});
 
+    //ai챗봇
+    const aichatBtn = document.getElementById("aichatBtn");
+    if(!aichatBtn) return;
+
+    aichatBtn.addEventListener("click", async ()=> {
+        try {
+            const response = await fetch("/api/auth/mypage");
+            const result = await response.json();
+
+            if(!result.success) {
+                window.showToast('🔒 로그인이 필요합니다');
+                setTimeout(() => window.location.href = '/login', 1000);
+                return;
+            }
+
+            window.location.herf = `/ai-chat`;
+        } catch (error) {
+            console.error(error);
+            window.showToast('🔒 로그인이 필요합니다');
+        }
+    
+    });
+});
