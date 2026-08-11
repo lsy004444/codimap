@@ -476,4 +476,36 @@ router.post("/find_pw", async(req, res) => {
     }
 })
 
+// 회원탈퇴
+router.delete("/withdraw", requireLogin, async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        const userId = req.session.user.userId;
+        await conn.beginTransaction();
+
+        await conn.query('DELETE FROM COMMENTS WHERE MEMBER_ID = ?', [userId]);
+        await conn.query('DELETE FROM LIKES WHERE MEMBER_ID = ?', [userId]);
+        await conn.query('DELETE FROM SCRAP WHERE MEMBER_ID = ?', [userId]);
+        await conn.query('DELETE FROM FOLLOW WHERE FOLLOWER_ID = ? OR FOLLOWING_ID = ?', [userId, userId]);
+        await conn.query('DELETE FROM REPORT WHERE REPORTER_ID = ?  OR REPORTED_ID = ?', [userId, userId]);
+        await conn.query('DELETE FROM IMAGE WHERE POST_ID IN (SELECT POST_ID FROM POST WHERE MEMBER_ID = ?)', [userId]);
+        await conn.query('DELETE FROM POST_LINK WHERE POST_ID IN (SELECT POST_ID FROM POST WHERE MEMBER_ID = ?)', [userId]);
+        await conn.query('DELETE FROM POST WHERE MEMBER_ID = ?', [userId]);
+        await conn.query('DELETE FROM USERS WHERE USER_ID = ?', [userId]);
+
+        await conn.commit();
+
+        req.session.destroy();
+        res.clearCookie('connect.sid');
+
+        return res.json({ success: true, message: '회원탈퇴가 완료되었습니다.' });
+    } catch (error) {
+        await conn.rollback();
+        console.error(error);
+        return res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
+    } finally {
+        conn.release();
+    }
+});
+
 module.exports = router;

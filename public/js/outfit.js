@@ -302,11 +302,20 @@ function removeLinkRow(rowId) {
 }
 
 function handleCancel() {
-  if (confirm('작성 중인 내용이 사라집니다. 취소하시겠어요?')) {
-    closeModal();
-  }
-}
+    const existing = document.getElementById('cancel-confirm-toast');
+    if(existing) existing.remove();
 
+    const toast = document.createElement('div');
+    toast.id = 'cancel-confirm-toast';
+    toast.style.cssText = 'position:fixed; bottom:500px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, rgba(250,248,255,0.97), rgba(255,248,252,0.97)); color:#888; padding:14px 24px; border-radius:20px; font-size:13px; z-index:10001; box-shadow:0 4px 20px rgba(200,160,184,0.2); display:flex; align-items:center; gap:12px; white-space:nowrap; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1.5px solid rgba(200,180,210,0.3);';
+    toast.innerHTML = `
+    <span>작성 중인 내용이 사라집니다. 취소할까요?</span>
+    <button onclick="closeModal(); document.getElementById('cancel-confirm-toast').remove();" style="background:rgba(200,180,210,0.4); color:#7a5a8a; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">확인</button>
+    <button onclick="document.getElementById('cancel-confirm-toast').remove();" style="background:rgba(200,180,210,0.15); color:#aaa; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">취소</button>
+  `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast?.remove(), 5000);
+}
 
 function handleRegister() {
   if (uploadedFiles.length === 0) {

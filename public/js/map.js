@@ -330,6 +330,12 @@ window.openModal = async function() {
     }
 }
 
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+        document.body.style.opacity = '1';
+    }
+});
+
 window.addEventListener('message', function(e) {
     if (e.data?.type === 'redirect-login') {
         const mapContainer = document.getElementById('map-container');
@@ -389,11 +395,22 @@ function handleMenuClick(e) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // fade-in
     document.body.style.opacity = '0';
     document.body.style.transition = 'opacity 0.4s ease';
     setTimeout(() => document.body.style.opacity = '1', 50);
+
+    //로그인 상태 확인 
+    const authRes = await fetch('/api/auth/mypage');
+    const authData = await authRes.json();
+
+    if (authData.success) {
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('signupBtn').style.display = 'none';
+        document.getElementById('divider1').style.display = 'none';
+        document.getElementById('divider2').style.display = 'none';
+    }
 
     // 로그아웃
     const logoutBtn = document.getElementById("logoutBtn");

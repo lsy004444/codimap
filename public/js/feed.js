@@ -668,6 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const postId = urlParams.get('postId');
     const city = urlParams.get('city');
 
+
     state.currentLat = lat ? parseFloat(lat) : null;
     state.currentLng = lng ? parseFloat(lng) : null;
     state.addressType = type;

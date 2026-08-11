@@ -201,7 +201,7 @@ async function toggleFollowBtn(btn, targetUserId) {
     }
 }
 
-async function loadPosts(profileId) {
+async function loadPosts(profileId, isMyProfile = false) {
     const postList = document.getElementById("postList");
     if (!postList) return;
 
@@ -219,8 +219,7 @@ async function loadPosts(profileId) {
             return;
         }
 
-        // 💥 [수정] 내 게시물 탭이므로 True 인자값을 넘겨 모달이 열리도록 매핑합니다.
-        postList.innerHTML = result.posts.map(post => renderPostCard(post, true)).join("");
+        postList.innerHTML = result.posts.map(post => renderPostCard(post, isMyProfile)).join("");
 
     } catch (error) {
         console.error(error);
@@ -247,7 +246,7 @@ async function loadComments(profileId) {
         }
 
         commentList.innerHTML = result.comments.map(comment => `
-            <div class="comment" onclick="location.href='/feed?postId=${comment.POST_ID}'">
+            <div class="comment" onclick="window.openScrapFrame('${comment.POST_ID}')" style="cursor:pointer;">
                 <p>${escapeHTML(comment.COMMENT_CONTENT)}</p>
                 <small>게시물: ${escapeHTML(comment.POST_CONTENT || "내용 없음")}</small>
             </div>
@@ -485,13 +484,39 @@ document.addEventListener("DOMContentLoaded", async() => {
                     };
                     const profileTitleDiv = document.querySelector('.mypage-wrapper > div');
                     profileTitleDiv.appendChild(followBtn);
-                }
 
+                    if (window.top === window.self) {
+                        const homeBtn = document.createElement('button');
+                        homeBtn.innerHTML = '🏠';
+                        homeBtn.title = 'CODIMAP으로 이동';
+                        homeBtn.style.cssText = 'position:absolute; right:0; top:calc(50% + 52px); transform:translateY(0); margin:0; background:rgba(255,255,255,0.85); border:1.5px solid rgba(200,180,210,0.35); border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 16px rgba(200,160,184,0.2); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; transition:all 0.2s;';
+                        homeBtn.onmouseover = () => homeBtn.style.transform = 'translateY(0) scale(1.1)';
+                        homeBtn.onmouseout = () => homeBtn.style.transform = 'translateY(0) scale(1)';
+                        homeBtn.onclick = () => window.location.href = '/';
+                        profileTitleDiv.appendChild(homeBtn);
+                    }
+                }
             } else {
                 // 본인 프로필
                 modify.style.setProperty("display", "inline-block", "important");
                 const registerBtn = document.getElementById('registerBtn');
                 if(registerBtn) registerBtn.style.display = 'inline-block';
+
+                const homeBtn = document.createElement('button');
+                homeBtn.innerHTML = '🏠';
+                homeBtn.title = 'CODIMAP으로 이동';
+                homeBtn.style.cssText = 'position:absolute; right:0; top:50%; transform:translateY(-50%); margin:0; background:rgba(255,255,255,0.85); border:1.5px solid rgba(200,180,210,0.35); border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; box-shadow:0 4px 16px rgba(200,160,184,0.2); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; transition:all 0.2s;';
+                homeBtn.onmouseover = () => homeBtn.style.transform = 'translateY(-50%) scale(1.1)';
+                homeBtn.onmouseout = () => homeBtn.style.transform = 'translateY(-50%) scale(1)';
+                homeBtn.onclick = () => {
+                    if (window.top !== window.self) {
+                        window.top.location.href = '/';
+                    } else {
+                        window.location.href = '/';
+                    }
+                };
+                const profileTitleDiv = document.querySelector('.mypage-wrapper > div');
+                profileTitleDiv.appendChild(homeBtn);
             }
 
             modify.addEventListener("click", () => {
@@ -499,9 +524,11 @@ document.addEventListener("DOMContentLoaded", async() => {
             });
         }
 
+        const isMyProfile = currentProfileId === loginUserProfileId;
+
         await loadFollows(currentProfileId);
-        await loadPosts(currentProfileId);
-        if(currentProfileId === loginUserProfileId) {
+        await loadPosts(currentProfileId, isMyProfile);
+        if(isMyProfile) {
             await loadScraps(currentProfileId);
             await loadComments(currentProfileId);
         }

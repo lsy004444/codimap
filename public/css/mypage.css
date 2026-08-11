@@ -4,22 +4,32 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-     background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
+    background: linear-gradient(160deg, #faf8ff 0%, #fff8fc 50%, #f5fbff 100%);
     padding: 50px 20px;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
 }
 
 .mypage-wrapper {
+    height: 700px;
     display: flex;
     flex-direction: column;
     align-items: center;
     background-color: white;
-    padding: 50px;
+    padding: 4dvh;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     width: 100%;
-    max-width: 900px;
+    max-width: 800px;
     box-sizing: border-box;
+    position: relative;
+    overflow-y: hidden;
+    
 }
 
 .mypage-title {
@@ -135,6 +145,11 @@ button:hover {
 /* active 된 탭만 보이게 */
 .tab-content.active {
     display: block;
+
+    overflow-x: hidden;/*가로 스크롤 해제*/
+    overflow-y: auto;
+
+    max-height: 50vh;
 }
 
 /* 스크랩 / 내 게시물 그리드 */
@@ -312,6 +327,7 @@ button:hover {
     gap: 8px;
     margin-top: 30px;
     width: 100%;
+    overflow: hidden;
 }
 
 #postList .grid, #scrapList .grid {
@@ -347,4 +363,9 @@ button:hover {
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+#homeBtn:hover {
+    transform: translateY(-50%) scale(1.05) !important;
+    box-shadow: 0 4px 16px rgba(200,160,184,0.35);
 }
