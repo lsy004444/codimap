@@ -55,10 +55,14 @@
                   <i class="ti ti-user" aria-hidden="true"></i>
                   <span>마이페이지</span>
                 </div>
-              </div>
+                <div class="bubble bubble-medium" onclick="location.href='/ai-chat'">
+                  <i class="ti ti-message-chatbot" aria-hidden="true"></i>
+                  <span>AI 코디 추천</span>
+                </div>
+               </div>
              
                 <div style="position:fixed; bottom:30px; left:0; right:0; display:flex; justify-content:center; align-items:center; gap:0;">
-                    <div class="bubble-logout" onclick="
+                    <div class="bubble-logout" id="loginBtn" onclick="
                         document.body.style.transition='opacity 0.4s ease';
                         document.body.style.opacity='0';
                         setTimeout(()=>window.location.href='/login', 400);
@@ -66,7 +70,16 @@
                         <i class="ti ti-login" aria-hidden="true"></i>
                         <span>로그인</span>
                     </div>
-                    <span style="color:rgba(255,255,255,0.5); font-size:16px; margin: 0 4px;">|</span>
+                    <span id= "divider1" style="color:rgba(255,255,255,0.5); font-size:16px; margin: 0 4px;">|</span>
+                    <div class="bubble-logout" id="signupBtn" onclick="
+                        document.body.style.transition='opacity 0.4s ease';
+                        document.body.style.opacity='0';
+                        setTimeout(()=>window.location.href='/signup', 400);
+                    ">
+                        <i class="ti ti-user-plus" aria-hidden="true"></i>
+                        <span>회원가입</span>
+                    </div>
+                    <span id="divider2" style="color:rgba(255,255,255,0.5); font-size:16px; margin: 0 4px;">|</span>
                     <div class="bubble-logout" id="logoutBtn">
                         <i class="ti ti-logout" aria-hidden="true"></i>
                         <span>로그아웃</span>
