@@ -22,6 +22,8 @@ const state = {
     currentSlide: 0,
 };
 
+const DEFAULT_AVATAR = '/images/default-avatar.svg';
+
 // ──────────────────────────────────────────
 // DOM 참조
 // ──────────────────────────────────────────
@@ -246,16 +248,16 @@ function openPostModal(post) {
     );
     updateSliderArrows();
 
-    // 유저 프로필 — 클릭 시 해당 작성자의 마이페이지로 이동
+    // 유저 프로필 — 클릭 시 해당 작성자의 유저 페이지로 이동
     const avatarEl   = $('modal-avatar');
     const usernameEl = $('modal-username');
-    avatarEl.style.backgroundImage = `url('${post.user.avatar}')`;
+    setAvatar(avatarEl, post.user.avatar, post.user.username);
     usernameEl.textContent = post.user.username;
     $('modal-user-region').textContent = `${post.region} · ${seasonName(post.season)}`;
 
     const goToProfile = () => {
-        if (!state.myUserId) { redirectToLogin(); return; }
-        window.location.href = `/mypage?profileId=${post.user.profileId}`;
+        if (!post.user.profileId) return;
+        goToUserPage(post.user.profileId);
     };
     avatarEl.style.cursor   = 'pointer';
     usernameEl.style.cursor = 'pointer';
@@ -436,7 +438,7 @@ function buildCommentEl(postId, comment) {
     const isOwn = Boolean(comment.isOwn);
 
     wrap.innerHTML = `
-        <div class="comment-avatar" style="background-image:url('${comment.avatar}')"></div>
+        <div class="comment-avatar"></div>
         <div class="comment-body">
             <span class="comment-username">${comment.username}</span>
             <p class="comment-text">${escHtml(comment.text)}</p>
@@ -449,6 +451,18 @@ function buildCommentEl(postId, comment) {
             </div>
         </div>
     `;
+
+    // 아바타 (사진 or 이니셜) + 작성자 클릭 시 유저 페이지 이동
+    const avatarEl = wrap.querySelector('.comment-avatar');
+    setAvatar(avatarEl, comment.avatar, comment.username);
+    if (comment.profileId) {
+        const goProfile = () => goToUserPage(comment.profileId);
+        avatarEl.style.cursor = 'pointer';
+        avatarEl.addEventListener('click', goProfile);
+        const nameEl = wrap.querySelector('.comment-username');
+        nameEl.style.cursor = 'pointer';
+        nameEl.addEventListener('click', goProfile);
+    }
 
     wrap.querySelector('.comment-edit-btn')?.addEventListener('click', () => {
         startEditComment(postId, comment, wrap);
@@ -581,6 +595,96 @@ $('report-submit-btn').addEventListener('click', async () => {
 });
 
 // ──────────────────────────────────────────
+// 날씨 코디 추천 (하단 팝업 + 9그리드 모달)
+//   ⚠️ 현재는 UI만 구현. 실제 추천 로직은 미구현.
+//   TODO: 오늘 날씨(기온/강수 등)에 맞는 코디 9개를 서버에서 받아와 그리드에 채우기.
+//   TODO: AI 추천 방식 검토 — 사용자 위치의 오늘 날씨를 프롬프트로 넘겨
+//         적합한 계절/스타일의 게시물을 골라주는 형태 고려.
+//         (예: GET /api/feed/weather-recommend?lat=&lng= → posts[9])
+// ──────────────────────────────────────────
+// ── 날씨 코드(WMO) → 이모지 ──
+const WEATHER_EMOJI = [
+    { codes: [0],                       day: '☀️', night: '🌙' },
+    { codes: [1, 2],                    day: '🌤️', night: '☁️' },
+    { codes: [3],                       day: '☁️', night: '☁️' },
+    { codes: [45, 48],                  day: '🌫️', night: '🌫️' },
+    { codes: [51, 53, 55, 56, 57],      day: '🌦️', night: '🌧️' },
+    { codes: [61, 63, 65, 66, 67],      day: '🌧️', night: '🌧️' },
+    { codes: [71, 73, 75, 77, 85, 86],  day: '❄️', night: '❄️' },
+    { codes: [80, 81, 82],              day: '🌦️', night: '🌧️' },
+    { codes: [95, 96, 99],              day: '⛈️', night: '⛈️' },
+];
+
+function weatherCodeToEmoji(code, isDay) {
+    const hit = WEATHER_EMOJI.find(e => e.codes.includes(code));
+    if (!hit) return '☀️';
+    return isDay ? hit.day : hit.night;
+}
+
+// 오늘 날씨를 받아 팝업/모달 이모지를 교체 (실패 시 기본 ☀️ 유지)
+async function applyWeatherEmoji() {
+    // 지도에서 넘어온 좌표 우선, 없으면 서울시청 기준
+    const lat = state.currentLat ?? 37.5665;
+    const lng = state.currentLng ?? 126.9780;
+
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=weather_code,is_day&timezone=Asia%2FSeoul`);
+        if (!res.ok) return;
+
+        const { current } = await res.json();
+        const emoji = weatherCodeToEmoji(current.weather_code, current.is_day === 1);
+
+        const popupIcon = $('weather-popup-icon');
+        const modalIcon = $('weather-modal-icon');
+        if (popupIcon) popupIcon.textContent = emoji;
+        if (modalIcon) modalIcon.textContent = emoji;
+    } catch {
+        // 네트워크 오류 시 기본 이모지 유지
+    }
+}
+
+const weatherPopup   = $('weather-popup');
+const weatherOverlay  = $('weather-overlay');
+const weatherGrid     = $('weather-grid');
+
+function initWeatherRecommend() {
+    if (!weatherPopup) return;
+
+    // 하단 팝업 노출
+    weatherPopup.classList.remove('hidden');
+    applyWeatherEmoji();
+
+    // 9칸 자리표시 그리드 생성 (TODO: 실제 추천 코디로 교체)
+    if (weatherGrid) {
+        weatherGrid.innerHTML = Array.from({ length: 9 }, (_, i) => `
+            <div class="weather-cell placeholder">
+                <span class="weather-cell-num">${i + 1}</span>
+                <span class="weather-cell-hint">추천 예정</span>
+            </div>
+        `).join('');
+    }
+
+    $('weather-popup-open')?.addEventListener('click', openWeatherModal);
+    $('weather-popup-close')?.addEventListener('click', () => {
+        weatherPopup.classList.add('hidden');
+    });
+    $('weather-modal-close')?.addEventListener('click', closeWeatherModal);
+    weatherOverlay?.addEventListener('click', e => {
+        if (e.target === weatherOverlay) closeWeatherModal();
+    });
+}
+
+function openWeatherModal() {
+    weatherOverlay?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeWeatherModal() {
+    weatherOverlay?.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// ──────────────────────────────────────────
 // 지도에서 지역/계절 변경 시 호출
 // ──────────────────────────────────────────
 window.feedUpdateFilter = function(region, seasonId) {
@@ -593,6 +697,34 @@ window.feedUpdateFilter = function(region, seasonId) {
 // ──────────────────────────────────────────
 function seasonName(id) {
     return { spring: '봄', summer: '여름', fall: '가을', winter: '겨울' }[id] || id;
+}
+
+// ──────────────────────────────────────────
+// 아바타 표시 (이미지 없으면 기본 프로필 이미지)
+//   ⚠️ 프로필 사진 '업로드' 기능은 이 브랜치에 없음 (별도 작업 예정).
+//      현재 USERS.PROFILE_IMAGE가 모두 NULL이라 항상 기본 이미지가 뜸.
+//   TODO: 업로드 기능이 붙으면 연결 확인 —
+//         1) USERS.PROFILE_IMAGE에 저장된 경로가 /api/feed/posts 응답의
+//            user.avatar 로 내려오는지 (routes/feed.js)
+//         2) 피드 카드 / 게시물 모달 / 댓글 아바타 세 곳에 모두 반영되는지
+//         3) 업로드 경로가 /uploads/... 형태라 express.static 으로
+//            실제 접근 가능한지 (404 나면 이미지가 안 뜸)
+// ──────────────────────────────────────────
+function setAvatar(el, url, username) {
+    if (!el) return;
+    el.style.backgroundImage = `url('${url || DEFAULT_AVATAR}')`;
+    el.classList.add('has-image');
+    el.textContent = '';
+}
+
+// 유저 페이지로 이동 (iframe 안이면 최상위 창을 이동)
+function goToUserPage(profileId) {
+    const target = `/mypage?profileId=${encodeURIComponent(profileId)}`;
+    if (window.top !== window.self) {
+        window.top.location.href = target;
+    } else {
+        window.location.href = target;
+    }
 }
 
 function showToast(msg) {
@@ -688,5 +820,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         initInfiniteScroll();
         resetFeed(initialRegion, initialSeason);
+        initWeatherRecommend();   // 일반 피드 모드에서만 날씨 추천 팝업 노출
     }
 });

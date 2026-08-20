@@ -95,6 +95,7 @@ router.get('/posts', async (req, res) => {
                 p.POST_ID,
                 p.MEMBER_ID,
                 u.NAME,
+                u.PROFILE_IMAGE,
                 r.REGION_NAME,
                 p.CREATED_DATE,
                 p.VIEW_COUNT,
@@ -117,6 +118,7 @@ router.get('/posts', async (req, res) => {
                 p.POST_ID,
                 p.MEMBER_ID,
                 u.NAME,
+                u.PROFILE_IMAGE,
                 r.REGION_NAME,
                 p.CREATED_DATE,
                 p.VIEW_COUNT,
@@ -147,7 +149,9 @@ router.get('/posts', async (req, res) => {
                     id: row.MEMBER_ID,
                     username: normalizeUsername(row.NAME),
                     profileId: row.PROFILE_ID,
-                    avatar: '',
+                    // TODO: 프로필 사진 업로드 기능 추가되면 이 값이 실제 경로로
+                    //       내려오는지 확인 (현재는 전부 NULL → 프론트에서 기본 이미지)
+                    avatar: row.PROFILE_IMAGE || '',
                 },
                 images,
                 isFollowing: Boolean(row.is_following),
@@ -183,7 +187,7 @@ router.get('/posts/:postId', async (req, res) => {
         const [[row]] = await db.query(
             `
             SELECT
-                p.POST_ID, p.MEMBER_ID, u.NAME, r.REGION_NAME,
+                p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
                 p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
                 p.SCRAP_COUNT, p.LIKE_COUNT, u.ID AS PROFILE_ID,
                 GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
@@ -197,7 +201,7 @@ router.get('/posts/:postId', async (req, res) => {
             LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
             WHERE p.POST_ID = ?
             GROUP BY
-                p.POST_ID, p.MEMBER_ID, u.NAME, r.REGION_NAME,
+                p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
                 p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
                 p.SCRAP_COUNT, p.LIKE_COUNT, u.ID
             `,
@@ -222,7 +226,7 @@ router.get('/posts/:postId', async (req, res) => {
                     id: row.MEMBER_ID,
                     username: normalizeUsername(row.NAME),
                     profileId: row.PROFILE_ID,
-                    avatar: '',
+                    avatar: row.PROFILE_IMAGE || '',
                 },
                 images,
                 isFollowing: Boolean(row.is_following),
@@ -436,6 +440,8 @@ router.get('/posts/:postId/comments', async (req, res) => {
                 c.POST_ID,
                 c.MEMBER_ID,
                 u.NAME,
+                u.ID AS PROFILE_ID,
+                u.PROFILE_IMAGE,
                 c.CONTENT,
                 c.CREATED_DATE
             FROM COMMENTS c
@@ -451,7 +457,8 @@ router.get('/posts/:postId/comments', async (req, res) => {
             postId: row.POST_ID,
             userId: row.MEMBER_ID,
             username: normalizeUsername(row.NAME),
-            avatar: '',
+            profileId: row.PROFILE_ID,
+            avatar: row.PROFILE_IMAGE || '',
             text: row.CONTENT,
             createdAt: row.CREATED_DATE,
             isOwn: loginUserId && Number(row.MEMBER_ID) === Number(loginUserId),
