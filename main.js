@@ -63,9 +63,7 @@ app.get('/upload', (req, res) => {
 app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
-app.get('/ai-chat', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/ai-chat.html'));
-});
+
 
 const feedRouter = require("./routes/feed");
 app.use("/api/feed", feedRouter);

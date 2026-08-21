@@ -483,7 +483,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            window.location.href = '/ai-chat';
+            document.getElementById('aichatModalOverlay').style.display = 'flex';
         } catch (error) {
             console.error(error);
             window.showToast('🔒 로그인이 필요합니다');

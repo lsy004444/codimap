@@ -1,12 +1,12 @@
-async function sendMessage() {
-  const input = document.getElementById('chatInput');
-  const sendBtn = document.getElementById('sendBtn');
+async function sendAIMessage() {
+  const input = document.getElementById('aiChatInput');
+  const aiChatSendBtn = document.getElementById('aiChatSendBtn');
   const question = input.value.trim();
   if (!question) return;
 
   appendMessage('user', question);
   input.value = '';
-  sendBtn.disabled = true;
+  aiChatSendBtn.disabled = true;
 
   const loadingMsg = appendMessage('ai', '생각 중...');
 
@@ -28,28 +28,48 @@ async function sendMessage() {
     const imgContainer = document.createElement('div');
     imgContainer.style.cssText = 'display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;';
 
-    data.images.forEach(src => {
-        const img = document.createElement('img');
-        img.src = src;
-        img.style.cssText = 'width:120px; height:120px; object-fit:cover; border-radius:8px; cursor:pointer;';
-        imgContainer.appendChild(img);
-    });
+    data.images.forEach((src, idx) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'width:100px; height:100px; object-fit:cover; border-radius:8px; cursor:pointer;';
+    img.onclick = () => {
+      if (data.postIds && data.postIds[idx]) {
+        window.location.href = `/detail/${data.postIds[idx]}`;
+      }
+    };
+  imgContainer.appendChild(img);
+});
 
     loadingMsg.parentElement.appendChild(imgContainer);
     }
     } catch (err) {
     loadingMsg.textContent = '오류가 발생했어요. 다시 시도해주세요.';
   } finally {
-    sendBtn.disabled = false;
+    aiChatSendBtn.disabled = false;
   }
 }
 
+
 function appendMessage(sender, text) {
-  const box = document.getElementById('chatMessages');
-  const msg = document.createElement('div');
-  msg.className = `msg ${sender}`;
-  msg.textContent = text;
-  box.appendChild(msg);
+  const box = document.getElementById('aiChatMessages');
+
+  const row = document.createElement('div');
+  row.className = `chat-row ${sender}`;
+
+  if (sender === 'ai') {
+    const avatar = document.createElement('div');
+    avatar.className = 'chat-avatar';
+    avatar.textContent = '🤖';
+    row.appendChild(avatar);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+
+  box.appendChild(row);
   box.scrollTop = box.scrollHeight;
-  return msg;
+
+  return bubble;
 }
