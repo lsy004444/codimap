@@ -1,4 +1,7 @@
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 require('dotenv').config();
+
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
@@ -13,6 +16,7 @@ const db = mysql.createPool({
         ca: fs.readFileSync(path.join(__dirname, 'certs/ca.pem'))
     },
     waitForConnections: true,
+    connectTimeout: 20000
 });
 
 module.exports = db;

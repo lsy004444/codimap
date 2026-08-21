@@ -702,7 +702,8 @@ router.post('/users/:targetUserId/follow', async (req, res) => {
     const targetUserId = Number(req.params.targetUserId);
 
     if (!userId) return res.status(401).json({ message: '로그인이 필요합니다' });
-    if (!targetUserId || userId === targetUserId) {
+    if (!targetUserId ||
+        userId === targetUserId) {
         return res.status(400).json({ message: '잘못된 요청입니다' });
     }
 

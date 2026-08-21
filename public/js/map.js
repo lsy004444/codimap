@@ -457,7 +457,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!result.success) {
                 window.showToast('🔒 로그인이 필요합니다');
                 setTimeout(() => window.location.href = '/login', 1000);
-                return; // ← 추가
+                return; 
             }
 
             const profileId = result.user.profileId;
@@ -483,7 +483,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            window.location.herf = `/ai-chat`;
+            window.location.href = '/ai-chat';
         } catch (error) {
             console.error(error);
             window.showToast('🔒 로그인이 필요합니다');
