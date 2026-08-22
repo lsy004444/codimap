@@ -596,11 +596,8 @@ $('report-submit-btn').addEventListener('click', async () => {
 
 // ──────────────────────────────────────────
 // 날씨 코디 추천 (하단 팝업 + 9그리드 모달)
-//   ⚠️ 현재는 UI만 구현. 실제 추천 로직은 미구현.
-//   TODO: 오늘 날씨(기온/강수 등)에 맞는 코디 9개를 서버에서 받아와 그리드에 채우기.
-//   TODO: AI 추천 방식 검토 — 사용자 위치의 오늘 날씨를 프롬프트로 넘겨
-//         적합한 계절/스타일의 게시물을 골라주는 형태 고려.
-//         (예: GET /api/feed/weather-recommend?lat=&lng= → posts[9])
+//   오늘 날씨(기온) 기준으로 계절을 역매핑해 계절 일치도 + 인기도 + 최신성을
+//   가중치로 합산한 상위 9개를 서버(GET /api/feed/weather-recommend)에서 받아온다.
 // ──────────────────────────────────────────
 // ── 날씨 코드(WMO) → 이모지 ──
 const WEATHER_EMOJI = [
@@ -644,24 +641,113 @@ async function applyWeatherEmoji() {
 }
 
 const weatherPopup   = $('weather-popup');
-const weatherOverlay  = $('weather-overlay');
-const weatherGrid     = $('weather-grid');
+const weatherOverlay = $('weather-overlay');
+const weatherGrid    = $('weather-grid');
+const weatherModalSub = $('weather-modal-sub');
 
+let weatherRecommendPosts = null; // 캐시 (모달을 다시 열 때 재요청 방지)
+let weatherRecommendLoading = false;
+
+function renderLoadingGrid() {
+    if (!weatherGrid) return;
+    weatherGrid.innerHTML = `
+        <div class="weather-loading">
+            <div class="feed-loading-dots"><span></span><span></span><span></span></div>
+        </div>
+    `;
+}
+
+function renderWeatherGrid(posts) {
+    if (!weatherGrid) return;
+
+    if (!posts.length) {
+        weatherGrid.innerHTML = `
+            <div class="weather-empty">
+                <span class="weather-cell-hint">이 근처엔 아직 추천할 코디가 없어요</span>
+            </div>
+        `;
+        return;
+    }
+
+    weatherGrid.innerHTML = posts.map((post, i) => `
+        <div class="weather-cell" data-i="${i}">
+            <img src="${post.images[0] || ''}" alt="추천 코디" loading="lazy">
+            <span class="weather-cell-likes">❤ ${post.likeCount}</span>
+        </div>
+    `).join('');
+
+    weatherGrid.querySelectorAll('.weather-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            const post = posts[Number(cell.dataset.i)];
+            if (post) {
+                closeWeatherModal();
+                openPostModal(post);
+            }
+        });
+    });
+}
+
+async function loadWeatherRecommend() {
+    if (weatherRecommendPosts) {
+        renderWeatherGrid(weatherRecommendPosts);
+        return;
+    }
+    if (weatherRecommendLoading) return;
+    weatherRecommendLoading = true;
+    renderLoadingGrid();
+
+    const lat = state.currentLat ?? 37.5665;
+    const lng = state.currentLng ?? 126.9780;
+
+    try {
+        const res = await fetch(`/api/feed/weather-recommend?lat=${lat}&lng=${lng}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { posts, weather } = await res.json();
+
+        weatherRecommendPosts = posts;
+        renderWeatherGrid(posts);
+
+        if (weatherModalSub && weather?.temperature != null) {
+            weatherModalSub.textContent = `오늘 ${Math.round(weather.temperature)}°C · ${weather.description || ''} 날씨에 어울리는 코디를 모아봤어요`;
+        }
+    } catch {
+        if (weatherGrid) {
+            weatherGrid.innerHTML = `
+                <div class="weather-empty">
+                    <span class="weather-cell-hint">추천 코디를 불러오지 못했어요</span>
+                </div>
+            `;
+        }
+    } finally {
+        weatherRecommendLoading = false;
+    }
+}
+
+// 이 페이지는 지도 화면(map.html)의 iframe 안에서 열리는데, 부모의 사이드 패널이
+// flex 트랜지션(0.5s)으로 커지는 동안에는 iframe 뷰포트 크기가 아직 확정되지 않은
+// 상태다. 그 상태에서 바로 팝업을 띄우면 "전체화면 기준 중앙"에 잠깐 떴다가
+// 트랜지션이 끝난 뒤 "iframe 기준 중앙"으로 튀어 보인다.
+// → 부모가 트랜지션 종료 시점에 보내주는 'panel-layout-stable' 메시지를 받은 뒤에만
+//   노출한다 (map.js의 notifyPanelStable 참고). iframe이 아니거나 신호가 오지 않는
+//   경우(직접 /feed 접속 등)를 대비해 폴백 타이머도 둔다.
 function initWeatherRecommend() {
     if (!weatherPopup) return;
 
-    // 하단 팝업 노출
-    weatherPopup.classList.remove('hidden');
-    applyWeatherEmoji();
+    let revealed = false;
+    const reveal = () => {
+        if (revealed) return;
+        revealed = true;
+        weatherPopup.classList.remove('hidden');
+        applyWeatherEmoji();
+    };
 
-    // 9칸 자리표시 그리드 생성 (TODO: 실제 추천 코디로 교체)
-    if (weatherGrid) {
-        weatherGrid.innerHTML = Array.from({ length: 9 }, (_, i) => `
-            <div class="weather-cell placeholder">
-                <span class="weather-cell-num">${i + 1}</span>
-                <span class="weather-cell-hint">추천 예정</span>
-            </div>
-        `).join('');
+    if (window.parent !== window) {
+        window.addEventListener('message', e => {
+            if (e.data?.type === 'panel-layout-stable') reveal();
+        });
+        setTimeout(reveal, 900); // 폴백: 신호가 안 오면 그냥 노출
+    } else {
+        reveal();
     }
 
     $('weather-popup-open')?.addEventListener('click', openWeatherModal);
@@ -677,6 +763,7 @@ function initWeatherRecommend() {
 function openWeatherModal() {
     weatherOverlay?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    loadWeatherRecommend();
 }
 
 function closeWeatherModal() {

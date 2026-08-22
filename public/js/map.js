@@ -202,6 +202,15 @@ window.onload = function() {
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
 
+            // 사이드 패널의 flex 트랜지션(0.5s)이 끝나야 iframe 뷰포트 크기가 확정된다.
+            // 그 전에 iframe 안의 날씨 추천 팝업이 뜨면 위치가 튀어 보이므로,
+            // 트랜지션이 끝난 뒤 iframe에 "레이아웃 안정됨" 신호를 보낸다.
+            const notifyPanelStable = () => {
+                feedFrame?.contentWindow?.postMessage({ type: 'panel-layout-stable' }, '*');
+            };
+            sidePanel.addEventListener('transitionend', notifyPanelStable, { once: true });
+            setTimeout(notifyPanelStable, 550); // 트랜지션이 안 붙는 경우(이미 열려있던 패널) 대비 폴백
+
             setTimeout(function() {
                 map.relayout();
                 if(currentCoords) {
