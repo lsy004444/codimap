@@ -63,7 +63,9 @@ app.get('/upload', (req, res) => {
 app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
-
+app.get('/trend/:theme', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/trend.html'));
+});
 
 //banner.js
 const bannerRouter = require("./routes/banner");

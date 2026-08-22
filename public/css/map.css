@@ -172,7 +172,7 @@
 /*페이지 이동 버튼 등록*/
 .hamburger-bar {
     position: absolute;
-    top: 20px;
+    top: 30px;
     right: 20px;
     z-index: 100;
     pointer-events: auto;
@@ -478,4 +478,23 @@
 .ai-chat-input-area button:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+/*메인화면 배너*/
+.trend-banner {
+  position: fixed;
+  top: 100px;  /* top-nav + hamburger-bar 높이 감안해서 조정 */
+  right: 40px;
+  background: #f7d2d2;
+  border-radius: 999px;  /* 알약 모양, 상단바랑 톤 맞춤 */
+  padding: 8px 15px;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  z-index: 500;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.4s ease;
 }
