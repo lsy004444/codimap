@@ -1,5 +1,4 @@
 var currentMarker = null;
-
 var currentCoords = null;
 var currentRegionName = null;
 var currentAddressType = 'dong';

@@ -65,6 +65,11 @@ app.get('/feed', (req, res) => {
 })
 
 
+//banner.js
+const bannerRouter = require("./routes/banner");
+app.use("/api/banner", bannerRouter);
+
+//feed.js
 const feedRouter = require("./routes/feed");
 app.use("/api/feed", feedRouter);
 
