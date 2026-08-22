@@ -490,3 +490,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     });
 });
+
+let trendThemes = [];
+let currentThemeIndex = 0;
+
+async function loadBanners() {
+    try {
+        const res = await fetch('/api/banners/active');
+        const data = await res.json();
+        trendThemes = data.map(b => ({ text: b.TEXT, url: b.LINK_URL }));
+
+        if (trendThemes.length > 0) {
+            document.getElementById('trendBannerText').textContent = trendThemes[0].text;
+            document.getElementById('trendBanner').style.display = 'block';
+            setInterval(rotateTrendBanner, 5000);
+        }
+    } catch (err) {
+        console.error('배너 로드 실패:', err);
+    }
+}
+
+function rotateTrendBanner() {
+    currentThemeIndex = (currentThemeIndex + 1) % trendThemes.length;
+    const banner = document.getElementById('trendBanner');
+    const textEl = document.getElementById('trendBannerText');
+
+    banner.style.opacity = '0';
+    setTimeout(() => {
+        textEl.textContent = trendThemes[currentThemeIndex].text;
+        banner.style.opacity = '1';
+    }, 400);
+}
+
+function goToTrendPage() {
+    window.location.href = trendThemes[currentThemeIndex].url; 
+}
+
+loadBanners();
