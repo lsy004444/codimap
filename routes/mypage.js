@@ -1,8 +1,112 @@
 const express = require("express");
 const pool = require("../config/db");
 const router = express.Router();
+const multer = require('multer');
+const path=require('path');
 
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, 'public/uploads/profileimage/');
+    },
 
+    filename: function(req, file, cb) {
+        const uniqueName = Date.now() + '-' + Math.round(Math.random()*1E9);
+        cb(null, uniqueName + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+    fileFilter: function(req, file, cb) {
+        if(file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('이미지 파일만 업로드할 수 있습니다.'));
+        }
+    }
+});
+
+//프로필 사진 업로드
+router.post("/profile-image",upload.single("profileImage"),
+async(req, res) => {
+    try {
+        if(!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "프로필 사진을 선택해주세요."
+            });
+        }
+
+        const userId = req.session.userId;
+
+        if(!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "로그인이 필요합니다."
+            });
+        }
+
+        const imageUrl=`/uploads/profileimage/${req.file.filename}`;
+
+        await pool.query(
+            `
+            UPDATE USERS
+            SET PROFILE_IMAGE = ?
+            WHERE USER_ID = ?
+            `,
+            [imageUrl, userId]
+        );
+        
+        return res.json({
+            success: true,
+            message: "프로필 사진이 변경되었습니다.",
+            imageUrl: imageUrl
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "프로필 사진 변경 중 오류가 발생했습니다."
+        });
+    }
+});
+
+router.get("/:profileId/profile", async(req, res) => {
+    try {
+        const { profileId } = req.params;
+
+        const [rows] = await pool.query(
+            `
+            SELECT USER_ID, ID, NAME, PROFILE_IMAGE
+            FROM USERS
+            WHERE ID = ?`,
+            [profileId]
+        );
+
+        if(rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "사용자를 찾을 수 없습니다."
+            });
+        }
+
+        return res.json({
+            success: true,
+            user: rows[0]
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "프로필 정보를 불러오지 못했습니다."
+        });
+    }
+});
 
 // 스크랩 목록
 router.get("/:profileId/scraps", async (req, res) => {

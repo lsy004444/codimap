@@ -1,7 +1,42 @@
 //const { response } = require("express");
+// const profileInput = document.getElementById('profile-image-input');
+// const uploadBtn = document.getElementById('profile-upload-btn');
+// const profileImage = document.getElementById('profile-image');
+
+// uploadBtn.addEventListener('click', async function () {
+//     const file = profileInput.files[0];
+
+//     if(!file) {
+//         alert('프로필 사진을 선택해주세요.');
+//         return;
+//     }
+
+//     const formData = new FormData();
+
+//     formData.append('profileImage', file);
+
+//     try {
+//         const response = await fetch('/api/profile/image', {
+//             method: 'POST',
+//             body: formData
+//         });
+
+//         const result = await response.json();
+
+//         if(result.success) {
+//             profileImage.src = result.imageUrl;
+
+//             alert('프로필 사진이 변경되었습니다.'); 
+//         } else {
+//             alert(result.message);
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         alert('프로필 사진 업로드 중 오류가 발생했습니다.');
+//     }
+// });
 
 // 탭을 눌렀을 경우 발생하는 이벤트
-
 if (!window.showToast) {
             window.showToast = function(message) {
                 const toast = document.createElement('div');
@@ -332,9 +367,55 @@ window.handleDeletePost = function(postId) {
 document.addEventListener("DOMContentLoaded", async() => {
     const idInput = document.getElementById("id");
     const modify = document.getElementById("modify");
+    const profileImage = document.getElementById("profileImage");
+    const profileImageInput = document.getElementById("profileImageInput");
+    const profileImageBtn = document.getElementById("profileImageBtn");
 
     const params = new URLSearchParams(window.location.search);
     const urlProfileId = params.get("profileId");
+
+    profileImageBtn.addEventListener("click", () => {
+        profileImageInput.click();
+    });
+
+    profileImageInput.addEventListener("change", async() => {
+        const file = profileImageInput.files[0];
+
+        if(!file) {
+            return;
+        }
+
+        if(file.size > 5 * 1024 * 1024) {
+            window.showToast("5MB 이하의 이미지를 선택해주세요.");
+            profileImageInput.value = "";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("profileImage", file);
+
+        try {
+            const response = await fetch("/api/mypage/profile-image", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if(!result.success) {
+                window.showToast(result.message);
+                return;
+            }
+
+            // 업로드된 사진으로 즉시 변경
+            profileImage.src = result.imageUrl;
+
+            window.showToast("프로필 사진이 변경되었습니다.");
+        } catch(error) {
+            console.error(error);
+            window.showToast("프로필 사진 변경에 실패했습니다.");
+        }
+    });
 
     try {
         const response = await fetch("/api/auth/mypage");
@@ -348,8 +429,25 @@ document.addEventListener("DOMContentLoaded", async() => {
 
         // URL에 profileId가 있으면 그 프로필을 보여주고, 없으면 로그인한 내 프로필을 보여줌
         const currentProfileId = urlProfileId || loginUserProfileId;
-
+        
+        // log test
+        console.log("loginUserProfileId:", loginUserProfileId);
+        console.log("urlProfileId:", urlProfileId);
+        console.log("currentProfileId:", currentProfileId);
+        
+        const profileResponse = await fetch(`/api/mypage/${encodeURIComponent(currentProfileId)}/profile`);
+        const profileResult = await profileResponse.json();
         const profileTitle = document.getElementById("profileTitle");
+
+        
+
+        if(profileResult.success) {
+            if(profileResult.user.PROFILE_IMAGE) {
+               profileImage.src = profileResult.user.PROFILE_IMAGE;
+            } else {
+                profileImage.src = "/images/default_img.svg";
+            }
+        }
 
         if(profileTitle) {
             profileTitle.textContent = `@${currentProfileId}`;
@@ -363,13 +461,17 @@ document.addEventListener("DOMContentLoaded", async() => {
         if (modify) {
             if (currentProfileId !== loginUserProfileId) {
                 modify.style.setProperty("display", "none", "important");
+                profileImageBtn.style.display="none";
                 
                 // 타인 프로필을 조회 중인 경우 내 게시물이 아니므로 삭제 권한 제어 (버튼 숨김 처리)
                 const registerBtn = document.getElementById('registerBtn');
                 if(registerBtn) registerBtn.style.display = 'none';
           } else {
                 modify.style.setProperty("display", "inline-block", "important");
+                profileImageBtn.style.display = "inline-block";
+
                 const registerBtn = document.getElementById('registerBtn');
+                
                 if(registerBtn) registerBtn.style.display = 'inline-block';
           }
             modify.addEventListener("click", () => {
@@ -387,3 +489,4 @@ document.addEventListener("DOMContentLoaded", async() => {
         window.location.href = "/login";
     }    
 });
+
