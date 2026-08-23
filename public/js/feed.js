@@ -22,6 +22,8 @@ const state = {
     currentSlide: 0,
 };
 
+const DEFAULT_AVATAR = '/images/default-avatar.svg';
+
 // ──────────────────────────────────────────
 // DOM 참조
 // ──────────────────────────────────────────
@@ -246,16 +248,16 @@ function openPostModal(post) {
     );
     updateSliderArrows();
 
-    // 유저 프로필 — 클릭 시 해당 작성자의 마이페이지로 이동
+    // 유저 프로필 — 클릭 시 해당 작성자의 유저 페이지로 이동
     const avatarEl   = $('modal-avatar');
     const usernameEl = $('modal-username');
-    avatarEl.style.backgroundImage = `url('${post.user.avatar}')`;
+    setAvatar(avatarEl, post.user.avatar, post.user.username);
     usernameEl.textContent = post.user.username;
     $('modal-user-region').textContent = `${post.region} · ${seasonName(post.season)}`;
 
     const goToProfile = () => {
-        if (!state.myUserId) { redirectToLogin(); return; }
-        window.location.href = `/mypage?profileId=${post.user.profileId}`;
+        if (!post.user.profileId) return;
+        goToUserPage(post.user.profileId);
     };
     avatarEl.style.cursor   = 'pointer';
     usernameEl.style.cursor = 'pointer';
@@ -436,7 +438,7 @@ function buildCommentEl(postId, comment) {
     const isOwn = Boolean(comment.isOwn);
 
     wrap.innerHTML = `
-        <div class="comment-avatar" style="background-image:url('${comment.avatar}')"></div>
+        <div class="comment-avatar"></div>
         <div class="comment-body">
             <span class="comment-username">${comment.username}</span>
             <p class="comment-text">${escHtml(comment.text)}</p>
@@ -449,6 +451,18 @@ function buildCommentEl(postId, comment) {
             </div>
         </div>
     `;
+
+    // 아바타 (사진 or 이니셜) + 작성자 클릭 시 유저 페이지 이동
+    const avatarEl = wrap.querySelector('.comment-avatar');
+    setAvatar(avatarEl, comment.avatar, comment.username);
+    if (comment.profileId) {
+        const goProfile = () => goToUserPage(comment.profileId);
+        avatarEl.style.cursor = 'pointer';
+        avatarEl.addEventListener('click', goProfile);
+        const nameEl = wrap.querySelector('.comment-username');
+        nameEl.style.cursor = 'pointer';
+        nameEl.addEventListener('click', goProfile);
+    }
 
     wrap.querySelector('.comment-edit-btn')?.addEventListener('click', () => {
         startEditComment(postId, comment, wrap);
@@ -581,6 +595,183 @@ $('report-submit-btn').addEventListener('click', async () => {
 });
 
 // ──────────────────────────────────────────
+// 날씨 코디 추천 (하단 팝업 + 9그리드 모달)
+//   오늘 날씨(기온) 기준으로 계절을 역매핑해 계절 일치도 + 인기도 + 최신성을
+//   가중치로 합산한 상위 9개를 서버(GET /api/feed/weather-recommend)에서 받아온다.
+// ──────────────────────────────────────────
+// ── 날씨 코드(WMO) → 이모지 ──
+const WEATHER_EMOJI = [
+    { codes: [0],                       day: '☀️', night: '🌙' },
+    { codes: [1, 2],                    day: '🌤️', night: '☁️' },
+    { codes: [3],                       day: '☁️', night: '☁️' },
+    { codes: [45, 48],                  day: '🌫️', night: '🌫️' },
+    { codes: [51, 53, 55, 56, 57],      day: '🌦️', night: '🌧️' },
+    { codes: [61, 63, 65, 66, 67],      day: '🌧️', night: '🌧️' },
+    { codes: [71, 73, 75, 77, 85, 86],  day: '❄️', night: '❄️' },
+    { codes: [80, 81, 82],              day: '🌦️', night: '🌧️' },
+    { codes: [95, 96, 99],              day: '⛈️', night: '⛈️' },
+];
+
+function weatherCodeToEmoji(code, isDay) {
+    const hit = WEATHER_EMOJI.find(e => e.codes.includes(code));
+    if (!hit) return '☀️';
+    return isDay ? hit.day : hit.night;
+}
+
+// 오늘 날씨를 받아 팝업/모달 이모지를 교체 (실패 시 기본 ☀️ 유지)
+async function applyWeatherEmoji() {
+    // 지도에서 넘어온 좌표 우선, 없으면 서울시청 기준
+    const lat = state.currentLat ?? 37.5665;
+    const lng = state.currentLng ?? 126.9780;
+
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=weather_code,is_day&timezone=Asia%2FSeoul`);
+        if (!res.ok) return;
+
+        const { current } = await res.json();
+        const emoji = weatherCodeToEmoji(current.weather_code, current.is_day === 1);
+
+        const popupIcon = $('weather-popup-icon');
+        const modalIcon = $('weather-modal-icon');
+        if (popupIcon) popupIcon.textContent = emoji;
+        if (modalIcon) modalIcon.textContent = emoji;
+    } catch {
+        // 네트워크 오류 시 기본 이모지 유지
+    }
+}
+
+const weatherPopup   = $('weather-popup');
+const weatherOverlay = $('weather-overlay');
+const weatherGrid    = $('weather-grid');
+const weatherModalSub = $('weather-modal-sub');
+
+let weatherRecommendPosts = null; // 캐시 (모달을 다시 열 때 재요청 방지)
+let weatherRecommendLoading = false;
+
+function renderLoadingGrid() {
+    if (!weatherGrid) return;
+    weatherGrid.innerHTML = `
+        <div class="weather-loading">
+            <div class="feed-loading-dots"><span></span><span></span><span></span></div>
+        </div>
+    `;
+}
+
+function renderWeatherGrid(posts) {
+    if (!weatherGrid) return;
+
+    if (!posts.length) {
+        weatherGrid.innerHTML = `
+            <div class="weather-empty">
+                <span class="weather-cell-hint">이 근처엔 아직 추천할 코디가 없어요</span>
+            </div>
+        `;
+        return;
+    }
+
+    weatherGrid.innerHTML = posts.map((post, i) => `
+        <div class="weather-cell" data-i="${i}">
+            <img src="${post.images[0] || ''}" alt="추천 코디" loading="lazy">
+            <span class="weather-cell-likes">❤ ${post.likeCount}</span>
+        </div>
+    `).join('');
+
+    weatherGrid.querySelectorAll('.weather-cell').forEach(cell => {
+        cell.addEventListener('click', () => {
+            const post = posts[Number(cell.dataset.i)];
+            if (post) {
+                closeWeatherModal();
+                openPostModal(post);
+            }
+        });
+    });
+}
+
+async function loadWeatherRecommend() {
+    if (weatherRecommendPosts) {
+        renderWeatherGrid(weatherRecommendPosts);
+        return;
+    }
+    if (weatherRecommendLoading) return;
+    weatherRecommendLoading = true;
+    renderLoadingGrid();
+
+    const lat = state.currentLat ?? 37.5665;
+    const lng = state.currentLng ?? 126.9780;
+
+    try {
+        const res = await fetch(`/api/feed/weather-recommend?lat=${lat}&lng=${lng}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { posts, weather } = await res.json();
+
+        weatherRecommendPosts = posts;
+        renderWeatherGrid(posts);
+
+        if (weatherModalSub && weather?.temperature != null) {
+            weatherModalSub.textContent = `오늘 ${Math.round(weather.temperature)}°C · ${weather.description || ''} 날씨에 어울리는 코디를 모아봤어요`;
+        }
+    } catch {
+        if (weatherGrid) {
+            weatherGrid.innerHTML = `
+                <div class="weather-empty">
+                    <span class="weather-cell-hint">추천 코디를 불러오지 못했어요</span>
+                </div>
+            `;
+        }
+    } finally {
+        weatherRecommendLoading = false;
+    }
+}
+
+// 이 페이지는 지도 화면(map.html)의 iframe 안에서 열리는데, 부모의 사이드 패널이
+// flex 트랜지션(0.5s)으로 커지는 동안에는 iframe 뷰포트 크기가 아직 확정되지 않은
+// 상태다. 그 상태에서 바로 팝업을 띄우면 "전체화면 기준 중앙"에 잠깐 떴다가
+// 트랜지션이 끝난 뒤 "iframe 기준 중앙"으로 튀어 보인다.
+// → 부모가 트랜지션 종료 시점에 보내주는 'panel-layout-stable' 메시지를 받은 뒤에만
+//   노출한다 (map.js의 notifyPanelStable 참고). iframe이 아니거나 신호가 오지 않는
+//   경우(직접 /feed 접속 등)를 대비해 폴백 타이머도 둔다.
+function initWeatherRecommend() {
+    if (!weatherPopup) return;
+
+    let revealed = false;
+    const reveal = () => {
+        if (revealed) return;
+        revealed = true;
+        weatherPopup.classList.remove('hidden');
+        applyWeatherEmoji();
+    };
+
+    if (window.parent !== window) {
+        window.addEventListener('message', e => {
+            if (e.data?.type === 'panel-layout-stable') reveal();
+        });
+        setTimeout(reveal, 900); // 폴백: 신호가 안 오면 그냥 노출
+    } else {
+        reveal();
+    }
+
+    $('weather-popup-open')?.addEventListener('click', openWeatherModal);
+    $('weather-popup-close')?.addEventListener('click', () => {
+        weatherPopup.classList.add('hidden');
+    });
+    $('weather-modal-close')?.addEventListener('click', closeWeatherModal);
+    weatherOverlay?.addEventListener('click', e => {
+        if (e.target === weatherOverlay) closeWeatherModal();
+    });
+}
+
+function openWeatherModal() {
+    weatherOverlay?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    loadWeatherRecommend();
+}
+
+function closeWeatherModal() {
+    weatherOverlay?.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// ──────────────────────────────────────────
 // 지도에서 지역/계절 변경 시 호출
 // ──────────────────────────────────────────
 window.feedUpdateFilter = function(region, seasonId) {
@@ -593,6 +784,34 @@ window.feedUpdateFilter = function(region, seasonId) {
 // ──────────────────────────────────────────
 function seasonName(id) {
     return { spring: '봄', summer: '여름', fall: '가을', winter: '겨울' }[id] || id;
+}
+
+// ──────────────────────────────────────────
+// 아바타 표시 (이미지 없으면 기본 프로필 이미지)
+//   ⚠️ 프로필 사진 '업로드' 기능은 이 브랜치에 없음 (별도 작업 예정).
+//      현재 USERS.PROFILE_IMAGE가 모두 NULL이라 항상 기본 이미지가 뜸.
+//   TODO: 업로드 기능이 붙으면 연결 확인 —
+//         1) USERS.PROFILE_IMAGE에 저장된 경로가 /api/feed/posts 응답의
+//            user.avatar 로 내려오는지 (routes/feed.js)
+//         2) 피드 카드 / 게시물 모달 / 댓글 아바타 세 곳에 모두 반영되는지
+//         3) 업로드 경로가 /uploads/... 형태라 express.static 으로
+//            실제 접근 가능한지 (404 나면 이미지가 안 뜸)
+// ──────────────────────────────────────────
+function setAvatar(el, url, username) {
+    if (!el) return;
+    el.style.backgroundImage = `url('${url || DEFAULT_AVATAR}')`;
+    el.classList.add('has-image');
+    el.textContent = '';
+}
+
+// 유저 페이지로 이동 (iframe 안이면 최상위 창을 이동)
+function goToUserPage(profileId) {
+    const target = `/mypage?profileId=${encodeURIComponent(profileId)}`;
+    if (window.top !== window.self) {
+        window.top.location.href = target;
+    } else {
+        window.location.href = target;
+    }
 }
 
 function showToast(msg) {
@@ -688,5 +907,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         initInfiniteScroll();
         resetFeed(initialRegion, initialSeason);
+        initWeatherRecommend();   // 일반 피드 모드에서만 날씨 추천 팝업 노출
     }
 });
