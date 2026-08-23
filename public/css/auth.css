@@ -103,6 +103,27 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
     box-shadow: 0 4px 20px rgba(200, 160, 184, 0.25);
 }
 
+.auto-login {
+    width: 476px;
+    margin: 14px auto 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 14px;
+    color: #666;
+}
+
+.auto-login input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.auto-login label {
+    cursor: pointer;
+}
+
 button {
     margin-top: 24px;
     width: 100%;

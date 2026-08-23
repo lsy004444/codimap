@@ -8,7 +8,7 @@ emailInput.addEventListener('keydown',function(event) {
         event.preventDefault();
         passwordInput.focus();
     }
-})
+});
 
 window.showToast = function(message) {
     const toast = document.getElementById("login-toast");
@@ -31,6 +31,9 @@ loginForm.addEventListener('submit',async function(event) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
+    // 자동 로그인
+    const autoLogin = document.getElementById('autoLogin').checked;
+
     // 로그인에 성공했을 경우 
     if(email === "") {
         window.showToast("이메일을 입력해주세요!");
@@ -52,7 +55,8 @@ loginForm.addEventListener('submit',async function(event) {
             },
             body: JSON.stringify({
                 email: email,
-                password: password
+                password: password,
+                autoLogin: autoLogin
             })
         });
 

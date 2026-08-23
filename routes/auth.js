@@ -101,7 +101,7 @@ router.post("/signup",async(req, res) => {
 
 router.post("/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, autoLogin } = req.body;
 
         if(!email || !password) {
             return res.status(400).json({
@@ -151,7 +151,16 @@ router.post("/login", async (req, res) => {
                 message: "이메일 또는 비밀번호가 올바르지 않습니다."
             });
         }
+        
+        const One_Day = 1000 * 60 * 60 * 24
 
+        if(autoLogin) {
+            // 자동 로그인 시 1일 유지
+            req.session.cookie.maxAge = One_Day;
+        } else {
+            req.session.cookie.maxAge = null;
+        }
+ 
         req.session.user = {
             userId: user.USER_ID,
             name: user.NAME,
