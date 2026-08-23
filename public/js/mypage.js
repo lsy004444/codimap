@@ -113,6 +113,7 @@ async function loadScraps(profileId) {
             scrapList.innerHTML = `<p class="empty-message">${escapeHTML(result.message)}</p>`;
             return;
         }
+        
 
         if(result.scraps.length === 0) {
             scrapList.innerHTML = `<p class="empty-message">스크랩한 게시물이 없습니다.</p>`;
@@ -428,13 +429,7 @@ document.addEventListener("DOMContentLoaded", async() => {
         const loginUserProfileId = result.user.profileId;
 
         // URL에 profileId가 있으면 그 프로필을 보여주고, 없으면 로그인한 내 프로필을 보여줌
-        const currentProfileId = urlProfileId || loginUserProfileId;
-        
-        // log test
-        console.log("loginUserProfileId:", loginUserProfileId);
-        console.log("urlProfileId:", urlProfileId);
-        console.log("currentProfileId:", currentProfileId);
-        
+        const currentProfileId = urlProfileId || loginUserProfileId;     
         const profileResponse = await fetch(`/api/mypage/${encodeURIComponent(currentProfileId)}/profile`);
         const profileResult = await profileResponse.json();
         const profileTitle = document.getElementById("profileTitle");

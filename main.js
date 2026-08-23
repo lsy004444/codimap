@@ -53,6 +53,10 @@ app.get('/mypage', (req, res) => {
     }
     res.sendFile(path.join(__dirname, 'views', 'mypage.html'));
 })
+
+app.get('/delete_account', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'delete_account.html'));
+})
 app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'signup.html'));
 })

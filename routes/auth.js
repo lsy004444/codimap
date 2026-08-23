@@ -135,6 +135,14 @@ router.post("/login", async (req, res) => {
             });
         }
 
+        
+        if(user.STATUS === 'DELETED') {
+            return res.status(403).json({
+                success: false,
+                message: '탈퇴한 회원입니다.'
+            });
+        }
+
         const isMatch = await bcrypt.compare(password, user.PASSWORD);
 
         if(!isMatch) {
@@ -156,6 +164,7 @@ router.post("/login", async (req, res) => {
             message: "로그인 성공",
             user: req.session.user
         });
+
     } catch(error) {
         console.error(error);
         return res.status(500).json({
@@ -284,6 +293,13 @@ router.get("/mypage", (req, res) => {
 
 // 로그인 확인 미들웨어
 function requireLogin(req, res, next) {
+    console.log("========== requireLogin ==========");
+    console.log("method:", req.method);
+    console.log("url:", req.originalUrl);
+    console.log("sessionID:", req.sessionID);
+    console.log("session:", req.session);
+    console.log("session.user:", req.session?.user);
+
     if(!req.session.user) {
         return res.status(401).json({
             success: false,
@@ -461,5 +477,98 @@ router.post("/find_pw", async(req, res) => {
         });
     }
 })
+
+router.delete('/delete_account',requireLogin, async(req, res)=> {
+    try{
+        // 로그인 확인
+        const userId = req.session.user.userId;
+
+        // if(!userId) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: '로그인이 필요합니다.'
+        //     });
+        // }
+
+        // 입력한 비밀번호
+        const { password } = req.body;
+
+        if(!password) {
+            return res.status(400).json({
+                success: false,
+                message: '비밀번호를 입력해주세요.'
+            });
+        }
+
+        // 현재 회원 조회
+        const [rows] = await pool.query(
+            `SELECT USER_ID, PASSWORD, STATUS
+            FROM USERS
+            WHERE USER_ID = ?`,
+            [userId]
+        );
+
+        if(rows.length === 0 ) {
+            return res.status(404).json({
+                success: false,
+                message: '회원 정보를 찾을 수 없습니다.'
+            });
+        }
+
+        const user = rows[0];
+
+        // 이미 탈퇴한 회원인지 확인
+        if(user.STATUS === 'DELETED') {
+            return res.status(400).json({
+                success: false,
+                message: '이미 탈퇴한 회원입니다.'
+            });
+        }
+
+        // 비밀번호 비교
+        const passwordMatch = await bcrypt.compare(password, user.PASSWORD);
+
+        if(!passwordMatch) {
+            return res.status(401).json({
+                success: false,
+                message: '비밀번호가 일치하지 않습니다.'
+            });
+        }
+
+        // 회원 상태 변경
+        await pool.query(
+            `UPDATE USERS
+            SET STATUS = 'DELETED'
+            WHERE USER_ID = ?`,
+            [userId]
+        );
+
+        // 세션 삭제
+        req.session.destroy((error) => {
+            if(error) {
+                console.error('세션 삭제 오류:', error);
+
+                return res.status(500).json({
+                    success: false,
+                    message: '회원탈퇴 후 로그아웃 처리에 실패했습니다.'
+                });
+            }
+
+            res.clearCookie('connect.sid');
+
+            return res.status(200).json({
+                success: true,
+                message: '회원탈퇴가 완료되었습니다.'
+            });
+        });
+    } catch (error) {
+        console.error('회원탈퇴 오류:', error);
+        
+        return res.status(500).json({
+            success: false,
+            message: '회원탈퇴 처리 중 오류가 발생했습니다.'
+        });
+    }
+});
 
 module.exports = router;
