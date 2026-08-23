@@ -151,6 +151,92 @@ button:active {
     transform: translateY(0);
 }
 
+.social-login {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+/* 소셜 로그인 버튼 공통 */
+.google-btn,
+.kakao-btn,
+.apple-btn {
+    position: relative;
+    width: 100%;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+    border-radius: 30px;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+
+    text-decoration: none;
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+/* 아이콘 공통 */
+.google-icon,
+.kakao-icon,
+.apple-icon {
+    position: absolute;
+    left: 20px;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Google */
+.google-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #444;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 12px rgba(200, 160, 184, 0.12);
+}
+
+.google-icon {
+    color: #4285F4;
+}
+
+/* Kakao */
+.kakao-btn {
+    background: #FEE500;
+    color: #191919;
+    border: 1px solid #FEE500;
+}
+
+.kakao-icon {
+    color: #191919;
+}
+
+/* Apple */
+.apple-btn {
+    background: #111;
+    color: #fff;
+    border: 1px solid #111;
+}
+
+.apple-icon {
+    color: #fff;
+}
+
+/* hover */
+.google-btn:hover,
+.kakao-btn:hover,
+.apple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
 .find_pw {
     margin-top: 24px;
     display: flex;

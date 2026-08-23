@@ -183,6 +183,7 @@ router.post("/login", async (req, res) => {
     }
 });
 
+
 // 로그아웃
 router.post("/logout", (req, res) => {
     req.session.destroy(() => {

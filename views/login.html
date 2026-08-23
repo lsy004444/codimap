@@ -25,6 +25,22 @@
             <input type="password" id="password" name="password">
         </div>
         <button type="submit" id="login" name="login">로그인</button>
+        <div class="social-login">
+            <a href="/api/auth/google" class="google-btn">
+                <span class="google-icon">G</span>
+                <span>Google로 로그인</span>
+            </a>
+            <a href="/api/auth/kakao" class="kakao-btn">
+              <span class="social-icon kakao-icon">K</span>
+              <span>카카오로 로그인</span>
+            </a>
+
+            <a href="/api/auth/apple" class="apple-btn">
+              <span class="social-icon apple-icon">●</span>
+             <span>Apple로 로그인</span>
+            </a>
+        </div>
+        
         <div class="auto-login">
             <input type="checkbox" id="autoLogin">
             <label for="autoLogin">자동 로그인</label>

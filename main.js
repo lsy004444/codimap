@@ -1,15 +1,19 @@
 const express = require('express'),
       path = require('path'),
       session = require('express-session'),
+      dotenv = require('dotenv'),
       authRouter = require("./routes/auth"),
       mypageRouter = require("./routes/mypage"),
-      app = express();
+      app = express(),
+      googleauthRouter = require('./routes/googleauth'),
+      kakaoauthRouter = require('./routes/kakaoauth');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use(express.static('public'));
 app.use(express.json());            
 app.use(express.urlencoded({ extended: true })); 
+dotenv.config();
 
 // 세션 설정
 app.use(session({
@@ -24,6 +28,8 @@ app.use(session({
 }));
 
 app.use("/api/auth", authRouter);
+app.use('/api/auth',googleauthRouter);
+app.use('/api/auth', kakaoauthRouter);
 app.use("/api/mypage", mypageRouter);
 
 const outfitRouter = require('./routes/outfit');
