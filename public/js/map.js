@@ -184,7 +184,10 @@ window.onload = function() {
             const mapContainer = document.getElementById('map-container');
             const sidePanel = document.getElementById('side-panel');
             const feedFrame = document.getElementById('feed-frame');
+            const trendBanner = document.getElementById('trendBanner');
 
+            //검색하고 피드 뜰 때는 배너 안 뜨게 수정
+            if (trendBanner) trendBanner.style.display = 'none';
             if(feedFrame && currentRegionName) {
             const dongName = currentRegionName.split(' ').pop(); // ← 추가
 
