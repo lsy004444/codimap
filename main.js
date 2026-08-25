@@ -67,9 +67,10 @@ app.get('/trend/:theme', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/trend.html'));
 });
 
+
 //banner.js
 const bannerRouter = require("./routes/banner");
-app.use("/api/banner", bannerRouter);
+app.use("/api/banners", bannerRouter);
 
 //feed.js
 const feedRouter = require("./routes/feed");

@@ -488,34 +488,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.showToast('🔒 로그인이 필요합니다');
         }
     
+        });
     });
 
-    //배너창
-    const trendThemes = [
-        { text: "🔥 요즘 유행하는 오버핏 코디" , url: "/trend/oversized"},
-        { text:  "☀️ 오늘 날씨에 맞는 코디", url: "/trend/weather"},
-        { text:  "🍂 가을 감성 코디 모음", url: "/trend/autumn"}
-    ];
-    let currentThemeIndex = 0;
-
-    function rotateTrendBanner() {
-        currentThemeIndex = (currentThemeIndex + 1) % trendThemes.length;
-        const banner = document.getElementById('trendBanner');
-        const textEl = document.getElementById('trendBannerText');
-
-        banner.style.opacity = '0';
-        setTimeout(() => {
-            textEl.textContent = trendThemes[currentThemeIndex].text;
-            banner.style.opacity = '1';
-        }, 400);
+    function closeAIChat() {
+    document.getElementById('aichatModalOverlay').style.display = 'none';
     }
 
-    setInterval(rotateTrendBanner, 5000);
-
-    function goToTrendPage(){
-        window.location.href = trendThemes[currentThemeIndex].url;
-    }
-});
 
 let trendThemes = [];
 let currentThemeIndex = 0;
