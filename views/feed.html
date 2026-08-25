@@ -138,6 +138,30 @@
         </div>
     </div>
 
+    <!-- ── 날씨 코디 추천: 하단 팝업 바 ── -->
+    <div id="weather-popup" class="weather-popup hidden">
+        <button class="weather-popup-close" id="weather-popup-close" title="닫기">✕</button>
+        <button class="weather-popup-inner" id="weather-popup-open">
+            <span class="weather-popup-icon" id="weather-popup-icon">☀️</span>
+            <span class="weather-popup-text">
+                <b>오늘 날씨에 딱 맞는 코디</b>가 궁금하다면?
+                <span class="weather-popup-sub">지금 추천 코디 9선 보러가기 →</span>
+            </span>
+        </button>
+    </div>
+
+    <!-- ── 날씨 코디 추천: 9그리드 모달 ── -->
+    <div id="weather-overlay" class="weather-overlay hidden">
+        <div class="weather-modal">
+            <button class="weather-modal-close" id="weather-modal-close">✕</button>
+            <div class="weather-modal-header">
+                <h2><span id="weather-modal-icon">☀️</span> 오늘의 추천 코디</h2>
+                <p class="weather-modal-sub" id="weather-modal-sub">오늘 날씨에 어울리는 코디를 모아봤어요</p>
+            </div>
+            <div class="weather-grid" id="weather-grid"></div>
+        </div>
+    </div>
+
     <!-- 토스트 -->
     <div id="toast" class="toast hidden"></div>
 

@@ -1,0 +1,207 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f1f7;
+    color: #2d2438;
+    padding: 24px 16px 60px;
+}
+
+.admin-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* 헤더 */
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+.admin-header h1 { font-size: 24px; font-weight: 800; }
+.admin-home-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #b79cd8;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.admin-home-btn:hover { background: #a488cc; }
+
+/* 탭 */
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+.admin-tab {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    color: #8a7ba0;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(140,110,170,0.08);
+}
+.admin-tab.active { background: #7b5ea7; color: #fff; }
+
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+/* 필터 */
+.admin-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.filter-btn {
+    padding: 6px 14px;
+    border: 1.5px solid #d8c9ea;
+    border-radius: 20px;
+    background: #fff;
+    color: #7b6b95;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.filter-btn.active { background: #7b5ea7; color: #fff; border-color: #7b5ea7; }
+
+/* 신고 카드 */
+.report-list { display: flex; flex-direction: column; gap: 12px; }
+.report-card {
+    display: flex;
+    gap: 14px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(140,110,170,0.08);
+}
+.report-thumb {
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #eee;
+}
+.report-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.no-thumb {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #aaa; text-align: center;
+}
+.report-info { flex: 1; min-width: 0; }
+.report-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.report-date { font-size: 12px; color: #999; }
+.report-reason { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.report-meta { font-size: 13px; color: #5c5170; margin-bottom: 4px; }
+.report-count {
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #efe8f7;
+    color: #6b5b8a;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.report-post {
+    font-size: 13px; color: #777;
+    margin-bottom: 10px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* 상태 뱃지 */
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+}
+.badge-pending  { background: #f0a840; }
+.badge-resolved { background: #4caf82; }
+.badge-rejected { background: #b0a0b8; }
+.suspended-tag {
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e05656;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* 액션 버튼 */
+.report-actions, .user-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.report-actions button, .user-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+}
+.btn-resolve   { background: #4caf82; }
+.btn-reject    { background: #9e8fb0; }
+.btn-delete    { background: #e05656; }
+.btn-suspend   { background: #d9843b; }
+.btn-unsuspend { background: #5c9bd6; }
+.report-actions button:hover, .user-actions button:hover { opacity: 0.88; }
+
+/* 유저 카드 */
+.user-list { display: flex; flex-direction: column; gap: 10px; }
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(140,110,170,0.08);
+}
+.user-main { flex: 1; }
+.user-main b { font-size: 15px; }
+.user-name { margin-left: 8px; color: #888; font-size: 13px; }
+.user-stats { display: flex; gap: 16px; font-size: 13px; color: #666; }
+.user-stats b { color: #2d2438; }
+.pending-num { color: #e05656 !important; }
+
+.admin-empty {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
+    font-size: 14px;
+}
+
+/* 토스트 */
+.admin-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(45,36,56,0.94);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 24px;
+    font-size: 14px;
+    z-index: 1000;
+}
+.admin-toast.hidden { display: none; }
