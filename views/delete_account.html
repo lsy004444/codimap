@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width" initial-scale=1.0">
+    <link rel="stylesheet" href="/css/delete_account.css">
+
+    <title>회원탈퇴 페이지</title>
+</head>
+<body>
+    <div class="delete-account-wrapper">
+        <div class="delete-account-header">
+            <button type="button" class="btn-back" onclick="window.history.back()">뒤로</button>
+            <h1 class="delete-account-title">회원탈퇴</h1>
+        </div>
+        <div class="delete-warning">
+            <h2>회원탈퇴 전 확인해주세요.</h2> 
+            <ul>
+                <li>탈퇴 후 해당 계정으로 로그인할 수 없습니다.</li>
+                <li>탈퇴한 계정은 복구할 수 없습니다.</li>
+            </ul>
+        </div>
+
+        <form id="deleteAccountForm">
+            <div class="password-area">
+                <label for="password">비밀번호 확인</label>
+                <input type="password" id="password" name="password" placeholder="현재 비밀번호를 입력해주세요" required>
+            </div>
+
+            <label class="agree-area">
+                <input type="checkbox" id="deleteAgree">
+                <span> 위 내용을 확인했으며 회원탈퇴에 동의합니다.</span>
+            </label>
+
+            <div class="button-area">
+                <button type="button" class="cancel" onclick="window.history.back()">취소</button>
+                <button type="submit" class="delete">회원탈퇴</button>
+            </div>
+        </form>
+    </div>
+    <script src="/js/delete_account.js"></script>
+</body>
+</html>
