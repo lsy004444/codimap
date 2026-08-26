@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const pool = require("../config/db");
-const { requireLogin } = require.apply('../middleware/authMiddleware');
+const { requireLogin } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 function isValidUserId(userId) {
@@ -230,6 +230,18 @@ router.post("/login", async (req, res) => {
     }
 });
 
+router.get('/check-login', (req, res) => {
+    if (req.session.user) {
+        return res.status(200).json({
+                loggedIn: true,
+                user: req.session.user
+            });
+    }
+
+    return res.status(200).json({
+        loggedIn: false
+    });
+});
 
 // 로그아웃
 router.post("/logout", (req, res) => {

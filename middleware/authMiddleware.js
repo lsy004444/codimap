@@ -1,3 +1,5 @@
+const pool = require('../config/db');
+
 // 로그인 확인 미들웨어
 async function requireLogin(req, res, next) {
     // console.log("========== requireLogin ==========");
@@ -91,8 +93,7 @@ async function requireLogin(req, res, next) {
         // 정지 기간 만료되면 자동 해제
         await pool.query(
             `UPDATE USERS
-            SET STATUS='ACTIVE'
-                SUSPENDED_UNTIL = NULL
+            SET STATUS='ACTIVE',SUSPENDED_UNTIL = NULL
             WHERE USER_ID = ?`, [userId]
         );
     }
@@ -106,3 +107,5 @@ async function requireLogin(req, res, next) {
     });
 }
 }
+
+module.exports = {requireLogin};
