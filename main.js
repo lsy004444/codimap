@@ -73,8 +73,20 @@ app.get('/upload', (req, res) => {
 app.get('/feed', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'feed.html'));
 })
+app.get('/community', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'community.html'));
+})
 app.get('/trend/:theme', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/trend.html'));
+});
+// TODO: 이 페이지로 이동하는 진입 버튼이 아직 없음 (주소 직접 입력만 가능).
+//       관리자에게만 보이도록 노출 — 상세는 routes/admin.js 의 /check 주석 참고.
+app.get('/admin', (req, res) => {
+    // 로그인하지 않은 사용자는 로그인으로, 관리자 여부는 페이지 내부에서 재확인
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 // TODO: 이 페이지로 이동하는 진입 버튼이 아직 없음 (주소 직접 입력만 가능).
 //       관리자에게만 보이도록 노출 — 상세는 routes/admin.js 의 /check 주석 참고.

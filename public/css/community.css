@@ -1,0 +1,56 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f1f7;
+    color: #2d2438;
+    padding: 24px 16px 60px;
+}
+
+.community-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* 헤더 */
+.community-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+.community-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 24px;
+    font-weight: 800;
+}
+.community-home-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #b79cd8;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.community-home-btn:hover { background: #a488cc; }
+
+/* 준비 중 자리표시 (게시판 구현 시 교체) */
+.community-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 55vh;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(120, 90, 150, 0.08);
+    text-align: center;
+    padding: 40px 20px;
+}
+.community-empty i { font-size: 44px; color: #c9b6e0; }
+.community-empty p { font-size: 17px; font-weight: 700; }
+.community-empty span { font-size: 13px; color: #9a8aad; }
