@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const pool = require("../config/db");
+const { requireLogin } = require.apply('../middleware/authMiddleware');
 const router = express.Router();
 
 function isValidUserId(userId) {
@@ -112,7 +113,7 @@ router.post("/login", async (req, res) => {
 
         const[rows] = await pool.query(
             `
-            SELECT USER_ID, ID, NAME, EMAIL, PASSWORD, STATUS
+            SELECT USER_ID, ID, NAME, EMAIL, PASSWORD, STATUS, SUSPENDED_UNTIL
             FROM USERS
             WHERE EMAIL = ?
             `,
@@ -128,21 +129,6 @@ router.post("/login", async (req, res) => {
 
         const user = rows[0];
 
-        if(user.STATUS !== "ACTIVE") {
-            return res.status(403).json({
-                success: false,
-                message: "사용할 수 없는 계정입니다."
-            });
-        }
-
-        
-        if(user.STATUS === 'DELETED') {
-            return res.status(403).json({
-                success: false,
-                message: '탈퇴한 회원입니다.'
-            });
-        }
-
         const isMatch = await bcrypt.compare(password, user.PASSWORD);
 
         if(!isMatch) {
@@ -150,6 +136,67 @@ router.post("/login", async (req, res) => {
                 success: false,
                 message: "이메일 또는 비밀번호가 올바르지 않습니다."
             });
+        }
+
+        // 탈퇴 회원
+        if(user.STATUS === 'DELETED') {
+            return res.status(403).json({
+                success: false,
+                message: '탈퇴한 회원입니다.'
+            });
+        }
+        
+        // 영구 정지 회원
+        if(user.STATUS === 'BANNED') {
+            return res.status(403).json({
+                success: false,
+                message: '영구 정지된 계정입니다.'
+            });
+        }
+
+        // 기간 정지 회원
+        if(user.STATUS === 'SUSPENDED') {
+            if(!user.SUSPENDED_UNTIL) {
+                return res.status(403).json({
+                    success: false,
+                    message: '현재 이용이 정지된 계정입니다.'
+                });
+            }
+
+               const [suspensionRows] = await pool.query(
+                `SELECT
+                    CASE
+                        WHEN SUSPENDED_UNTIL > NOW() THEN 1
+                        ELSE 0
+                    END AS IS_SUSPENDED
+                FROM USERS
+                WHERE USER_ID = ?`,
+                [user.USER_ID]
+            );
+
+            // 아직 정지 기간이 남았을 경우
+            if(suspensionRows[0].IS_SUSPENDED === 1) {
+                return res.status(403).json({
+                    success: false,
+                    message: '현재 이용이 정지된 계정입니다.',
+                    suspendedUntil: user.SUSPENDED_UNTIL
+                });
+            }
+
+            // 정지 기간이 끝났으면 자동 해체
+            await pool.query(
+                `UPDATE USERS SET STATUS='ACTIVE', SUSPENDED_UNTIL=NULL
+                WHERE USER_ID = ? `,[user.USER_ID]
+            );
+            user.STATUS = 'ACTIVE';
+
+        if(user.STATUS !== "ACTIVE") {
+            return res.status(403).json({
+                success: false,
+                message: "사용할 수 없는 계정입니다."
+            });
+        }
+         
         }
         
         const One_Day = 1000 * 60 * 60 * 24
@@ -287,13 +334,13 @@ router.get("/check-id", async(req, res) => {
 });
 
 // 마이페이지
-router.get("/mypage", (req, res) => {
-    if(!req.session.user) {
-        return res.status(401).json({
-            success: false,
-            message: "로그인이 필요합니다."
-        });
-    }
+router.get("/mypage", requireLogin, (req, res) => {
+    // if(!req.session.user) {
+    //     return res.status(401).json({
+    //         success: false,
+    //         message: "로그인이 필요합니다."
+    //     });
+    // }
 
     return res.json({
         success: true,
@@ -301,23 +348,7 @@ router.get("/mypage", (req, res) => {
     });
 });
 
-// 로그인 확인 미들웨어
-function requireLogin(req, res, next) {
-    console.log("========== requireLogin ==========");
-    console.log("method:", req.method);
-    console.log("url:", req.originalUrl);
-    console.log("sessionID:", req.sessionID);
-    console.log("session:", req.session);
-    console.log("session.user:", req.session?.user);
 
-    if(!req.session.user) {
-        return res.status(401).json({
-            success: false,
-            message: "로그인이 필요합니다."
-        });
-    }
-    next();
-}
 
 // 아이디,비밀번호 변경
 router.patch("/modify", requireLogin, async(req, res) => {
