@@ -202,6 +202,15 @@ window.onload = function() {
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
 
+            // 사이드 패널의 flex 트랜지션(0.5s)이 끝나야 iframe 뷰포트 크기가 확정된다.
+            // 그 전에 iframe 안의 날씨 추천 팝업이 뜨면 위치가 튀어 보이므로,
+            // 트랜지션이 끝난 뒤 iframe에 "레이아웃 안정됨" 신호를 보낸다.
+            const notifyPanelStable = () => {
+                feedFrame?.contentWindow?.postMessage({ type: 'panel-layout-stable' }, '*');
+            };
+            sidePanel.addEventListener('transitionend', notifyPanelStable, { once: true });
+            setTimeout(notifyPanelStable, 550); // 트랜지션이 안 붙는 경우(이미 열려있던 패널) 대비 폴백
+
             setTimeout(function() {
                 map.relayout();
                 if(currentCoords) {
@@ -457,7 +466,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!result.success) {
                 window.showToast('🔒 로그인이 필요합니다');
                 setTimeout(() => window.location.href = '/login', 1000);
-                return; // ← 추가
+                return; 
             }
 
             const profileId = result.user.profileId;
@@ -467,5 +476,53 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.showToast('🔒 로그인이 필요합니다');
         }
     });
-});
 
+    //ai챗봇
+    const aichatBtn = document.getElementById("aichatBtn");
+    if(!aichatBtn) return;
+
+    aichatBtn.addEventListener("click", async ()=> {
+        try {
+            const response = await fetch("/api/auth/mypage");
+            const result = await response.json();
+
+            if(!result.success) {
+                window.showToast('🔒 로그인이 필요합니다');
+                setTimeout(() => window.location.href = '/login', 1000);
+                return;
+            }
+
+            document.getElementById('aichatModalOverlay').style.display = 'flex';
+        } catch (error) {
+            console.error(error);
+            window.showToast('🔒 로그인이 필요합니다');
+        }
+    
+    });
+
+    //배너창
+    const trendThemes = [
+        { text: "🔥 요즘 유행하는 오버핏 코디" , url: "/trend/oversized"},
+        { text:  "☀️ 오늘 날씨에 맞는 코디", url: "/trend/weather"},
+        { text:  "🍂 가을 감성 코디 모음", url: "/trend/autumn"}
+    ];
+    let currentThemeIndex = 0;
+
+    function rotateTrendBanner() {
+        currentThemeIndex = (currentThemeIndex + 1) % trendThemes.length;
+        const banner = document.getElementById('trendBanner');
+        const textEl = document.getElementById('trendBannerText');
+
+        banner.style.opacity = '0';
+        setTimeout(() => {
+            textEl.textContent = trendThemes[currentThemeIndex].text;
+            banner.style.opacity = '1';
+        }, 400);
+    }
+
+    setInterval(rotateTrendBanner, 5000);
+
+    function goToTrendPage(){
+        window.location.href = trendThemes[currentThemeIndex].url;
+    }
+});

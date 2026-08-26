@@ -963,6 +963,7 @@ body {
     gap: 10px;
 }
 .weather-cell {
+    position: relative;
     aspect-ratio: 1 / 1;
     border-radius: 12px;
     background: #f3eef8;
@@ -972,14 +973,38 @@ body {
     justify-content: center;
     gap: 4px;
     overflow: hidden;
-}
-.weather-cell.placeholder {
-    border: 1.5px dashed #d5c6e6;
-    color: #b3a3c4;
+    cursor: pointer;
 }
 .weather-cell img { width: 100%; height: 100%; object-fit: cover; }
-.weather-cell-num { font-size: 18px; font-weight: 800; }
 .weather-cell-hint { font-size: 11px; }
+.weather-cell-likes {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    font-size: 10px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 2px 6px;
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+}
+
+.weather-loading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.weather-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    color: #b3a3c4;
+}
 
 @media (max-width: 480px) {
     .weather-popup-text { font-size: 13px; }

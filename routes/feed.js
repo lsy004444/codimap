@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const axios = require('axios');
+const { getCurrentWeather, SEASON_TEMP_AVG } = require('../utils/weather');
 
 const ogCache = new Map();
 
@@ -46,6 +47,43 @@ function normalizeUsername(userName) {
 function splitGroupConcat(value) {
     if (!value) return [];
     return value.split('||').filter(Boolean);
+}
+
+// 서울시청 좌표 — 위치 정보가 없을 때 기본값 (프론트 applyWeatherEmoji와 동일한 폴백)
+const DEFAULT_LAT = 37.5665;
+const DEFAULT_LNG = 126.9780;
+const WEATHER_RECOMMEND_RANGE = 0.15; // 약 16km 반경
+const WEATHER_RECOMMEND_CANDIDATE_SIZE = 60;
+const WEATHER_RECOMMEND_SIZE = 9;
+
+// 오늘 날씨(기온) 기준 계절 일치도 + 인기도 + 최신성을 합산해 상위 9개를 뽑는다
+// 가중치: 계절 일치 40% + 기온 근접도 30% + 인기도(좋아요+스크랩) 20% + 최신성 10%
+function rankByWeather(rows, weather) {
+    if (!rows.length) return [];
+
+    const maxPopularity = Math.max(1, ...rows.map(r => (r.LIKE_COUNT || 0) + (r.SCRAP_COUNT || 0)));
+    const now = Date.now();
+
+    return rows
+        .map(row => {
+            const seasonMatch = weather.matchedSeason && row.SEASON === weather.matchedSeason ? 1 : 0;
+
+            const seasonAvg = SEASON_TEMP_AVG[row.SEASON];
+            const tempCloseness = (seasonAvg == null || weather.temperature == null)
+                ? 0
+                : Math.max(0, 1 - Math.abs(weather.temperature - seasonAvg) / 20);
+
+            const popularity = ((row.LIKE_COUNT || 0) + (row.SCRAP_COUNT || 0)) / maxPopularity;
+
+            const ageDays = (now - new Date(row.CREATED_DATE).getTime()) / 86400000;
+            const recency = 1 / (1 + Math.max(0, ageDays) / 30);
+
+            const score = seasonMatch * 0.4 + tempCloseness * 0.3 + popularity * 0.2 + recency * 0.1;
+            return { row, score };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, WEATHER_RECOMMEND_SIZE)
+        .map(x => x.row);
 }
 
 
@@ -168,6 +206,96 @@ router.get('/posts', async (req, res) => {
     } catch (err) {
         console.error('[feed/posts]', err);
         res.status(500).json({ message: '게시물 목록 조회 실패' });
+    }
+});
+
+// ──────────────────────────────────────────
+// 오늘 날씨 기반 코디 추천 (9개)
+// GET /api/feed/weather-recommend?lat=&lng=
+// ──────────────────────────────────────────
+router.get('/weather-recommend', async (req, res) => {
+    const { lat, lng } = req.query;
+    const viewerId = getLoginUserId(req) || 0;
+
+    const latitude = lat ? parseFloat(lat) : DEFAULT_LAT;
+    const longitude = lng ? parseFloat(lng) : DEFAULT_LNG;
+
+    try {
+        const [rows] = await db.query(
+            `
+            SELECT
+                p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
+                p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
+                p.SCRAP_COUNT, p.LIKE_COUNT, u.ID AS PROFILE_ID,
+                GROUP_CONCAT(DISTINCT i.URL ORDER BY i.IMAGE_ID SEPARATOR '||') AS image_urls,
+                GROUP_CONCAT(DISTINCT pl.URL ORDER BY pl.LINK_ID SEPARATOR '||') AS link_urls,
+                MAX(pl.AFFILIATE) AS has_affiliate,
+                EXISTS(SELECT 1 FROM FOLLOW WHERE FOLLOWER_ID = ? AND FOLLOWING_ID = p.MEMBER_ID) AS is_following
+            FROM POST p
+            JOIN USERS u ON p.MEMBER_ID = u.USER_ID
+            JOIN REGION r ON p.REGION_ID = r.REGION_ID
+            LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
+            LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
+            WHERE r.LATITUDE BETWEEN ? AND ?
+              AND r.LONGITUDE BETWEEN ? AND ?
+            GROUP BY
+                p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
+                p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,
+                p.SCRAP_COUNT, p.LIKE_COUNT, u.ID
+            ORDER BY p.CREATED_DATE DESC
+            LIMIT ${WEATHER_RECOMMEND_CANDIDATE_SIZE}
+            `,
+            [
+                viewerId,
+                latitude - WEATHER_RECOMMEND_RANGE,
+                latitude + WEATHER_RECOMMEND_RANGE,
+                longitude - WEATHER_RECOMMEND_RANGE,
+                longitude + WEATHER_RECOMMEND_RANGE,
+            ]
+        );
+
+        let weather = null;
+        try {
+            weather = await getCurrentWeather(latitude, longitude);
+        } catch (weatherErr) {
+            console.error('[feed/weather-recommend] 날씨 조회 실패', weatherErr.message);
+        }
+
+        const ranked = weather ? rankByWeather(rows, weather) : rows.slice(0, WEATHER_RECOMMEND_SIZE);
+
+        const posts = ranked.map((row) => {
+            const images = splitGroupConcat(row.image_urls);
+            const links = splitGroupConcat(row.link_urls);
+
+            return {
+                id: row.POST_ID,
+                desc: row.CONTENT,
+                region: row.REGION_NAME,
+                season: row.SEASON,
+                viewCount: row.VIEW_COUNT || 0,
+                scrapCount: row.SCRAP_COUNT || 0,
+                likeCount: row.LIKE_COUNT || 0,
+                user: {
+                    id: row.MEMBER_ID,
+                    username: normalizeUsername(row.NAME),
+                    profileId: row.PROFILE_ID,
+                    avatar: row.PROFILE_IMAGE || '',
+                },
+                images,
+                isFollowing: Boolean(row.is_following),
+                hasAffiliate: Boolean(row.has_affiliate),
+                shops: links.map((url, index) => ({
+                    name: '쇼핑 링크',
+                    item: `링크 ${index + 1}`,
+                    url,
+                })),
+            };
+        });
+
+        res.json({ posts, weather });
+    } catch (err) {
+        console.error('[feed/weather-recommend]', err);
+        res.status(500).json({ message: '추천 코디 조회 실패' });
     }
 });
 
@@ -709,7 +837,8 @@ router.post('/users/:targetUserId/follow', async (req, res) => {
     const targetUserId = Number(req.params.targetUserId);
 
     if (!userId) return res.status(401).json({ message: '로그인이 필요합니다' });
-    if (!targetUserId || userId === targetUserId) {
+    if (!targetUserId ||
+        userId === targetUserId) {
         return res.status(400).json({ message: '잘못된 요청입니다' });
     }
 
