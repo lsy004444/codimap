@@ -202,15 +202,6 @@ window.onload = function() {
             mapContainer.classList.add('shrink');
             sidePanel.classList.remove('hidden');
 
-            // 사이드 패널의 flex 트랜지션(0.5s)이 끝나야 iframe 뷰포트 크기가 확정된다.
-            // 그 전에 iframe 안의 날씨 추천 팝업이 뜨면 위치가 튀어 보이므로,
-            // 트랜지션이 끝난 뒤 iframe에 "레이아웃 안정됨" 신호를 보낸다.
-            const notifyPanelStable = () => {
-                feedFrame?.contentWindow?.postMessage({ type: 'panel-layout-stable' }, '*');
-            };
-            sidePanel.addEventListener('transitionend', notifyPanelStable, { once: true });
-            setTimeout(notifyPanelStable, 550); // 트랜지션이 안 붙는 경우(이미 열려있던 패널) 대비 폴백
-
             setTimeout(function() {
                 map.relayout();
                 if(currentCoords) {
@@ -526,3 +517,184 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = trendThemes[currentThemeIndex].url;
     }
 });
+
+// ──────────────────────────────────────────
+// 날씨 코디 추천 (맵 하단 팝업 + 9그리드 모달)
+//   오늘 날씨(기온) 기준으로 계절을 역매핑해 계절 일치도 + 인기도 + 최신성을
+//   가중치로 합산한 상위 9개를 서버(GET /api/feed/weather-recommend)에서 받아온다.
+//   좌표는 지도에서 마지막으로 선택한 위치(currentCoords), 없으면 서울시청 기준.
+// ──────────────────────────────────────────
+(function () {
+    const $w = (id) => document.getElementById(id);
+
+    const popup        = $w('weather-popup');
+    const overlay      = $w('weather-overlay');
+    const grid         = $w('weather-grid');
+    const modalSub     = $w('weather-modal-sub');
+    const popupIcon    = $w('weather-popup-icon');
+    const modalIcon    = $w('weather-modal-icon');
+    const frameOverlay = $w('weatherPostFrameOverlay');
+    const frame        = $w('weatherPostFrame');
+
+    if (!popup || !overlay || !grid) return;
+
+    // ── 날씨 코드(WMO) → 이모지 ──
+    const WEATHER_EMOJI = [
+        { codes: [0],                       day: '☀️', night: '🌙' },
+        { codes: [1, 2],                    day: '🌤️', night: '☁️' },
+        { codes: [3],                       day: '☁️', night: '☁️' },
+        { codes: [45, 48],                  day: '🌫️', night: '🌫️' },
+        { codes: [51, 53, 55, 56, 57],      day: '🌦️', night: '🌧️' },
+        { codes: [61, 63, 65, 66, 67],      day: '🌧️', night: '🌧️' },
+        { codes: [71, 73, 75, 77, 85, 86],  day: '❄️', night: '❄️' },
+        { codes: [80, 81, 82],              day: '🌦️', night: '🌧️' },
+        { codes: [95, 96, 99],              day: '⛈️', night: '⛈️' },
+    ];
+
+    function weatherCodeToEmoji(code, isDay) {
+        const hit = WEATHER_EMOJI.find(e => e.codes.includes(code));
+        if (!hit) return '☀️';
+        return isDay ? hit.day : hit.night;
+    }
+
+    // 지도에서 검색/선택한 좌표 우선, 없으면 서울시청 기준
+    function currentLatLng() {
+        if (currentCoords && typeof currentCoords.getLat === 'function') {
+            return { lat: currentCoords.getLat(), lng: currentCoords.getLng() };
+        }
+        return { lat: 37.5665, lng: 126.9780 };
+    }
+
+    // 오늘 날씨를 받아 팝업/모달 이모지를 교체 (실패 시 기본 ☀️ 유지)
+    async function applyWeatherEmoji() {
+        const { lat, lng } = currentLatLng();
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=weather_code,is_day&timezone=Asia%2FSeoul`);
+            if (!res.ok) return;
+
+            const { current } = await res.json();
+            const emoji = weatherCodeToEmoji(current.weather_code, current.is_day === 1);
+
+            if (popupIcon) popupIcon.textContent = emoji;
+            if (modalIcon) modalIcon.textContent = emoji;
+        } catch {
+            // 네트워크 오류 시 기본 이모지 유지
+        }
+    }
+
+    // 다른 지역을 검색하면 좌표가 바뀌므로 캐시 키를 좌표로 둔다
+    let cacheKey = null;
+    let cachedPosts = null;
+    let loading = false;
+
+    function renderLoading() {
+        grid.innerHTML = `
+            <div class="weather-loading">
+                <div class="weather-loading-dots"><span></span><span></span><span></span></div>
+            </div>
+        `;
+    }
+
+    function renderGrid(posts) {
+        if (!posts.length) {
+            grid.innerHTML = `
+                <div class="weather-empty">
+                    <span class="weather-cell-hint">이 근처엔 아직 추천할 코디가 없어요</span>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = posts.map((post, i) => `
+            <div class="weather-cell" data-i="${i}">
+                <img src="${post.images[0] || ''}" alt="추천 코디" loading="lazy">
+                <span class="weather-cell-likes">❤ ${post.likeCount}</span>
+            </div>
+        `).join('');
+
+        grid.querySelectorAll('.weather-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const post = posts[Number(cell.dataset.i)];
+                if (post) openPostFrame(post.id);
+            });
+        });
+    }
+
+    async function loadRecommend() {
+        const { lat, lng } = currentLatLng();
+        const key = `${lat},${lng}`;
+
+        if (cacheKey === key && cachedPosts) {
+            renderGrid(cachedPosts);
+            return;
+        }
+        if (loading) return;
+        loading = true;
+        renderLoading();
+
+        try {
+            const res = await fetch(`/api/feed/weather-recommend?lat=${lat}&lng=${lng}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const { posts, weather } = await res.json();
+
+            cacheKey = key;
+            cachedPosts = posts;
+            renderGrid(posts);
+
+            if (modalSub && weather?.temperature != null) {
+                modalSub.textContent = `오늘 ${Math.round(weather.temperature)}°C · ${weather.description || ''} 날씨에 어울리는 코디를 모아봤어요`;
+            }
+        } catch {
+            grid.innerHTML = `
+                <div class="weather-empty">
+                    <span class="weather-cell-hint">추천 코디를 불러오지 못했어요</span>
+                </div>
+            `;
+        } finally {
+            loading = false;
+        }
+    }
+
+    function openWeatherModal() {
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        applyWeatherEmoji();   // 좌표가 바뀌었을 수 있으니 이모지도 다시 맞춘다
+        loadRecommend();
+    }
+
+    function closeWeatherModal() {
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // 추천 코디 클릭 → 피드의 단일 게시물 모드(/feed?postId=)를 전체 오버레이로 띄운다
+    // (마이페이지의 openScrapFrame과 같은 방식)
+    function openPostFrame(postId) {
+        if (!frameOverlay || !frame) return;
+        closeWeatherModal();
+        frame.src = `/feed?postId=${postId}`;
+        frameOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePostFrame() {
+        if (!frameOverlay || !frame) return;
+        frameOverlay.style.display = 'none';
+        frame.src = 'about:blank';   // iframe 정리
+        document.body.style.overflow = '';
+    }
+
+    window.addEventListener('message', (e) => {
+        if (e.data?.type === 'close-post-frame') closePostFrame();
+    });
+
+    $w('weather-popup-open')?.addEventListener('click', openWeatherModal);
+    $w('weather-popup-close')?.addEventListener('click', () => popup.classList.add('hidden'));
+    $w('weather-modal-close')?.addEventListener('click', closeWeatherModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeWeatherModal();
+    });
+
+    popup.classList.remove('hidden');
+    applyWeatherEmoji();
+})();
