@@ -491,6 +491,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     });
 
+    //커뮤니티
+    // 위의 mypageBtn/aichatBtn과 달리 early return을 쓰지 않는다.
+    // 여기서 return하면 아래 배너창 코드까지 통째로 건너뛰기 때문.
+    const communityBtn = document.getElementById("communityBtn");
+    communityBtn?.addEventListener("click", () => {
+        document.body.style.transition = 'opacity 0.4s ease';
+        document.body.style.opacity = '0';
+        setTimeout(() => window.location.href = '/community', 400);
+    });
+
     //배너창
     const trendThemes = [
         { text: "🔥 요즘 유행하는 오버핏 코디" , url: "/trend/oversized"},
