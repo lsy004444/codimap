@@ -561,6 +561,14 @@ router.delete('/delete_account',requireLogin, async(req, res)=> {
             [userId]
         );
 
+        const [socialRows] = await pool.query(
+            `SELECT PROVIDER, PROVIDER_USER_ID
+            FROM USER_SOCIAL_ACCOUNTS
+            WHERE USER_ID = ?`,[userId]
+        );
+        
+        const isSocialUser = socialRows.length > 0;
+
         if(rows.length === 0 ) {
             return res.status(404).json({
                 success: false,

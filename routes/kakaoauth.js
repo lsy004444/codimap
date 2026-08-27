@@ -100,14 +100,43 @@ router.get('/kakao/callback', async(req, res) => {
         // 세션에 넣을 사용자 정보 조회
         const[userRows] = await pool.query(
             `
-            SELECT USER_ID, ID, NAME, EMAIL
+            SELECT USER_ID, ID, NAME, EMAIL, STATUS, SUSPENDED_UNTIL
             FROM USERS
             WHERE USER_ID = ?
             `,
             [userId]
         );
+        
+        if(userRows.length === 0 ) {
+            return res.status(404).send('회원 정보를 찾을 수 없습니다.');
+        }
 
         const user = userRows[0];
+
+        // 탈퇴 회원
+        if(user.STATUS === 'DELETED') {
+            return res.status(403).send('탈퇴한 회원입니다.');
+        }
+
+        // 영구 정지 회원
+        if(user.STATUS === 'BANNED') {
+            return res.status(403).send('영구 정지된 계정입니다.');
+        }
+
+        // 기간 정지 회원
+        if(user.STATUS === 'SUSPENDED') {
+            if(user.SUSPENDED_UNTIL && new Date(user.SUSPENDED_UNTIL) > new Date()) {
+                return res.status(403).send('현재 이용이 정지된 계정입니다.');
+            }
+
+            // 정지 기간이 끝났을 경우 자동 해제
+            await pool.query(
+                `UPDATE USERS SET STATUS = 'ACTIVE',
+                SUSPENDED_UNTIL = null
+                WHERE USER_ID = ?`,[userId]
+            );
+            user.STATUS = 'ACTIVE';
+        }
 
         // 세션 생성
          req.session.user = {
