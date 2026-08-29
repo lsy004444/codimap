@@ -73,3 +73,19 @@ function appendMessage(sender, text) {
 
   return bubble;
 }
+
+//ai 챗봇 모달창 키면 자동으로 환영 문구 출력
+let welcomeLoaded = false;
+
+async function loadWelcomeMessage() {
+  if (welcomeLoaded) return;
+  welcomeLoaded = true;
+
+  try {
+    const res = await fetch('/api/ai/welcome');
+    const data = await res.json();
+    appendMessage('ai', data.message);
+  } catch (err) {
+    appendMessage('ai','👋 안녕하세요! 코디맵 AI 코디 추천 챗봇입니다. 어떤 스타일을 좋아하시나요?');
+  }
+}

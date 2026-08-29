@@ -486,6 +486,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             document.getElementById('aichatModalOverlay').style.display = 'flex';
+            loadWelcomeMessage();
         } catch (error) {
             console.error(error);
             window.showToast('🔒 로그인이 필요합니다');

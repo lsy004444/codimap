@@ -7,7 +7,7 @@ const db = require('../config/db');
 
 router.get('/welcome', (req, res) => {
   res.json({
-    message: "안녕하세요! 코디맵 코디 컨설턴트입니다 "
+    message: "👋 환영합니다! 코디맵 코디 추천 AI입니다! 어떤 코디가 궁금하세요? 😊"
   })
 })
 
@@ -15,6 +15,12 @@ router.post('/recommend', async (req, res) => {
   const { question, season, gender, style } = req.body;
 
   try {
+    //질문했던 내용 반영해서 답변하기
+    const [pastKeywords] = await db.query (
+      'SELECT DISTINCT KEYWORD FROM USER_STYLE_HISTORY WHERE MEMBER_ID = ? ORDER BY CREATED_DATE DESC LIMIT 5',
+      [req.session.user.userId]
+    );
+
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview"});
 
     const prompt = `너는 코디맵의 AI 코디 추천 어시스턴트야. 
@@ -60,6 +66,7 @@ router.post('/recommend', async (req, res) => {
   }
 });
 
+
 async function findMatchingPosts(season, keywords = [], limit = 3) {
   if (!keywords || keywords.length === 0) {
     // 키워드 없으면 기존처럼 계절만으로 검색
@@ -98,10 +105,5 @@ async function generateWithRetry(model, prompt, retries = 3) {
   }
 }
 
-//질문했던 내용 반영해서 답변하기
-const [pastKeywords] = await db.query (
-  'SELECT DISTINCT KEYWORD FROM USER_STYLE_HISTORY WHERE MEMBER_ID = ? ORDER BY CREATED_DATE DESC LIMIT 5',
-  [req.session.user.userId]
-);
 
 module.exports = router;
