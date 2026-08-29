@@ -31,12 +31,23 @@ router.post('/recommend', async (req, res) => {
     - keywords는 게시물 검색에 쓸 핵심 옷 종류 단어 1~3개 (예: "니트", "치노팬츠", "스니커즈")
     - 이모지는 answer 안에서 적당히만 사용
 
+    참고로 이 사용자가 최근에 관심 가졌던 스타일 : ${pastKeywords.map(k => k.KEYWORD).join(', ')}
+
     사용자 질문: ${question}`;
 
     const result = await generateWithRetry(model,prompt);
     const answer = result.response.text();
     const parsed = JSON.parse(answer.replace(/```json|```/g, '').trim());
     const matchedPosts = await findMatchingPosts(season, parsed.keywords);
+
+    if (req.session.user) {
+      for (const keyword of parsed.keywords) {
+        await db.query(
+          `INSERT INTO USER_STYLE_HISTORY (MEMBER_ID, KEYWORD) VALUES (?, ?)`,
+          [req.session.user.userId, keyword]
+        );
+      }
+    }
 
     res.json({
     answer: parsed.answer,
@@ -86,5 +97,11 @@ async function generateWithRetry(model, prompt, retries = 3) {
     }
   }
 }
+
+//질문했던 내용 반영해서 답변하기
+const [pastKeywords] = await db.query (
+  'SELECT DISTINCT KEYWORD FROM USER_STYLE_HISTORY WHERE MEMBER_ID = ? ORDER BY CREATED_DATE DESC LIMIT 5',
+  [req.session.user.userId]
+);
 
 module.exports = router;

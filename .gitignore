@@ -1,6 +1,5 @@
 node_modules/
 public/uploads/
 config/certs/
-config/certs/ca.pem
 .env
 

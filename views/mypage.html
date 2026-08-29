@@ -20,8 +20,15 @@
                 뒤로
             </button>
             <h1 id="profileTitle" class="mypage-title" style="margin:0; display:inline-block;">@아이디</h1>
-        </div>
+            <a href="/delete_account" class="delete-account-link">회원탈퇴 </a>
+          </div>
 
+       <div class="profile-image-area">
+        <img id="profileImage" class="profile-image" src="/images/default_img.svg" alt="프로필 사진" onerror="this.onerror=null; this.src='/images/default_img.svg';">
+        <input type="file" id="profileImageInput" accept="image/jpeg, image/png, image/jpg, image/webp" hidden>
+        <button type="button" id="profileImageBtn" class="profile-image-btn">프로필 사진 변경</button>
+        <p class="profile-image-guide" 5MB 이하의 이미지 파일만 업로드할 수 있습니다.></p>
+      </div>
         <form>
             <div class="input-group">
                 <label class="label-text">아이디</label>   
@@ -89,6 +96,6 @@
   </div>
 </div>
 
-    <script src="/js/mypage.js?v=6"></script>
+    <script src="/js/mypage.js?v=7"></script>
 </body>
 </html>

@@ -1,0 +1,274 @@
+/* 전체 페이지 */
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    background-color: #eef3f9;
+
+    padding: 50px 20px;
+    box-sizing: border-box;
+
+    font-family: Arial, sans-serif;
+    color: #333;
+}
+
+
+/* 회원탈퇴 전체 흰색 박스 */
+.delete-account-wrapper {
+    width: 100%;
+    max-width: 900px;
+
+    background-color: #fff;
+
+    padding: 50px 60px;
+    box-sizing: border-box;
+
+    border-radius: 16px;
+
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+
+/* 상단 영역 */
+.delete-account-header {
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin-bottom: 50px;
+}
+
+
+/* 뒤로 버튼 */
+.btn-back {
+    position: absolute;
+    left: 0;
+
+    padding: 10px 16px;
+
+    background-color: #fff;
+
+    border: 1.5px solid #e6dce9;
+    border-radius: 22px;
+
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    background-color: #fafafa;
+}
+
+
+/* 회원탈퇴 제목 */
+.delete-account-title {
+    margin: 0;
+
+    font-size: 28px;
+    font-weight: 700;
+
+    color: #333;
+}
+
+
+/* 탈퇴 안내 영역 */
+.delete-warning {
+    width: 100%;
+
+    padding: 25px 30px;
+    margin-bottom: 35px;
+
+    background-color: #fff7f8;
+
+    border: 1px solid #f5dfe5;
+    border-radius: 12px;
+
+    box-sizing: border-box;
+}
+
+
+/* 안내 제목 */
+.delete-warning h2 {
+    margin: 0 0 18px;
+
+    font-size: 18px;
+    color: #444;
+}
+
+
+/* 안내 목록 */
+.delete-warning ul {
+    margin: 0;
+    padding-left: 20px;
+
+    color: #666;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+
+/* form 전체 */
+#deleteAccountForm {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 25px;
+}
+
+
+/* 비밀번호 영역 */
+.password-area {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+
+/* 비밀번호 라벨 */
+.password-area label {
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #444;
+}
+
+
+/* 비밀번호 입력칸 */
+.password-area input {
+    width: 100%;
+
+    padding: 14px 16px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    outline: none;
+}
+
+
+/* 비밀번호 입력칸 클릭했을 때 */
+.password-area input:focus {
+    border-color: #f4a8bf;
+}
+
+
+/* placeholder */
+.password-area input::placeholder {
+    color: #aaa;
+}
+
+
+/* 동의 체크 영역 */
+.agree-area {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 14px;
+    color: #555;
+
+    cursor: pointer;
+}
+
+
+/* 체크박스 */
+.agree-area input {
+    width: 16px;
+    height: 16px;
+
+    cursor: pointer;
+
+    accent-color: #f4a8bf;
+}
+
+
+/* 아래 버튼 영역 */
+.button-area {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+
+/* 공통 버튼 */
+.button-area button {
+    padding: 11px 20px;
+
+    border-radius: 22px;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+/* 취소 버튼 */
+.cancel {
+    background-color: #fff;
+
+    color: #555;
+
+    border: 1.5px solid #ddd;
+}
+
+.cancel:hover {
+    background-color: #f8f8f8;
+}
+
+
+/* 회원탈퇴 버튼 */
+.delete {
+    background-color: #fff;
+
+    color: #e35d6a;
+
+    border: 1.5px solid #e9a5ad;
+}
+
+.delete:hover {
+    background-color: #fff4f5;
+}
+
+
+/* 작은 화면 대응 */
+@media (max-width: 700px) {
+
+    body {
+        padding: 20px 10px;
+    }
+
+    .delete-account-wrapper {
+        padding: 35px 25px;
+    }
+
+    .delete-account-title {
+        font-size: 24px;
+    }
+
+    .delete-warning {
+        padding: 20px;
+    }
+}

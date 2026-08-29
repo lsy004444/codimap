@@ -1,4 +1,14 @@
-const loginbtn=document.getElementById('login');
+//const loginbtn=document.getElementById('login');
+const loginForm = document.getElementById('login-form');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+
+emailInput.addEventListener('keydown',function(event) {
+    if(event.key === 'Enter') {
+        event.preventDefault();
+        passwordInput.focus();
+    }
+});
 
 
 window.showToast = function(message) {
@@ -12,16 +22,26 @@ window.showToast = function(message) {
 }
 
 // 로그인 버튼 클릭했을 때 동작하는 코드
-loginbtn.addEventListener('click',async function(event) {
+loginForm.addEventListener('submit',async function(event) {
     event.preventDefault();
 
     // 값 가져오기
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
+    // 자동 로그인
+    const autoLogin = document.getElementById('autoLogin').checked;
+
     // 로그인에 성공했을 경우 
-    if(email === "" && password === "") {
-        window.showToast("이메일과 비밀번호를 입력해주세요!");
+    if(email === "") {
+        window.showToast("이메일을 입력해주세요!");
+        emailInput.focus();
+        return;
+    }
+
+    if(password === "") {
+        window.showToast("비밀번호를 입력해주세요!");
+        passwordInput.focus();
         return;
     }
 
@@ -33,7 +53,8 @@ loginbtn.addEventListener('click',async function(event) {
             },
             body: JSON.stringify({
                 email: email,
-                password: password
+                password: password,
+                autoLogin: autoLogin
             })
         });
 
