@@ -44,7 +44,7 @@ function createTempPassword() {
     return crypto.randomBytes(6).toString("base64").replace(/[+/=]/g, "").slice(0, 8);
 }
 
-// 회원가입
+// 일반 회원가입
 router.post("/signup",async(req, res) => {
     try{
         const { name, email, userId, password} = req.body;
@@ -113,6 +113,199 @@ router.post("/signup",async(req, res) => {
             success: false,
             message:"서버 오류가 발생했습니다."
         });
+    }
+});
+
+// 소셜 계정으로 회원가입할 때 넘어오는 정보
+router.get('/social_signup_info',(req, res) => {
+    const socialSignup = req.session.pendingSocialSignup;
+
+    if(!socialSignup) {
+        return res.status(404).json({
+            success: false,
+            message: '소셜 인증 정보가 없습니다.'
+        });
+    }
+
+    return res.json({
+        success: true,
+        provider: socialSignup.provider,
+        name: socialSignup.name,
+        email: socialSignup.email
+    });
+});
+
+router.post('/social_signup', async(req, res) => {
+    const { userId } = req.body;
+    const socialSignup = req.session.pendingSocialSignup;
+
+    if(!socialSignup) {
+        return res.status(401).json({
+            success: false,
+            message: '소셜 인증 정보가 없습니다. 다시 인증해주세요.'
+        });
+    }
+
+    if(!userId) {
+        return res.status(400).json({
+            success: false,
+            message: '아이디를 입력해주세요.'
+        });
+    }
+
+    if(!isValidUserId(userId)) {
+        return res.status(400).json({
+            success: false,
+            message: '아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요.'
+        });
+    }
+
+    const {provider, providerUserId, name, email } = socialSignup;
+
+    if(!name || !email) {
+         return res.status(400).json({
+            success: false,
+            message: '소셜 계정에서 회원 정보를 가져오지 못했습니다. 다시 인증해주세요.'
+        });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 이미 연결된 소셜 계정인지 다시 확인
+        const [socialRows] = await connection.query(
+            `SELECT USER_ID
+            FROM USER_SOCIAL_ACCOUNTS
+            WHERE PROVIDER = ? AND PROVIDER_USER_ID = ?`,[provider, providerUserId]
+        );
+
+        if(socialRows.length > 0) {
+            await connection.rollback();
+
+            return res.status(409).json({
+                success: false,
+                message: '이미 가입된 소셜 계정입니다.'
+            });
+        }
+
+        // 이메일 / 아이디 중복 확인
+        const [duplicateRows] = await connection.query(
+            `
+            SELECT EMAIL, ID
+            FROM USERS
+            WHERE EMAIL = ?
+            OR ID = ?
+            `,
+            [email, userId]
+        );
+
+        if(duplicateRows.length > 0) {
+            const emailDuplicated = duplicateRows.some(
+                user => user.EMAIL === email
+            );
+
+            const idDuplicated = duplicateRows.some(
+                user => user.ID === userId
+            );
+
+            await connection.rollback();
+
+            if(emailDuplicated) {
+                return res.status(409).json({
+                    success: false,
+                    message: '이미 사용 중인 이메일입니다.'
+                });
+            }
+
+            if(idDuplicated) {
+                return res.status(409).json({
+                    success: false,
+                    message: '이미 사용 중인 아이디입니다.'
+                });
+            }
+        }
+
+        // USERS 생성
+        const [userResult] = await connection.query(
+            `
+            INSERT INTO USERS
+            (
+                ID,
+                NAME,
+                EMAIL,
+                PASSWORD
+            )
+            VALUES (?, ?, ?, ?)
+            `,
+            [
+                userId,
+                name,
+                email,
+                null
+            ]
+        );
+
+        const newUserId = userResult.insertId;
+
+        // 소셜 계정 연결
+        await connection.query(
+            `
+            INSERT INTO USER_SOCIAL_ACCOUNTS
+            (
+                USER_ID,
+                PROVIDER,
+                PROVIDER_USER_ID
+            )
+            VALUES (?, ?, ?)
+            `,
+            [
+                newUserId,
+                provider,
+                providerUserId
+            ]
+        );
+
+        await connection.commit();
+
+        // 로그인 처리
+        req.session.user = {
+            userId: newUserId,
+            name: name,
+            email: email,
+            profileId: userId
+        };
+
+        // 임시 가입정보 제거
+        delete req.session.pendingSocialSignup;
+
+        req.session.save((err) => {
+            if(err) {
+                console.error('세션 저장 오류:', err);
+
+                return res.status(500).json({
+                    success: false,
+                    message: '로그인 처리 중 오류가 발생했습니다.'
+                });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: '소셜 회원가입이 완료되었습니다.'
+            });
+        });
+    } catch(error) {
+        await connection.rollback();
+
+        console.error('소셜 회원가입 오류:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: '회원가입 중 서버 오류가 발생했습니다.'
+        });
+    } finally {
+        connection.release();
     }
 });
 

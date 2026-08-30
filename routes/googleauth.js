@@ -17,7 +17,8 @@ router.get('/google',(req, res) => {
     + `?client_id=${process.env.GOOGLE_CLIENT_ID}`
     + `&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}`
     + `&response_type=code`
-    + `&scope=openid email profile`;
+    + `&scope=openid email profile`
+    + `&prompt=select_account`;
 
     // console.log(googleAuthURL);
 
@@ -67,49 +68,72 @@ router.get('/google/callback', async(req, res) => {
             AND PROVIDER_USER_ID = ?`,
             [provider, providerUserId]
         );
+        
+        // 소셜 계정 가입 후 아이디를 받고난 후 로그인에 성공하게 하기 위한 방식임
+        if(socialRows.length === 0) {
+            // 신규 소셜 계정 가입자-USERS에는 아직 저장 X, 회원가입 정보를 세션에 임시로 저장
+            req.session.pendingSocialSignup = {
+                provider: provider,
+                providerUserId: String(providerUserId),
+                name: googleUser.name,
+                email: googleUser.email
+            };
 
-        let userId;
-
-        if(socialRows.length > 0) {
-            // 기존 회원
-            userId = socialRows[0].USER_ID;
-        } else {
-            // 신규 회원 생성
-            const [userResult] = await pool.query(
-                `INSERT INTO USERS
-                (
-                    ID,
-                    NAME,
-                    EMAIL,
-                    PASSWORD
-                )
-                VALUES(?,?,?,?)
-                `,
-                [
-                    `google_${providerUserId}`,
-                    googleUser.name,
-                    googleUser.email,
-                    null
-                ]
-            );
-            userId = userResult.insertId;
-
-            // 소셜 계정 연결
-            await pool.query(
-                `
-                INSERT INTO USER_SOCIAL_ACCOUNTS
-                (
-                    USER_ID,
-                    PROVIDER,
-                    PROVIDER_USER_ID
-                )
-                    VALUES(?,?,?)
-                `,
-                [
-                    userId,provider,providerUserId
-                ]
-            );
+            return req.session.save((err) => {
+                if(err) {
+                    console.error('소셜 회원가입 세션 저장 오류:' ,err);
+                    return res.status(500).send('회원가입 정보 저장 중 오류가 발생했습니다.');
+                }
+                res.redirect('/signup?social=true');
+            });
         }
+
+        // 기존 회원
+        const userId = socialRows[0].USER_ID;
+
+        // 이 방식은 소셜 로그인 후 바로 users 테이블에 회원 정보가 들어감
+        // let userId;
+
+        // if(socialRows.length > 0) {
+        //     // 기존 회원
+        //     userId = socialRows[0].USER_ID;
+        // } else {
+        //     // 신규 회원 생성
+        //     const [userResult] = await pool.query(
+        //         `INSERT INTO USERS
+        //         (
+        //             ID,
+        //             NAME,
+        //             EMAIL,
+        //             PASSWORD
+        //         )
+        //         VALUES(?,?,?,?)
+        //         `,
+        //         [
+        //             `google_${providerUserId}`,
+        //             googleUser.name,
+        //             googleUser.email,
+        //             null
+        //         ]
+        //     );
+        //     userId = userResult.insertId;
+
+        //     // 소셜 계정 연결
+        //     await pool.query(
+        //         `
+        //         INSERT INTO USER_SOCIAL_ACCOUNTS
+        //         (
+        //             USER_ID,
+        //             PROVIDER,
+        //             PROVIDER_USER_ID
+        //         )
+        //             VALUES(?,?,?)
+        //         `,
+        //         [
+        //             userId,provider,providerUserId
+        //         ]
+        //     );
+        // }
         
         // 세션에 넣을 사용자 정보 조회
         const[userRows] = await pool.query(

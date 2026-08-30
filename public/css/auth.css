@@ -151,7 +151,7 @@ button:active {
     transform: translateY(0);
 }
 
-.social-signup {
+.social-login {
     width: 100%;
     max-width: 380px;
     display: flex;
