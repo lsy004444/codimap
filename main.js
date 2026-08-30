@@ -84,5 +84,25 @@ app.use("/api/feed", feedRouter);
 const regionsRouter = require('./routes/regions');
 app.use('/api/regions', regionsRouter);
 
-app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+//app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+
+const server = app.listen(80, () => {
+    console.log('✅ 서버 가동 중: http://localhost');
+});
+
+server.on('error', (err) => {
+    console.error('❌ 서버 오류:', err);
+});
+
+server.on('close', () => {
+    console.log('⚠️ HTTP 서버가 닫혔습니다.');
+});
+
+process.on('beforeExit', (code) => {
+    console.log('⚠️ Node 종료 직전:', code);
+});
+
+process.on('exit', (code) => {
+    console.log('❌ Node 프로세스 종료:', code);
+});
 

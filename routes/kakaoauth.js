@@ -8,7 +8,8 @@ router.get('/kakao',(req, res) => {
     const kakaoAuthURL = 'https://kauth.kakao.com/oauth/authorize'
     +`?client_id=${process.env.KAKAO_CLIENT_ID}`
     +`&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`
-    +`&response_type=code`;
+    +`&response_type=code`
+    + `&prompt=login`;
 
     res.redirect(kakaoAuthURL);
 });
@@ -75,7 +76,7 @@ router.get('/kakao/callback', async(req, res) => {
                     `kakao_${providerUserId}`,
                     kakaoUser.kakao_account.profile.nickname,
                     kakaoUser.kakao_account.email,
-                    'SOCIAL_LOGIN'
+                    null
                 ]
             );
             userId = userResult.insertId;
@@ -115,8 +116,34 @@ router.get('/kakao/callback', async(req, res) => {
 
         // 탈퇴 회원
         if(user.STATUS === 'DELETED') {
-            return res.status(403).send('탈퇴한 회원입니다.');
-        }
+            return res.status(403).send(`
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <title>탈퇴 회원 안내</title>
+        </head>
+        <body>
+            <div style="
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            ">
+                <h2>탈퇴한 회원입니다.</h2>
+            </div>
+
+            <script>
+                setTimeout(() => {
+                    window.location.replace('/login');
+                }, 3000);
+            </script>
+        </body>
+        </html>
+    `); 
+}
+        
 
         // 영구 정지 회원
         if(user.STATUS === 'BANNED') {

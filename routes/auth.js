@@ -2,9 +2,25 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const axios = require('axios');
 const pool = require("../config/db");
 const { requireLogin } = require('../middleware/authMiddleware');
 const router = express.Router();
+
+async function unlinkKakao(providerUserId) {
+    await axios.post('https://kapi.kakao.com/v1/user/unlink',
+        new URLSearchParams({
+            target_id_type: 'user_id',
+            target_id : String(providerUserId)
+        }),
+        {
+            headers: {
+                Authorization: `KakaoAK ${process.env.KAKAO_ADMIN_KEY}`,
+                'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
+            }
+        }
+    );
+}
 
 function isValidUserId(userId) {
     const idPattern = /^[A-Za-z0-9!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]{8}$/;
@@ -128,6 +144,26 @@ router.post("/login", async (req, res) => {
         }
 
         const user = rows[0];
+
+        if(!user.PASSWORD) {
+            const [socialRows] = await pool.query(
+                `SELECT PROVIDER
+                FROM USER_SOCIAL_ACCOUNTS
+                WHERE USER_ID = ?`,[user.USER_ID]
+            );
+
+            if(socialRows.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${socialRows[0].PROVIDER} 로그인으로 가입한 계정입니다.` 
+                });
+            }
+
+            return res.status(401).json({
+                success: false,
+                message: '이메일 또는 비밀번호가 올바르지 않습니다.'
+            });
+        }
 
         const isMatch = await bcrypt.compare(password, user.PASSWORD);
 
@@ -544,14 +580,14 @@ router.delete('/delete_account',requireLogin, async(req, res)=> {
         // }
 
         // 입력한 비밀번호
-        const { password } = req.body;
+        // const { password } = req.body;
 
-        if(!password) {
-            return res.status(400).json({
-                success: false,
-                message: '비밀번호를 입력해주세요.'
-            });
-        }
+        // if(!password) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: '비밀번호를 입력해주세요.'
+        //     });
+        // }
 
         // 현재 회원 조회
         const [rows] = await pool.query(
@@ -561,15 +597,7 @@ router.delete('/delete_account',requireLogin, async(req, res)=> {
             [userId]
         );
 
-        const [socialRows] = await pool.query(
-            `SELECT PROVIDER, PROVIDER_USER_ID
-            FROM USER_SOCIAL_ACCOUNTS
-            WHERE USER_ID = ?`,[userId]
-        );
-        
-        const isSocialUser = socialRows.length > 0;
-
-        if(rows.length === 0 ) {
+         if(rows.length === 0 ) {
             return res.status(404).json({
                 success: false,
                 message: '회원 정보를 찾을 수 없습니다.'
@@ -586,14 +614,63 @@ router.delete('/delete_account',requireLogin, async(req, res)=> {
             });
         }
 
-        // 비밀번호 비교
-        const passwordMatch = await bcrypt.compare(password, user.PASSWORD);
 
-        if(!passwordMatch) {
-            return res.status(401).json({
-                success: false,
-                message: '비밀번호가 일치하지 않습니다.'
+        const [socialRows] = await pool.query(
+            `SELECT PROVIDER, PROVIDER_USER_ID
+            FROM USER_SOCIAL_ACCOUNTS
+            WHERE USER_ID = ?`,[userId]
+        );
+
+        const isSocialUser = socialRows.length > 0;
+
+        const googleAccount = socialRows.find(social => social.PROVIDER === 'GOOGLE');
+
+        if(googleAccount) {
+            return res.status(200).json({
+                success: true,
+                requiresGoogleReauth: true,
+                redirectUrl: '/api/auth/google/delete'
             });
+        }
+        
+
+       
+        // 비밀번호 비교
+        // const passwordMatch = await bcrypt.compare(password, user.PASSWORD);
+
+        // if(!passwordMatch) {
+        //     return res.status(401).json({
+        //         success: false,
+        //         message: '비밀번호가 일치하지 않습니다.'
+        //     });
+        // }
+
+        // 일반 로그인 회원만 비밀번호 확인
+        if(!isSocialUser) {
+            const { password } = req.body;
+
+            if(!password) {
+                return res.status(400).json({
+                    success: false,
+                    message: '비밀번호를 입력해주세요.'
+                });
+            }
+
+            const passwordMatch = await bcrypt.compare(password, user.PASSWORD);
+
+            if(!passwordMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: '비밀번호가 일치하지 않습니다.'
+                });
+            }
+        }
+
+        // kakao 계정 연결 해제
+        for(const social of socialRows) {
+            if(social.PROVIDER === 'KAKAO') {
+                 await unlinkKakao(social.PROVIDER_USER_ID);
+            }
         }
 
         // 회원 상태 변경

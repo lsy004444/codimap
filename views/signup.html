@@ -39,8 +39,18 @@
                 <input type="password" id="password" name="password">
             </div>
             <button type="submit" class="signupBtn" id="signupBtn">회원가입</button>
+            <div class="social-signup">
+            <a href="/api/auth/google" class="google-btn">
+                <span class="google-icon">G</span>
+                <span>Google로 시작하기</span>
+            </a>
+            <a href="/api/auth/kakao" class="kakao-btn">
+              <span class="social-icon kakao-icon">K</span>
+              <span>카카오로 시작하기</span>
+            </a>
     </form>
     </div>
+    
     <div id="signup-toast" class="signup-toast hidden"></div>
     </div>
     <script src="/js/signup.js"></script>
