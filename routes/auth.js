@@ -120,19 +120,37 @@ router.post("/signup",async(req, res) => {
 router.get('/social_signup_info',(req, res) => {
     const socialSignup = req.session.pendingSocialSignup;
 
+    // if(!socialSignup) {
+    //     return res.status(404).json({
+    //         success: false,
+    //         message: '소셜 인증 정보가 없습니다.'
+    //     });
+    // }
+
+    // return res.json({
+    //     success: true,
+    //     provider: socialSignup.provider,
+    //     name: socialSignup.name,
+    //     email: socialSignup.email
+    // });
+    
+    // 일반 회원가입
     if(!socialSignup) {
-        return res.status(404).json({
-            success: false,
-            message: '소셜 인증 정보가 없습니다.'
+        return res.json({
+            success: true,
+            socialSignup: false
         });
     }
 
+    // 소셜 인증을 거치고 온 회원
     return res.json({
         success: true,
+        socialSignup: true,
         provider: socialSignup.provider,
         name: socialSignup.name,
         email: socialSignup.email
     });
+
 });
 
 router.post('/social_signup', async(req, res) => {

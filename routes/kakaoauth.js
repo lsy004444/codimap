@@ -5,6 +5,8 @@ const router=express.Router();
 
 // 카카오 로그인
 router.get('/kakao',(req, res) => {
+    req.session.socialAuthFrom = req.query.from;
+
     const kakaoAuthURL = 'https://kauth.kakao.com/oauth/authorize'
     +`?client_id=${process.env.KAKAO_CLIENT_ID}`
     +`&redirect_uri=${process.env.KAKAO_REDIRECT_URI}`
@@ -70,7 +72,8 @@ router.get('/kakao/callback', async(req, res) => {
                     console.error('소셜 회원가입 세션 저장 오류:' ,err);
                     return res.status(500).send('회원가입 정보 저장 중 오류가 발생했습니다.');
                 }
-                res.redirect('/signup?social=true');
+                res.redirect('/signup');
+                //res.redirect('/signup?social=true');
             });
         }
 
