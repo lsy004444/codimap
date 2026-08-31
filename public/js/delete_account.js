@@ -29,11 +29,13 @@ deleteAccountForm.addEventListener('submit', async(event) => {
 
     const password = passwordInput.value.trim();
 
-    if(!password) { 
-        alert('현재 비밀번호를 입력해주세요.');
-        passwordInput.focus();
-        return;
-    }
+    // 소셜 로그인 비밀번호를 null로 처리했으므로 
+    // 이 부분 남기면 모든 사용자에게 비밀번호 요구하므로 주석 처리함
+    // if(!password) { 
+    //     alert('현재 비밀번호를 입력해주세요.');
+    //     passwordInput.focus();
+    //     return;
+    // }
 
     if(!deleteAgree.checked) {
         alert('회원탈퇴 안내사항에 동의해주세요.');
@@ -60,13 +62,28 @@ deleteAccountForm.addEventListener('submit', async(event) => {
 
         const result = await response.json();
 
-        if(!response.ok) {
-            alert(result.message);
+        if(result.requiresGoogleReauth) {
+            window.location.href = result.redirectUrl;
             return;
         }
+        
+        // 일반, kakao 회원 탈퇴 성공했을 경우
+        if(response.ok && result.success) {
+            alert(result.message);
+            window.location.href= '/login';
+            return;
+        }
+        alert(result.message);
 
-        alert('탈퇴가 완료되었습니다.');
-        window.location.href = '/';
+
+        // 소셜 계정 탈퇴로 인해 주석처리
+        // if(!response.ok) {
+        //     alert(result.message);
+        //     return;
+        // }
+
+        // alert('탈퇴가 완료되었습니다.');
+        // window.location.href = '/';
     } catch(error) {
         console.error('회원탈퇴 오류:',error);
         alert('탈퇴 중 오류가 발생했습니다.');

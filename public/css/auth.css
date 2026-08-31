@@ -159,10 +159,12 @@ button:active {
 
 .social-login {
     width: 100%;
+    max-width: 380px;
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin-top: 4px;
+    margin: 20px auto 0;
 }
 
 /* 소셜 로그인 버튼 공통 */
