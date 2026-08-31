@@ -14,12 +14,37 @@
             <button class="community-home-btn" onclick="location.href='/'">홈으로</button>
         </header>
 
-        <!-- TODO: 게시판 목록 / 글쓰기 / 상세 보기 구현 예정 -->
-        <section class="community-empty">
-            <i class="ti ti-message-circle"></i>
-            <p>커뮤니티는 준비 중이에요</p>
-            <span>곧 코디 이야기를 나눌 수 있는 공간이 열립니다.</span>
+        <!-- 검색창 (플레이스홀더: 아직 동작 안 함) -->
+        <div class="community-search">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="search" id="community-search-input"
+                   placeholder="궁금한 코디나 키워드를 검색해보세요" autocomplete="off">
+        </div>
+
+        <!-- 주제 선택 -->
+        <!-- 주제 목록은 /js/community.js 의 TOPICS 배열 한 곳에서 관리한다.
+             주제를 바꾸려면 그 배열만 고치면 여기 버튼도 같이 바뀐다. -->
+        <nav class="community-topics" id="community-topics" aria-label="주제 선택"></nav>
+
+        <!-- 게시글 목록 자리 -->
+        <!-- TODO: GET /api/community/posts 연동. 지금은 빈 상태만 보여준다. -->
+        <section class="community-list" id="community-list">
+            <div class="community-empty">
+                <i class="ti ti-message-circle"></i>
+                <p>아직 글이 없어요</p>
+                <span>첫 번째 글을 남겨보세요.</span>
+            </div>
         </section>
     </div>
+
+    <!-- 글쓰기 (플레이스홀더: 아직 작성 화면 없음) -->
+    <button class="community-write-fab" id="community-write-btn">
+        <i class="ti ti-pencil" aria-hidden="true"></i>
+        <span>글쓰기</span>
+    </button>
+
+    <div id="community-toast" class="community-toast" hidden></div>
+
+    <script src="/js/community.js"></script>
 </body>
 </html>
