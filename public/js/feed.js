@@ -20,6 +20,7 @@ const state = {
     posts: [],
     currentPost: null,
     currentSlide: 0,
+    sort: 'latest',     // utils/postSort.js 의 키: latest | oldest | popular | least
 };
 
 const DEFAULT_AVATAR = '/images/default-avatar.svg';
@@ -49,6 +50,63 @@ function initInfiniteScroll() {
     if (sentinel) observer.observe(sentinel);
 }
 
+// 정렬 드롭다운: 버튼 하나를 누르면 4개 항목이 목록으로 펼쳐진다.
+function initSortToggle() {
+    const wrap   = $('feed-sort');
+    const toggle = $('feed-sort-toggle');
+    const menu   = $('feed-sort-menu');
+    if (!wrap || !toggle || !menu) return;
+
+    const close = () => {
+        wrap.classList.remove('is-open');
+        menu.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+    };
+    const open = () => {
+        wrap.classList.add('is-open');
+        menu.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    toggle.addEventListener('click', e => {
+        e.stopPropagation();
+        menu.hidden ? open() : close();
+    });
+
+    menu.querySelectorAll('.feed-sort-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            close();
+            if (opt.dataset.sort === state.sort) return;   // 같은 항목이면 재조회 안 함
+            state.sort = opt.dataset.sort;
+            renderSortToggle();
+            resetFeed();
+        });
+    });
+
+    // 바깥 클릭 / ESC 로 닫기
+    document.addEventListener('click', e => {
+        if (!menu.hidden && !wrap.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !menu.hidden) close();
+    });
+
+    renderSortToggle();
+}
+
+function renderSortToggle() {
+    const menu  = $('feed-sort-menu');
+    const label = $('feed-sort-label');
+    if (!menu) return;
+
+    menu.querySelectorAll('.feed-sort-option').forEach(opt => {
+        const selected = opt.dataset.sort === state.sort;
+        opt.classList.toggle('is-selected', selected);
+        opt.setAttribute('aria-selected', String(selected));
+        if (selected && label) label.textContent = opt.textContent.trim();
+    });
+}
+
 async function loadMorePosts() {
     state.isLoading = true;
     sentinel.style.visibility = 'visible';
@@ -57,12 +115,12 @@ async function loadMorePosts() {
         if(state.currentLat && state.currentLng) {
             let url;
             if(state.currentGu) {
-                url = `/api/regions/nearby?gu=${encodeURIComponent(state.currentGu)}&season=${state.currentSeason}`;
+                url = `/api/regions/nearby?gu=${encodeURIComponent(state.currentGu)}&season=${state.currentSeason}&sort=${state.sort}`;
             } else if (state.currentCity){
-                url = `/api/regions/nearby?city=${encodeURIComponent(state.currentCity)}&season=${state.currentSeason}`;
+                url = `/api/regions/nearby?city=${encodeURIComponent(state.currentCity)}&season=${state.currentSeason}&sort=${state.sort}`;
             } else {
             
-                url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}`;
+                url = `/api/regions/nearby?lat=${state.currentLat}&lng=${state.currentLng}&season=${state.currentSeason}&type=${state.addressType}&sort=${state.sort}`;
             }
             const res = await fetch(url);
             console.log('API 응답 상태: ', res.status, url);
@@ -91,11 +149,11 @@ async function loadMorePosts() {
             state.hasMore = false;
             state.posts.push(...newPosts);
             renderCards(newPosts);
-            $('feed-count-num').textContent = newPosts.length;
         } else {
             const params = new URLSearchParams({
                 page: state.page,
                 size: state.pageSize,
+                sort: state.sort,
             });
             if (state.currentRegion && state.currentRegion !== '전국') params.set('region', state.currentRegion);
             if (state.currentSeason) params.set('season', state.currentSeason);
@@ -108,7 +166,6 @@ async function loadMorePosts() {
             state.page++;
             state.posts.push(...newPosts);
             renderCards(newPosts);
-            $('feed-count-num').textContent = total;
         }
     } catch (err) {
         console.error('게시물 로드 실패:', err);
@@ -729,6 +786,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         openPostById(Number(postId));
     } else {
         initInfiniteScroll();
+        initSortToggle();
         resetFeed(initialRegion, initialSeason);
     }
 });

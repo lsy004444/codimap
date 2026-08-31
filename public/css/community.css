@@ -4,7 +4,7 @@ body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: #f4f1f7;
     color: #2d2438;
-    padding: 24px 16px 60px;
+    padding: 24px 16px 100px;   /* 하단 여백 = 글쓰기 버튼에 목록이 가리지 않게 */
 }
 
 .community-wrap {
@@ -12,12 +12,12 @@ body {
     margin: 0 auto;
 }
 
-/* 헤더 */
+/* ── 헤더 ── */
 .community-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 .community-header h1 {
     display: flex;
@@ -37,7 +37,73 @@ body {
 }
 .community-home-btn:hover { background: #a488cc; }
 
-/* 준비 중 자리표시 (게시판 구현 시 교체) */
+/* ── 검색창 ── */
+.community-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    background: #fff;
+    border: 1px solid #e5dded;
+    border-radius: 999px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.community-search:focus-within {
+    border-color: #b79cd8;
+    box-shadow: 0 0 0 3px rgba(183, 156, 216, 0.18);
+}
+.community-search i { font-size: 18px; color: #b0a3c4; flex-shrink: 0; }
+.community-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 13px 0;
+    font: inherit;
+    font-size: 14px;
+    color: #2d2438;
+}
+.community-search input::placeholder { color: #b0a3c4; }
+/* 검색 input 기본 X 버튼 제거 (브라우저마다 위치가 달라 정렬이 틀어짐) */
+.community-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* ── 주제 선택 ── */
+.community-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.community-topic {
+    padding: 8px 16px;
+    border: 1px solid #e5dded;
+    border-radius: 999px;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7a6f8a;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.community-topic:hover { border-color: #b79cd8; color: #2d2438; }
+.community-topic.is-active {
+    background: #b79cd8;
+    border-color: #b79cd8;
+    color: #fff;
+}
+
+/* ── 게시글 목록 ── */
+.community-list {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(120, 90, 150, 0.08);
+    min-height: 55vh;
+}
+
+/* 글이 없을 때 (목록 연동 시 교체) */
 .community-empty {
     display: flex;
     flex-direction: column;
@@ -45,12 +111,69 @@ body {
     justify-content: center;
     gap: 10px;
     min-height: 55vh;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 6px 24px rgba(120, 90, 150, 0.08);
     text-align: center;
     padding: 40px 20px;
 }
 .community-empty i { font-size: 44px; color: #c9b6e0; }
 .community-empty p { font-size: 17px; font-weight: 700; }
 .community-empty span { font-size: 13px; color: #9a8aad; }
+
+/* ── 글쓰기 버튼 (우하단 고정) ── */
+.community-write-fab {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 22px;
+    border: none;
+    border-radius: 999px;
+    background: #b79cd8;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(120, 90, 150, 0.35);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.community-write-fab i { font-size: 17px; }
+.community-write-fab:hover {
+    background: #a488cc;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(120, 90, 150, 0.42);
+}
+.community-write-fab:active { transform: translateY(0); }
+
+/* 좁은 화면에선 아이콘만 남기고 원형으로 */
+@media (max-width: 480px) {
+    .community-write-fab {
+        right: 18px;
+        bottom: 18px;
+        padding: 0;
+        width: 54px;
+        height: 54px;
+        justify-content: center;
+    }
+    .community-write-fab span { display: none; }
+    .community-write-fab i { font-size: 22px; }
+}
+
+/* ── 토스트 ── */
+.community-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    z-index: 200;
+    padding: 11px 20px;
+    border-radius: 999px;
+    background: rgba(45, 36, 56, 0.92);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.community-toast[hidden] { display: none; }

@@ -18,7 +18,20 @@
                 <span class="feed-title-season" id="feed-season-label">봄</span>
                 <span class="feed-title-sub">코디</span>
             </div>
-            <div class="feed-count"><span id="feed-count-num">0</span>개의 게시물</div>
+            <!-- 정렬: 버튼 하나 → 목록 펼침 -->
+            <div class="feed-sort" id="feed-sort">
+                <button class="feed-sort-toggle" id="feed-sort-toggle"
+                        aria-haspopup="listbox" aria-expanded="false">
+                    <span id="feed-sort-label">최신순</span>
+                    <span class="feed-sort-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="feed-sort-menu" id="feed-sort-menu" role="listbox" hidden>
+                    <button class="feed-sort-option is-selected" role="option" data-sort="latest">최신순</button>
+                    <button class="feed-sort-option" role="option" data-sort="oldest">오래된순</button>
+                    <button class="feed-sort-option" role="option" data-sort="popular">좋아요순</button>
+                    <button class="feed-sort-option" role="option" data-sort="scrap">스크랩순</button>
+                </div>
+            </div>
         </div>
 
         <!-- 피드 그리드 -->

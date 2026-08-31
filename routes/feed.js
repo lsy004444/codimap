@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const axios = require('axios');
 const { getCurrentWeather, SEASON_TEMP_AVG } = require('../utils/weather');
+const { resolvePostSort } = require('../utils/postSort');
 
 const ogCache = new Map();
 
@@ -92,7 +93,8 @@ function rankByWeather(rows, weather) {
 // GET /api/feed/posts?page=0&size=9&region=서울&season=spring
 // ──────────────────────────────────────────
 router.get('/posts', async (req, res) => {
-    const { region, season, page = 0, size = 9 } = req.query;
+    const { region, season, sort, page = 0, size = 9 } = req.query;
+    const orderBy = resolvePostSort(sort);
     const limit = Number.parseInt(size, 10) || 9;
     const offset = (Number.parseInt(page, 10) || 0) * limit;
     const viewerId = getLoginUserId(req) || 0;
@@ -165,7 +167,7 @@ router.get('/posts', async (req, res) => {
                 p.SCRAP_COUNT,
                 p.LIKE_COUNT,
                 u.ID
-            ORDER BY p.CREATED_DATE DESC
+            ORDER BY ${orderBy}
             LIMIT ? OFFSET ?
             `,
             [viewerId, ...params, limit, offset]
