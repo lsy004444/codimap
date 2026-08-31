@@ -67,10 +67,84 @@ body {
 .feed-title-season  { color: var(--accent);  }
 .feed-title-sub     { font-size: 14px; color: var(--text-secondary); font-family: var(--font-body); font-weight: 400; }
 
-.feed-count {
-    font-size: 12px;
+/* ── 정렬 드롭다운 (헤더 오른쪽) ──
+   .feed-header 가 baseline 정렬이라 토글 버튼의 텍스트 baseline 이
+   제목과 맞는다. 메뉴는 absolute 로 띄워 그리드 위를 덮는다. */
+.feed-sort {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.feed-sort-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 5px 10px 5px 12px;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+.feed-sort-toggle:hover { border-color: var(--accent); }
+.feed-sort.is-open .feed-sort-toggle {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+
+.feed-sort-caret {
+    font-size: 9px;
     color: var(--text-muted);
-    letter-spacing: 0.03em;
+    transition: transform var(--transition);
+}
+.feed-sort.is-open .feed-sort-caret { transform: rotate(180deg); }
+
+.feed-sort-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 60;              /* .feed-header(50) 위 */
+    min-width: 132px;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-card);
+    animation: feed-sort-drop 0.16s ease;
+}
+.feed-sort-menu[hidden] { display: none; }
+
+@keyframes feed-sort-drop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.feed-sort-option {
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--transition), color var(--transition);
+}
+.feed-sort-option:hover { background: rgba(0,0,0,0.04); color: var(--text-primary); }
+.feed-sort-option.is-selected {
+    color: var(--text-primary);
+    font-weight: 700;
 }
 
 .feed-grid {

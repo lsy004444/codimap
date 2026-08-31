@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { resolvePostSort } = require('../utils/postSort');
 
 router.get('/nearby', async(req, res) => {
     try {
-        const { lat, lng, season, type, gu, city } = req.query;
+        const { lat, lng, season, type, gu, city, sort } = req.query;
         const viewerId = req.session?.user?.userId || 0;
         const range = type === 'gu' ? 0.05 : 0.01;
 
@@ -82,6 +83,10 @@ router.get('/nearby', async(req, res) => {
         }
 
         query += ' GROUP BY p.POST_ID, r.REGION_NAME, r.LATITUDE, r.LONGITUDE, u.NAME, u.ID';
+
+        // 정렬은 화이트리스트(utils/postSort)에서 고른 값만 붙인다 — 쿼리 문자열에
+        // 직접 이어붙이므로 req.query.sort 를 그대로 쓰면 인젝션이 된다.
+        query += ` ORDER BY ${resolvePostSort(sort)}`;
 
         const [rows] = await db.query(query, params);
         res.json(rows);
