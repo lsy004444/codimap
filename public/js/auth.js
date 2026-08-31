@@ -21,6 +21,7 @@ window.showToast = function(message) {
     }, 2500);
 }
 
+
 // 로그인 버튼 클릭했을 때 동작하는 코드
 loginForm.addEventListener('submit',async function(event) {
     event.preventDefault();

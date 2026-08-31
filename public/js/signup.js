@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const signupForm = document.getElementById("signupForm");
     const nameInput = document.getElementById("name");
     const emailInput = document.getElementById("email");
@@ -7,6 +7,91 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const emailBtn = document.getElementById("emailBtn");
     const userIdBtn = document.getElementById("userIdBtn");
+
+    // /signup?social=true로 들어왔을 경우 아이디만 입력하도록 설정
+    let isSocialSignup = false;
+
+    // const params = new URLSearchParams(window.location.search);
+
+    //     if(params.get('social') !== 'true') {
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await fetch('/api/auth/social_signup_info');
+    //         const data = await response.json();
+
+    //         if(!response.ok) {
+    //             console.error(data.message);
+    //             window.location.replace('/signup');
+    //             return;
+    //         }
+
+    //         isSocialSignup = true;
+
+    //         // 이름 숨기기
+    //         document.getElementById('name').closest('.input-group').style.display = 'none';
+
+    //         // 이메일 + 이메일 중복확인 숨기기
+    //         document.getElementById('email').closest('.input-group').style.display = 'none';
+
+    //     // 비밀번호 숨기기
+    //     document.getElementById('password').closest('.input-group').style.display = 'none';
+
+    //     const socialSignup = document.querySelector('.social-signup');
+
+    //     if(socialSignup) {
+    //         socialSignup.style.display = 'none';
+    //     }
+
+    //     document.querySelector('.signup-title').textContent = '아이디 설정';
+    //     document.getElementById('signupBtn').textContent = '가입 완료';
+    // } catch(error) {
+    //     console.error('소셜 회원가입 정보 확인 오류:', error);
+    // }
+
+    try {
+    const response = await fetch('/api/auth/social_signup_info');
+    const data = await response.json();
+
+    if(!response.ok) {
+        console.error('소셜 회원가입 정보 확인 실패:', data.message);
+    } 
+    else if(data.socialSignup) {
+        // 소셜 인증을 거치고 온 사용자
+        isSocialSignup = true;
+
+        // 이름 숨기기
+        nameInput
+            .closest('.input-group')
+            .style.display = 'none';
+
+        // 이메일 숨기기
+        emailInput
+            .closest('.input-group')
+            .style.display = 'none';
+
+        // 비밀번호 숨기기
+        passwordInput
+            .closest('.input-group')
+            .style.display = 'none';
+
+        // Google / Kakao 버튼 숨기기
+        const socialSignup = document.querySelector('.social-signup');
+
+        if(socialSignup) {
+            socialSignup.style.display = 'none';
+        }
+
+        // 화면 문구 변경
+        document.querySelector('.signup-title').textContent = '아이디 설정';
+        document.getElementById('signupBtn').textContent = '가입 완료';
+    }
+
+} catch(error) {
+    console.error('소셜 회원가입 정보 확인 오류:', error);
+}
+
 
     // 중복확인 여부 저장
     let isEmailChecked = false;
@@ -133,6 +218,33 @@ document.addEventListener("DOMContentLoaded", () => {
     signupForm.addEventListener("submit", async(event) => {
          event.preventDefault();
 
+         if(isSocialSignup) {
+        const userId = userIdInput.value.trim();
+
+        if(userId === "") {
+            window.showToast("아이디를 입력해주세요.");
+            userIdInput.focus();
+            return;
+        }
+
+        if(!isValidUserId(userId)) {
+            window.showToast(
+                "아이디는 영문, 숫자, 기호를 사용하여 정확히 8자리로 입력해주세요."
+            );
+            userIdInput.focus();
+            return;
+        }
+
+        if(!isIdChecked) {
+            window.showToast("아이디 중복확인을 해주세요.");
+            userIdBtn.focus();
+            return;
+        }
+
+        await submitSocialSignup();
+        return;
+    }
+
          const name = nameInput.value.trim();
          const email = emailInput.value.trim();
          const userId = userIdInput.value.trim();
@@ -231,8 +343,37 @@ document.addEventListener("DOMContentLoaded", () => {
            //alert("회원가입 요청 중 오류가 발생했습니다.");
         }
      });
+
+async function submitSocialSignup() {
+    const userId = document.getElementById('userId').value.trim();
+    try {
+        const response = await fetch('/api/auth/social_signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId
+            })
+        });
+
+        const data = await response.json();
+
+        if(!response.ok) {
+            showToast(data.message);
+            return;
+        }
+
+        // 성공
+        showToast(data.message);
+
+        setTimeout(() => {
+            window.location.replace('/');
+        }, 1000);
+    } catch(error) {
+        console.error('소셜 회원가입 오류:', error);
+        showToast('회원가입 중 오류가 발생했습니다.');
+    }
+}
 });
-
-
-
 

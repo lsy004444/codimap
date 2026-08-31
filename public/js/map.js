@@ -708,3 +708,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     popup.classList.remove('hidden');
     applyWeatherEmoji();
 })();
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+     try {
+         const response = await fetch('/api/auth/check-login');
+         const data = await response.json();
+         const loginBtn = document.getElementById('loginBtn');
+         const divider = document.getElementById('divider');
+
+         if(data.loggedIn) {
+             loginBtn.style.display = 'none';
+             divider.style.display = 'none';
+         } else {
+             loginBtn.style.display = '';
+             divider.style.display = '';
+         }
+     } catch (error) {
+         console.error('로그인 상태 확인 실패:',error);
+     }
+});
+

@@ -6,14 +6,16 @@ const express = require('express'),
       mypageRouter = require("./routes/mypage"),
       app = express(),
       googleauthRouter = require('./routes/googleauth'),
-      kakaoauthRouter = require('./routes/kakaoauth');
+      kakaoauthRouter = require('./routes/kakaoauth'),
+      reportRouter = require('./routes/reports');
+
+dotenv.config();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use(express.static('public'));
 app.use(express.json());            
 app.use(express.urlencoded({ extended: true })); 
-dotenv.config();
 
 // 세션 설정
 app.use(session({
@@ -31,6 +33,7 @@ app.use("/api/auth", authRouter);
 app.use('/api/auth',googleauthRouter);
 app.use('/api/auth', kakaoauthRouter);
 app.use("/api/mypage", mypageRouter);
+app.use('/api/reports',reportRouter);
 
 const outfitRouter = require('./routes/outfit');
 app.use('/api/outfit', outfitRouter);
@@ -113,4 +116,5 @@ const aiRouter = require('./routes/ai');
 app.use('/api/ai', aiRouter);
 
 app.listen(80, () => console.log('✅ 서버 가동 중: http://localhost'));
+
 
