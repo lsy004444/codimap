@@ -74,24 +74,25 @@ async function completeModify() {
     //alert("회원정보 수정 중 오류가 발생했습니다.");
    }
 }
-//탈퇴하기
-function handleWithdraw() {
-    const confirmToast = document.createElement('div');
-    confirmToast.id = 'withdraw-confirm';
-    confirmToast.style.cssText = 'position:fixed; bottom:200px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, rgba(250,248,255,0.97), rgba(255,248,252,0.97)); color:#888; padding:14px 24px; border-radius:20px; font-size:13px; z-index:10001; box-shadow:0 4px 20px rgba(200,160,184,0.2); display:flex; align-items:center; gap:12px; white-space:nowrap; backdrop-filter:blur(12px); border:1.5px solid rgba(200,180,210,0.3);';
-    confirmToast.innerHTML = `
-        <span>정말 탈퇴하시겠어요? 모든 데이터가 삭제됩니다.</span>
-        <button onclick="(async()=>{
-            const res = await fetch('/api/auth/withdraw', {method:'DELETE'});
-            const data = await res.json();
-            if(data.success) {
-                window.showToast('탈퇴가 완료되었습니다.');
-                setTimeout(()=>window.location.href='/login', 1500);
-            }
-            document.getElementById('withdraw-confirm')?.remove();
-        })()" style="background:rgba(200,180,210,0.4); color:#7a5a8a; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">확인</button>
-        <button onclick="document.getElementById('withdraw-confirm').remove();" style="background:rgba(200,180,210,0.15); color:#aaa; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">취소</button>
-    `;
-    document.body.appendChild(confirmToast);
-    setTimeout(() => confirmToast?.remove(), 5000);
-}
+
+//탈퇴하기->delete_account 페이지로 넘어가는 것으로 변경해서 주석처리함
+// function handleWithdraw() {
+//     const confirmToast = document.createElement('div');
+//     confirmToast.id = 'withdraw-confirm';
+//     confirmToast.style.cssText = 'position:fixed; bottom:200px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, rgba(250,248,255,0.97), rgba(255,248,252,0.97)); color:#888; padding:14px 24px; border-radius:20px; font-size:13px; z-index:10001; box-shadow:0 4px 20px rgba(200,160,184,0.2); display:flex; align-items:center; gap:12px; white-space:nowrap; backdrop-filter:blur(12px); border:1.5px solid rgba(200,180,210,0.3);';
+//     confirmToast.innerHTML = `
+//         <span>정말 탈퇴하시겠어요? 모든 데이터가 삭제됩니다.</span>
+//         <button onclick="(async()=>{
+//             const res = await fetch('/api/auth/withdraw', {method:'DELETE'});
+//             const data = await res.json();
+//             if(data.success) {
+//                 window.showToast('탈퇴가 완료되었습니다.');
+//                 setTimeout(()=>window.location.href='/login', 1500);
+//             }
+//             document.getElementById('withdraw-confirm')?.remove();
+//         })()" style="background:rgba(200,180,210,0.4); color:#7a5a8a; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">확인</button>
+//         <button onclick="document.getElementById('withdraw-confirm').remove();" style="background:rgba(200,180,210,0.15); color:#aaa; border:none; border-radius:12px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600;">취소</button>
+//     `;
+//     document.body.appendChild(confirmToast);
+//     setTimeout(() => confirmToast?.remove(), 5000);
+// }
