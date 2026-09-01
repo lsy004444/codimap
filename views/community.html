@@ -8,7 +8,7 @@
     <title>CODIMAP 커뮤니티</title>
 </head>
 <body>
-    <div class="community-wrap">
+    <div class="community-wrap" id="community-page">
         <header class="community-header">
             <h1><i class="ti ti-users"></i> 커뮤니티</h1>
             <button class="community-home-btn" onclick="location.href='/'">홈으로</button>
@@ -37,11 +37,90 @@
         </section>
     </div>
 
-    <!-- 글쓰기 (플레이스홀더: 아직 작성 화면 없음) -->
+    <!-- 글쓰기 -->
     <button class="community-write-fab" id="community-write-btn">
         <i class="ti ti-pencil" aria-hidden="true"></i>
         <span>글쓰기</span>
     </button>
+
+    <!-- 글쓰기 모달 -->
+    <div id="write-overlay" class="community-overlay hidden">
+        <div class="community-modal write-modal">
+            <button class="community-modal-close" id="write-close-btn"><i class="ti ti-x"></i></button>
+            <h2 class="community-modal-title">글쓰기</h2>
+
+            <div class="write-topic-select" id="write-topic-select"></div>
+
+            <input type="text" id="write-title-input" class="write-title-input" placeholder="제목 (선택)" maxlength="100">
+            <textarea id="write-content-input" class="write-content-input" placeholder="무슨 이야기를 나누고 싶으세요?" maxlength="3000"></textarea>
+
+            <div class="write-preview-list" id="write-preview-list"></div>
+
+            <div class="write-actions">
+                <label class="btn-add-image">
+                    <i class="ti ti-photo"></i> 사진 추가
+                    <input type="file" id="write-image-input" accept="image/*" multiple hidden>
+                </label>
+                <button class="btn-submit-post" id="write-submit-btn">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게시글 상세 페이지 (모달 아님 — /community?postId= 로 실제 주소 이동) -->
+    <section id="detail-page" class="community-wrap detail-page hidden">
+        <a href="/community" class="detail-back-link" id="detail-back-link"><i class="ti ti-arrow-left"></i> 목록으로</a>
+
+        <div class="detail-body">
+            <div class="detail-user-row">
+                <div class="detail-avatar" id="detail-avatar"></div>
+                <span class="detail-user" id="detail-user"></span>
+                <span class="detail-time" id="detail-time"></span>
+                <button class="detail-delete-btn hidden" id="detail-delete-btn"><i class="ti ti-trash"></i></button>
+            </div>
+
+            <h2 class="detail-title" id="detail-title"></h2>
+            <p class="detail-desc" id="detail-desc"></p>
+
+            <div class="detail-images hidden" id="detail-images"></div>
+
+            <div class="detail-action-row">
+                <span class="detail-topic-badge" id="detail-topic-badge"></span>
+                <!-- TODO: 좋아요/스크랩 버튼 복구. 백엔드(/api/feed/posts/:id/like, /scrap)는
+                     이미 구현돼 있어서 바로 붙이면 됨 — 지금은 UI에서만 뺀 상태 -->
+                <button class="detail-action-btn detail-report-btn" id="detail-report-btn"><i class="ti ti-flag"></i></button>
+            </div>
+
+            <div class="detail-comment-section">
+                <p class="detail-comment-title">댓글 <span id="detail-comment-count">0</span></p>
+                <div class="detail-comment-list" id="detail-comment-list"></div>
+                <div class="detail-comment-input-row">
+                    <input type="text" id="detail-comment-input" placeholder="댓글을 입력하세요..." maxlength="200">
+                    <button id="detail-comment-submit-btn"><i class="ti ti-send"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 신고 모달 -->
+    <div id="report-overlay" class="community-overlay hidden">
+        <div class="community-modal report-modal">
+            <h3 class="community-modal-title">게시글 신고</h3>
+            <p class="report-sub">신고 사유를 선택해 주세요</p>
+            <div class="report-options">
+                <label><input type="radio" name="report-reason" value="spam"> 스팸 / 광고성 게시물</label>
+                <label><input type="radio" name="report-reason" value="inappropriate"> 부적절한 콘텐츠</label>
+                <label><input type="radio" name="report-reason" value="copyright"> 저작권 침해</label>
+                <label><input type="radio" name="report-reason" value="hate"> 혐오 발언 / 차별</label>
+                <label><input type="radio" name="report-reason" value="privacy"> 개인 정보 침해</label>
+                <label><input type="radio" name="report-reason" value="other"> 기타</label>
+            </div>
+            <textarea id="report-detail" placeholder="추가 설명 (선택사항)" rows="3"></textarea>
+            <div class="report-btns">
+                <button class="report-cancel-btn" id="report-cancel-btn">취소</button>
+                <button class="report-submit-btn" id="report-submit-btn">신고 제출</button>
+            </div>
+        </div>
+    </div>
 
     <div id="community-toast" class="community-toast" hidden></div>
 

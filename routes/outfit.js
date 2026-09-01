@@ -202,7 +202,7 @@ router.get('/detail/:id', async (req, res) => {
      LEFT JOIN REGION R ON P.REGION_ID = R.REGION_ID
      LEFT JOIN IMAGE I ON P.POST_ID = I.POST_ID
      LEFT JOIN POST_LINK PL ON P.POST_ID = PL.POST_ID
-     WHERE P.POST_ID = ?
+     WHERE P.POST_ID = ? AND P.TOPIC IS NULL
      GROUP BY P.POST_ID`,
     [postId]
 );
@@ -226,7 +226,7 @@ router.delete('/delete/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM POST_LINK WHERE POST_ID = ?', [postId]);
         await db.query('DELETE FROM IMAGE WHERE POST_ID = ?', [postId]);
-        const [result] = await db.query('DELETE FROM POST WHERE POST_ID = ?', [postId]);
+        const [result] = await db.query('DELETE FROM POST WHERE POST_ID = ? AND TOPIC IS NULL', [postId]);
 
         if (result.affectedRows === 0) {
             return res.json({ success: false, message: '이미 삭제되었거나 존재하지 않는 게시물입니다.' });

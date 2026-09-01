@@ -71,6 +71,8 @@ router.get('/nearby', async(req, res) => {
             ];
         }
 
+        query += ' AND p.TOPIC IS NULL';
+
         if(season) {
             const seasonMap = {
                 spring: '봄',
