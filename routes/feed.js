@@ -99,7 +99,7 @@ router.get('/posts', async (req, res) => {
     const offset = (Number.parseInt(page, 10) || 0) * limit;
     const viewerId = getLoginUserId(req) || 0;
 
-    const conditions = [];
+    const conditions = ['p.TOPIC IS NULL'];
     const params = [];
 
     if (region && region !== '전국') {
@@ -238,7 +238,8 @@ router.get('/weather-recommend', async (req, res) => {
             JOIN REGION r ON p.REGION_ID = r.REGION_ID
             LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
             LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
-            WHERE r.LATITUDE BETWEEN ? AND ?
+            WHERE p.TOPIC IS NULL
+              AND r.LATITUDE BETWEEN ? AND ?
               AND r.LONGITUDE BETWEEN ? AND ?
             GROUP BY
                 p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
@@ -329,7 +330,7 @@ router.get('/posts/:postId', async (req, res) => {
             JOIN REGION r ON p.REGION_ID = r.REGION_ID
             LEFT JOIN IMAGE i ON p.POST_ID = i.POST_ID
             LEFT JOIN POST_LINK pl ON p.POST_ID = pl.POST_ID
-            WHERE p.POST_ID = ?
+            WHERE p.POST_ID = ? AND p.TOPIC IS NULL
             GROUP BY
                 p.POST_ID, p.MEMBER_ID, u.NAME, u.PROFILE_IMAGE, r.REGION_NAME,
                 p.CREATED_DATE, p.VIEW_COUNT, p.SEASON, p.CONTENT,

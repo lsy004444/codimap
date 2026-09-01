@@ -104,6 +104,9 @@ app.get('/admin', (req, res) => {
 const feedRouter = require("./routes/feed");
 app.use("/api/feed", feedRouter);
 
+const communityRouter = require("./routes/community");
+app.use("/api/community", communityRouter);
+
 const adminRouter = require("./routes/admin");
 app.use("/api/admin", adminRouter);
 

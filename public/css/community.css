@@ -177,3 +177,412 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 .community-toast[hidden] { display: none; }
+
+/* ──────────────────────────────────────────
+   게시글 목록 아이템
+   ────────────────────────────────────────── */
+.community-item {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    border-bottom: 1px solid #f0ebf6;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.community-item:hover { background: #faf8fc; }
+.community-item:hover .community-item-title { color: #9a7cc4; }
+
+.community-item-thumb {
+    flex: 0 0 84px;
+    width: 84px;
+    height: 84px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f0ebf6;
+}
+.community-item-thumb-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #c9b6e0;
+}
+
+.community-item-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.community-item-topic {
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9a7cc4;
+    background: #f4eefa;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.community-item-title {
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s;
+}
+
+.community-item-excerpt {
+    font-size: 12.5px;
+    color: #7a6f8a;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.community-item-meta {
+    margin-top: auto;
+    font-size: 11px;
+    color: #b0a3c4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.community-item-dot { color: #d8cde6; }
+.community-item-stats { margin-left: auto; white-space: nowrap; display: flex; align-items: center; gap: 2px; }
+
+/* ──────────────────────────────────────────
+   모달 공통 (글쓰기 / 상세 / 신고)
+   ────────────────────────────────────────── */
+.community-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(45, 36, 56, 0.5);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.community-overlay.hidden { display: none; }
+
+.community-modal {
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(60, 40, 80, 0.35);
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: community-modal-in 0.25s ease;
+}
+@keyframes community-modal-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.community-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: #f4f1f7;
+    color: #7a6f8a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.community-modal-close:hover { background: #e5dded; }
+
+.community-modal-title {
+    font-size: 19px;
+    font-weight: 800;
+    padding: 26px 24px 4px;
+}
+
+/* ── 글쓰기 모달 ── */
+.write-modal { width: min(520px, 92vw); padding-bottom: 22px; }
+
+.write-topic-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 24px 0;
+}
+
+.write-title-input,
+.write-content-input {
+    display: block;
+    width: calc(100% - 48px);
+    margin: 12px 24px 0;
+    border: 1.5px solid #e5dded;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font: inherit;
+    font-size: 13.5px;
+    color: #2d2438;
+}
+.write-title-input { font-weight: 700; }
+.write-content-input { min-height: 150px; line-height: 1.6; resize: vertical; }
+.write-title-input:focus, .write-content-input:focus {
+    outline: none;
+    border-color: #b79cd8;
+    box-shadow: 0 0 0 3px rgba(183, 156, 216, 0.18);
+}
+
+.write-preview-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 24px 0;
+}
+.write-preview-item { position: relative; width: 70px; height: 70px; border-radius: 10px; overflow: hidden; }
+.write-preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.write-preview-remove {
+    position: absolute; top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(45,36,56,0.6);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.write-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 18px 24px 0;
+}
+
+.btn-add-image {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    color: #7a6f8a;
+    background: #f4f1f7;
+    border: 1.5px solid #e5dded;
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.btn-submit-post {
+    background: #b79cd8;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-submit-post:hover { background: #a488cc; }
+
+/* ── 상세 페이지 ( /community?postId= 실제 주소 이동) ── */
+.detail-page.hidden { display: none; }
+
+.detail-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #7a6f8a;
+    text-decoration: none;
+    margin-bottom: 14px;
+}
+.detail-back-link:hover { color: #b79cd8; }
+
+.detail-page .detail-body {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(120, 90, 150, 0.08);
+}
+
+/* 본문 끝에 첨부 이미지를 세로로 나열 (블로그 글처럼) */
+/* 여러 장이면 가로로 나열, 글/버튼과 안 겹치게 작게 + 넘겨보기(가로 스크롤) */
+.detail-images {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 14px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 4px;
+}
+.detail-images.hidden { display: none; }
+.detail-images img {
+    flex: 0 0 auto;
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    scroll-snap-align: start;
+}
+.detail-images::-webkit-scrollbar { height: 5px; }
+.detail-images::-webkit-scrollbar-thumb { background: #e5dded; border-radius: 10px; }
+
+.detail-body { padding: 20px 22px 22px; }
+
+.detail-user-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.detail-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #f0ebf6;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+.detail-topic-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9a7cc4;
+    background: #f4eefa;
+    padding: 1px 8px;
+    border-radius: 999px;
+}
+.detail-user { font-size: 13px; font-weight: 700; }
+.detail-time { font-size: 11px; color: #b0a3c4; }
+.detail-delete-btn {
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: #c99;
+    cursor: pointer;
+    font-size: 15px;
+}
+.detail-delete-btn.hidden { display: none; }
+
+.detail-title { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+.detail-title.hidden { display: none; }
+
+.detail-desc {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: #4a3f5c;
+    white-space: pre-wrap;
+    margin-bottom: 16px;
+}
+
+.detail-action-row {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #f0ebf6;
+    margin-bottom: 14px;
+}
+.detail-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1.5px solid #e5dded;
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 13px;
+    font-size: 12.5px;
+    color: #7a6f8a;
+    cursor: pointer;
+}
+.detail-action-btn.active { border-color: #b79cd8; color: #b79cd8; background: #f9f5fd; }
+.detail-report-btn { margin-left: auto; }
+
+.detail-comment-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: #4a3f5c; }
+.detail-comment-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.detail-comment-item { font-size: 12.5px; }
+.detail-comment-username { font-weight: 700; color: #2d2438; margin-right: 6px; }
+.detail-comment-text { color: #4a3f5c; margin-top: 3px; line-height: 1.5; }
+.detail-comment-meta { display: flex; gap: 8px; margin-top: 3px; color: #b0a3c4; font-size: 10.5px; }
+.detail-comment-delete { border: none; background: none; color: #b0a3c4; cursor: pointer; font-size: 10.5px; padding: 0; }
+.detail-comment-delete:hover { color: #c99; }
+
+.detail-comment-input-row {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f0ebf6;
+    padding-top: 12px;
+}
+.detail-comment-input-row input {
+    flex: 1;
+    border: 1.5px solid #e5dded;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font: inherit;
+    font-size: 12.5px;
+}
+.detail-comment-input-row input:focus { outline: none; border-color: #b79cd8; }
+.detail-comment-input-row button {
+    border: none;
+    background: #b79cd8;
+    color: #fff;
+    width: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.detail-comment-input-row button:hover { background: #a488cc; }
+
+/* ── 신고 모달 ── */
+.report-modal { width: min(400px, 92vw); padding: 26px 24px 22px; }
+.report-modal .community-modal-title { padding: 0 0 4px; }
+.report-sub { font-size: 12.5px; color: #9a8aad; margin-bottom: 14px; }
+.report-options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 12px; }
+.report-options label { font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.report-modal textarea {
+    width: 100%;
+    border: 1.5px solid #e5dded;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 12.5px;
+    resize: vertical;
+    margin-bottom: 14px;
+}
+.report-modal textarea:focus { outline: none; border-color: #b79cd8; }
+.report-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.report-cancel-btn, .report-submit-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.report-cancel-btn { background: #f4f1f7; color: #7a6f8a; }
+.report-submit-btn { background: #b79cd8; color: #fff; }
+.report-submit-btn:hover { background: #a488cc; }
+
+.hidden { display: none !important; }
